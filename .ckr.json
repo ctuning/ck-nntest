@@ -1,0 +1,10 @@
+{
+  "data_uoa": "ck-nntest",
+  "data_uid": "490d7a29be946f5b",
+  "data_alias": "ck-nntest",
+  "data_name": "ck-nntest",
+  "dict": {
+    "shared": "git",
+    "url": "https://github.com/dividiti/ck-nntest"
+  }
+}
