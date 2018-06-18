@@ -1,0 +1,31 @@
+{
+  "env": {
+    "CK_ABS_DIFF_THRESHOLD": 0.001, 
+    "CK_DATASET_FILENAME": "shape-2-4-4-1-0", 
+    "CK_DEPTHWISE_PAD": 0, 
+    "CK_DEPTHWISE_STRIDE": 1, 
+    "CK_IN_SHAPE_C": 2, 
+    "CK_IN_SHAPE_H": 4, 
+    "CK_IN_SHAPE_N": 1, 
+    "CK_IN_SHAPE_W": 4, 
+    "CK_OUT_RAW_DATA": "tmp-ck-output.bin", 
+    "CK_SEED": 42
+  }, 
+  "execution_time": 0.009, 
+  "execution_time_kernel_0": 0.009, 
+  "execution_time_kernel_1": 0.000789, 
+  "post_processed": "yes", 
+  "run_time_state": {
+    "data_bits": 32, 
+    "in_shape_C": 2, 
+    "in_shape_H": 4, 
+    "in_shape_N": 1, 
+    "in_shape_W": 4, 
+    "out_shape_C": 2, 
+    "out_shape_H": 2, 
+    "out_shape_N": 1, 
+    "out_shape_W": 2, 
+    "rnd_seed": 42, 
+    "time_test": 0.009
+  }
+}
