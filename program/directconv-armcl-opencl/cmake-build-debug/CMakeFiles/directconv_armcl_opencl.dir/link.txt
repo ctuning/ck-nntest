@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/directconv_armcl_opencl.dir/autotune/tuner_direct_convolution.cpp.o CMakeFiles/directconv_armcl_opencl.dir/directconv.cpp.o  -o directconv_armcl_opencl 
