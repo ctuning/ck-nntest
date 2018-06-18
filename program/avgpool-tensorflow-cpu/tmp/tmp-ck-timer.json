@@ -1,0 +1,18 @@
+{
+ "execution_time":0.000000,
+ "execution_time_kernel_0":0.000000,
+ "execution_time_kernel_1":0.003238,
+ "run_time_state":{
+  "out_shape_N":1,
+  "out_shape_C":1,
+  "out_shape_H":1,
+  "out_shape_W":1,
+  "in_shape_N":1,
+  "in_shape_C":1,
+  "in_shape_H":7,
+  "in_shape_W":7,
+  "rnd_seed":42,
+  "data_bits":32,
+  "time_test":0.014000
+ }
+}

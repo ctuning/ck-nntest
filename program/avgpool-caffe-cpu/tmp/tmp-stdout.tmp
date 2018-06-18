@@ -1,0 +1,4 @@
+Input shape: num=1, channels=1000, height=6, width=6
+Pooling params: kernel=6, stride=1, padding=0
+time-0, setup: 0.000011
+time-1, test:  0.002272

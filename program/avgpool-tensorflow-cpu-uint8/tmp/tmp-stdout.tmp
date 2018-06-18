@@ -1,0 +1,5 @@
+Input shape: num=1, channels=1000, height=6, width=6
+Pooling params: kernel=6, stride=1, pad_scheme=2(VALID)
+TensorFlow measured time for node 'my_avgpool': 0.009000
+time-0, setup: 0.000000
+time-1, test:  0.001536
