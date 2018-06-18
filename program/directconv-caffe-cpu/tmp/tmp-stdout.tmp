@@ -1,5 +1,0 @@
-Input shape: num=1, channels=48, height=35, width=35
-out_feature_maps=64
-Convolution params: kernel=5, stride=1, pad=2
-time-0, setup: 0.000149
-time-1, test:  0.008780

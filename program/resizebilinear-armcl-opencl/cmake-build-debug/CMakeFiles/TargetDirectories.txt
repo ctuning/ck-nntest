@@ -1,3 +1,0 @@
-/home/nikolay/CK/ck-acl-private/program/resizebilinear-armcl-opencl/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/nikolay/CK/ck-acl-private/program/resizebilinear-armcl-opencl/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/nikolay/CK/ck-acl-private/program/resizebilinear-armcl-opencl/cmake-build-debug/CMakeFiles/resizebilinear_armcl_opencl.dir

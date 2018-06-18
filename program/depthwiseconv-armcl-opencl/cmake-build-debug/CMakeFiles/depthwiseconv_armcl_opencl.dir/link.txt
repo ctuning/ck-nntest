@@ -1,1 +1,0 @@
-/usr/bin/c++  -g   CMakeFiles/depthwiseconv_armcl_opencl.dir/autotune/tuner_depthwise_convolution.cpp.o CMakeFiles/depthwiseconv_armcl_opencl.dir/depthwiseconv.cpp.o  -o depthwiseconv_armcl_opencl 

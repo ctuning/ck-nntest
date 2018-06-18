@@ -1,3 +1,0 @@
-Input shape: num=1, channels=10, height=6, width=6
-time-0, setup: 0.000037
-time-1, test:  0.000058

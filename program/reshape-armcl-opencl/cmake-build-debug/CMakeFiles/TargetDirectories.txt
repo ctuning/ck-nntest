@@ -1,3 +1,0 @@
-/home/nikolay/CK/ck-acl-private/program/reshape-armcl-opencl/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/nikolay/CK/ck-acl-private/program/reshape-armcl-opencl/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/nikolay/CK/ck-acl-private/program/reshape-armcl-opencl/cmake-build-debug/CMakeFiles/reshape_armcl_opencl.dir

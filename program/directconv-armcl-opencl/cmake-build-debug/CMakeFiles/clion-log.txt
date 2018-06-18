@@ -1,4 +1,0 @@
-/home/nikolay/Programs/clion-2017.2.3/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/nikolay/CK/ck-acl-private/program/directconv-armcl-opencl
--- Configuring done
--- Generating done
--- Build files have been written to: /home/nikolay/CK/ck-acl-private/program/directconv-armcl-opencl/cmake-build-debug
