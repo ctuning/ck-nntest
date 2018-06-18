@@ -1,0 +1,1590 @@
+{
+  "library": {
+    "name": "TensorFlow C++ API",
+    "choices": [
+      "f63a0b92934049ee",
+      "42af974480b989d7",
+      "e64ec4bca017b634",
+      "613413998bfe81f9"
+    ],
+    "package_uoa": "c4baab22d1740334",
+    "cus": {
+      "env_prefix": "CK_ENV_LIB_TENSORFLOW_CC",
+      "path_include": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/include/tensorflow",
+      "skip_path": "yes",
+      "git_src_dir": "tensorflow_cc",
+      "used_package_uid": "c4baab22d1740334",
+      "extra_dir": "",
+      "full_path": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/lib/tensorflow_cc/libtensorflow_cc.so",
+      "check_that_exists": "yes",
+      "install_env": {
+        "PACKAGE_CONFIGURE_FLAGS_WINDOWS": "",
+        "PACKAGE_SKIP_CLEAN_SRC_DIR": "YES",
+        "PACKAGE_URL": "https://github.com/ctuning/tensorflow_cc.git",
+        "PACKAGE_GIT_CHECKOUT": "lib-tensorflow_cc-shared-1.7.0",
+        "PACKAGE_CONFIGURE_FLAGS_ANDROID": "-DBUILD_SHARED_LIBS=OFF",
+        "CK_HOST_CPU_NUMBER_OF_PROCESSORS": "4",
+        "CK_CMAKE_EXTRA": "",
+        "CK_HOST_OS_ID": "linux",
+        "CK_CC_PATH_FOR_CMAKE": "/usr/bin/gcc-6",
+        "CK_CXX_PATH_FOR_CMAKE_MINGW": "/usr/bin/g++-6",
+        "CK_ARMEABI_V7A": "OFF",
+        "PACKAGE_PATCH": "YES",
+        "CK_ARMEABI_V7A_HARD": "OFF",
+        "PACKAGE_CONFIGURE_FLAGS": "",
+        "PACKAGE_GIT": "YES",
+        "PACKAGE_VERSION": "1.7",
+        "CK_AR_PATH_FOR_CMAKE": "/usr/bin/ar",
+        "PACKAGE_SKIP_CLEAN_PACKAGE": "NO",
+        "PACKAGE_SUB_DIR": "tensorflow_cc",
+        "CK_CPU_ARM_NEON": "OFF",
+        "PACKAGE_SKIP_CLEAN_INSTALL": "NO",
+        "PACKAGE_SKIP_CLEAN_OBJ": "YES",
+        "PACKAGE_AUTOGEN": "NO",
+        "PACKAGE_BUILD_TYPE": "cmake",
+        "CK_CC_PATH_FOR_CMAKE_MINGW": "/usr/bin/gcc-6",
+        "CK_AR_PATH_FOR_CMAKE_MINGW": "/usr/bin/ar",
+        "CK_TARGET_OS_ID": "linux",
+        "PACKAGE_SKIP_CMAKE_TARGET": "NO",
+        "CK_CC_FLAGS_FOR_CMAKE_MINGW": "${CK_COMPILER_FLAGS_OBLIGATORY}",
+        "CK_COMPILER_PATH_FOR_CMAKE": "/usr/bin",
+        "PACKAGE_CONFIGURE_FLAGS_LINUX": "",
+        "CK_CC_FLAGS_FOR_CMAKE": "${CK_COMPILER_FLAGS_OBLIGATORY}",
+        "PACKAGE_SUB_DIR1": "tensorflow_cc/tensorflow_cc",
+        "CMAKE_CONFIG": "Release",
+        "CK_CXX_PATH_FOR_CMAKE": "/usr/bin/g++-6",
+        "CK_CXX_FLAGS_FOR_CMAKE_MINGW": "${CK_COMPILER_FLAGS_OBLIGATORY}",
+        "CK_TARGET_CPU_BITS": "64",
+        "CK_CPU_ARM_VFPV3": "OFF",
+        "CK_COMPILER_PATH_FOR_CMAKE_MINGW": "/usr/bin",
+        "CK_CXX_FLAGS_FOR_CMAKE": "${CK_COMPILER_FLAGS_OBLIGATORY}"
+      },
+      "soft_file": {
+        "android": "tensorflow/contrib/makefile/gen/lib/libtensorflow-core.a",
+        "linux": "install/lib/tensorflow_cc/libtensorflow_cc.so"
+      },
+      "ck_version": 10,
+      "dynamic_lib": "libtensorflow_cc.so",
+      "limit_recursion_dir_search": {
+        "win": 4,
+        "linux": 5
+      },
+      "version_split": [
+        1,
+        7
+      ],
+      "path_lib": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/lib/tensorflow_cc",
+      "version": "1.7",
+      "used_package_uoa": "lib-tensorflow_cc-shared-1.7.0"
+    },
+    "local": "yes",
+    "num_entries": 4,
+    "uoa": "f63a0b92934049ee",
+    "bat": ". /home/nikolay/CK/local/env/f63a0b92934049ee/env.sh\n",
+    "sort": -5,
+    "dict": {
+      "env": {
+        "CK_ENV_LIB_TENSORFLOW_CC_INCLUDE0": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/include/tensorflow",
+        "CK_ENV_LIB_TENSORFLOW_CC_CMAKE": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/cmake",
+        "CK_ENV_LIB_TENSORFLOW_CC": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64",
+        "CK_ENV_LIB_TENSORFLOW_CC_LIBPROTOBUF": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/lib/tensorflow_cc/libprotobuf.a",
+        "CK_ENV_LIB_TENSORFLOW_CC_INCLUDE1": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/include/tensorflow/bazel-genfiles",
+        "CK_ENV_LIB_TENSORFLOW_CC_INCLUDE2": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/include/tensorflow/tensorflow/contrib/makefile/downloads",
+        "CK_ENV_LIB_TENSORFLOW_CC_INCLUDE3": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/include/tensorflow/tensorflow/contrib/makefile/downloads/eigen",
+        "CK_ENV_LIB_TENSORFLOW_CC_LIBTENSORFLOW_CC": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/lib/tensorflow_cc/libtensorflow_cc.so",
+        "CK_ENV_LIB_TENSORFLOW_CC_INCLUDE4": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/include/tensorflow/tensorflow/contrib/makefile/downloads/gemmlowp",
+        "CK_ENV_LIB_TENSORFLOW_CC_INCLUDE5": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/include/tensorflow/tensorflow/contrib/makefile/gen/protobuf-host/include",
+        "CK_ENV_LIB_TENSORFLOW_CC_INCLUDE6": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/include/tensorflow/tensorflow/contrib/makefile/downloads/nsync/public"
+      },
+      "env_script": "env.sh",
+      "soft_alias": "lib.tensorflow_cc",
+      "setup": {
+        "deps_cmake": "2564764d7438cbf6",
+        "target_os_uoa": "4258b5fe54828a50",
+        "deps_bazel": "4f71be3142cc7170",
+        "host_os_uoa": "4258b5fe54828a50",
+        "version_split": [
+          1,
+          7
+        ],
+        "target_os_bits": "64",
+        "deps_compiler": "9698607419bb66de",
+        "version": "1.7"
+      },
+      "package_uoa": "c4baab22d1740334",
+      "data_name": "TensorFlow C++ API",
+      "deps": {
+        "bazel": {
+          "name": "Bazel tool",
+          "choices": [
+            "4f71be3142cc7170",
+            "5e7beacbfc2c1c47",
+            "51d1316b040406f9"
+          ],
+          "package_uoa": "1b43634cc2989a42",
+          "detected_ver": "0.11.1",
+          "add_to_path": "no",
+          "local": "no",
+          "num_entries": 1,
+          "version_to": [
+            0,
+            12,
+            0
+          ],
+          "uoa": "4f71be3142cc7170",
+          "build_dir_name": "bazel",
+          "tags": "tool,bazel",
+          "version_from": [
+            0,
+            5
+          ],
+          "sort": 40,
+          "dict": {
+            "env": {
+              "CK_ENV_TOOL_BAZEL_BIN": "/home/nikolay/CK-TOOLS/tool-bazel-0.11.1-linux-64/install/bin",
+              "CK_ENV_TOOL_BAZEL": "/home/nikolay/CK-TOOLS/tool-bazel-0.11.1-linux-64/install"
+            },
+            "env_script": "env.sh",
+            "setup": {
+              "deps_java-compiler": "b118e295666b8e34",
+              "host_os_uoa": "4258b5fe54828a50",
+              "target_os_uoa": "4258b5fe54828a50",
+              "version_split": [
+                0,
+                11,
+                1
+              ],
+              "target_os_bits": "64",
+              "version": "0.11.1"
+            },
+            "soft_uoa": "359f7730bd23ec60",
+            "package_uoa": "1b43634cc2989a42",
+            "customize": {
+              "use_git_revision": "no",
+              "env_prefix": "CK_ENV_TOOL_BAZEL",
+              "skip_path": "yes",
+              "git_src_dir": "src",
+              "soft_file_from_host_os": "yes",
+              "add_to_path": "yes",
+              "extra_dir": "",
+              "full_path": "/home/nikolay/CK-TOOLS/tool-bazel-0.11.1-linux-64/install/bin/bazel",
+              "version_split": [
+                0,
+                11,
+                1
+              ],
+              "check_that_exists": "yes",
+              "install_env": {
+                "PACKAGE_VERSION": "0.11.1",
+                "BAZEL_PATCH3": "javac-max-heap-500mb.patch",
+                "CK_TARGET_CPU_BITS": "64",
+                "BAZEL_PATCH2": "aarch64-is-64bit.patch",
+                "CK_HOST_CPU_NUMBER_OF_PROCESSORS": "4",
+                "BAZEL_URL": "https://github.com/bazelbuild/bazel/releases/download/0.11.1/bazel-0.11.1-dist.zip",
+                "BAZEL_PATCH1": "aarch64.patch",
+                "BAZEL_ZIP": "bazel-0.11.1-dist.zip",
+                "BAZEL_PATCH4": "non-64bit-unix-warning.patch",
+                "CK_HOST_OS_ID": "linux",
+                "CK_TARGET_OS_ID": "linux"
+              },
+              "soft_file": {
+                "win": "bazel.exe",
+                "linux": "bazel"
+              },
+              "build_dir_name": "bazel",
+              "ck_version": 10,
+              "only_for_host_os_tags": [
+                "windows",
+                "linux"
+              ],
+              "limit_recursion_dir_search": {
+                "win": 4,
+                "linux": 4
+              },
+              "soft_version_cmd": {
+                "win": "version > $#filename#$ 2>&1",
+                "linux": "version > $#filename#$ 2>&1"
+              },
+              "soft_path_example": {
+                "linux": "/usr/bin/bazel"
+              },
+              "version": "0.11.1",
+              "used_package_uid": "1b43634cc2989a42",
+              "used_package_uoa": "1b43634cc2989a42"
+            },
+            "deps": {
+              "java-compiler": {
+                "name": "Java compiler",
+                "choices": [
+                  "b118e295666b8e34",
+                  "802aa7e1cb04a1ca"
+                ],
+                "detected_ver": "1.8.0_121",
+                "dict": {
+                  "env": {
+                    "CK_COMPILER_FLAGS_OBLIGATORY": "",
+                    "CK_FLAG_PREFIX_INCLUDE": "-classpath ",
+                    "CK_ENV_COMPILER_JAVA": "/home/nikolay/Programs/jdk1.8.0_121",
+                    "CK_JAVAC": "javac",
+                    "CK_JAVA_RT": "java -classpath .",
+                    "CK_ENV_COMPILER_JAVA_BIN": "/home/nikolay/Programs/jdk1.8.0_121/bin",
+                    "JAVA_HOME": "/home/nikolay/Programs/jdk1.8.0_121",
+                    "CK_OBJ_EXT": ".class"
+                  },
+                  "env_script": "env.sh",
+                  "soft_alias": "compiler.java",
+                  "setup": {
+                    "version_split": [
+                      1,
+                      8,
+                      0,
+                      121
+                    ],
+                    "target_os_bits": "64",
+                    "target_os_uoa": "4258b5fe54828a50",
+                    "host_os_uoa": "4258b5fe54828a50",
+                    "version": "1.8.0_121"
+                  },
+                  "customize": {
+                    "env_prefix": "CK_ENV_COMPILER_JAVA",
+                    "add_to_path": "yes",
+                    "only_for_target_os_tags": [
+                      "windows",
+                      "linux"
+                    ],
+                    "full_path": "/home/nikolay/Programs/jdk1.8.0_121/bin/javac",
+                    "version_split": [
+                      1,
+                      8,
+                      0,
+                      121
+                    ],
+                    "check_that_exists": "yes",
+                    "soft_file_from_host_os": "yes",
+                    "soft_file": {
+                      "win": "javac.exe",
+                      "linux": "javac"
+                    },
+                    "build_dir_name": "java",
+                    "languages": [
+                      "JAVA"
+                    ],
+                    "skip_path": "yes",
+                    "limit_recursion_dir_search": {
+                      "win": 4,
+                      "linux": 3
+                    },
+                    "soft_version_cmd": {
+                      "win": "-version > $#filename#$ 2>&1",
+                      "linux": "-version > $#filename#$ 2>&1"
+                    },
+                    "soft_path_example": {
+                      "win": "C:\\Program Files\\Java\\jdk1.8.0_77\\bin\\javac.exe",
+                      "linux": "/usr/bin/javac"
+                    },
+                    "version": "1.8.0_121",
+                    "add_only_with_version": "yes",
+                    "ck_version": 10
+                  },
+                  "deps": {},
+                  "data_name": "java compiler",
+                  "tags": [
+                    "64bits",
+                    "compiler",
+                    "host-os-linux-64",
+                    "java",
+                    "lang-java",
+                    "target-os-linux-64",
+                    "v1",
+                    "v1.8",
+                    "v1.8.0",
+                    "v1.8.0.121"
+                  ],
+                  "soft_uoa": "0129a3b82235cbc0"
+                },
+                "local": "yes",
+                "num_entries": 1,
+                "uoa": "b118e295666b8e34",
+                "build_dir_name": "java",
+                "bat": ". /home/nikolay/CK/local/env/b118e295666b8e34/env.sh\n",
+                "sort": 10,
+                "tags": "compiler,lang-java",
+                "ver": "1.8.0_121"
+              },
+              "env-msys2": {
+                "name": "MSYS2 env",
+                "sort": 20,
+                "local": "yes",
+                "tags": "env,msys2",
+                "only_for_target_os_tags": [
+                  "windows"
+                ]
+              }
+            },
+            "data_name": "bazel",
+            "tags": [
+              "64bits",
+              "bazel",
+              "channel-stable",
+              "compiled-by-unknown_compiler",
+              "compiled-by-unknown_compiler-unknown_version",
+              "host-os-linux-64",
+              "target-os-linux-64",
+              "tool",
+              "v0",
+              "v0.11",
+              "v0.11.1"
+            ],
+            "soft_alias": "tool.bazel"
+          },
+          "bat": ". /home/nikolay/CK/local/env/4f71be3142cc7170/env.sh\n",
+          "ver": "0.11.1"
+        },
+        "compiler": {
+          "name": "C++ compiler",
+          "choices": [
+            "9698607419bb66de"
+          ],
+          "detected_ver": "6.4.0",
+          "add_to_path": "no",
+          "local": "yes",
+          "num_entries": 1,
+          "uoa": "9698607419bb66de",
+          "build_dir_name": "gcc",
+          "bat": ". /home/nikolay/CK/local/env/9698607419bb66de/env.sh\n",
+          "sort": 10,
+          "dict": {
+            "env": {
+              "CK_LB": "ar rcs",
+              "CK_OBJDUMP": "objdump -d",
+              "CK_PROFILER": "gprof",
+              "CK_LIB_EXT": ".a",
+              "CK_EXE_EXT": ".out",
+              "CK_COMPILER_FLAG_PTHREAD_LIB": "-lpthread",
+              "CK_ENV_COMPILER_GCC": "/usr",
+              "CK_COMPILER_FLAG_OPENMP": "-fopenmp",
+              "CK_COMPILER_FLAG_CPP11": "-std=c++11",
+              "CK_COMPILER_FLAG_CPP0X": "-std=c++0x",
+              "CK_CXX": "g++-6",
+              "CK_ENV_COMPILER_GCC_LIB": "/usr/lib/gcc/x86_64-linux-gnu/6",
+              "CK_FLAG_PREFIX_VAR": "-D",
+              "CK_FLAGS_DYNAMIC_BIN": " ",
+              "CK_AR": "ar",
+              "CK_FLAGS_OUTPUT": "-o ",
+              "CK_LD_FLAGS_EXTRA": "",
+              "CK_COMPILER_POSTFIX": "-6",
+              "CK_EXTRA_LIB_DL": "-ldl",
+              "CK_FLAGS_STATIC_BIN": "-static -fPIC",
+              "CK_OPT_SIZE": "-Os",
+              "CK_COMPILER_TOOLCHAIN_NAME": "gcc",
+              "CK_OPT_SPEED": "-O3",
+              "CK_COMPILER_FLAG_PLUGIN": "-fplugin=",
+              "CK_COMPILER_FLAG_CPP1Z": "-std=c++1z",
+              "CK_ASM_EXT": ".s",
+              "CK_COMPILER_FLAG_STD99": "-std=c99",
+              "CK_FLAGS_CREATE_OBJ": "-c",
+              "CK_OPT_UNWIND": " ",
+              "CK_FLAGS_DLL": "-shared -fPIC",
+              "CK_CC": "gcc-6",
+              "CK_LINKER_FLAG_OPENMP": "-lgomp -lrt",
+              "CK_FLAG_PREFIX_LIB_DIR": "-L",
+              "CK_LD": "ld",
+              "CK_MAKE": "make",
+              "CK_DLL_EXT": ".so",
+              "CK_RANLIB": "ranlib",
+              "CK_OBJ_EXT": ".o",
+              "CK_GPROF_OUT_FILE": "gmon.out",
+              "CK_COMPILER_FLAG_GPROF": "-pg",
+              "CK_COMPILER_FLAGS_OBLIGATORY": "",
+              "CK_FLAGS_CREATE_ASM": "-S",
+              "CK_FLAGS_DLL_EXTRA": "",
+              "CK_PLUGIN_FLAG": "-fplugin=",
+              "CK_OPT_SPEED_SAFE": "-O2",
+              "CK_LB_OUTPUT": "-o ",
+              "CK_FLAG_PREFIX_INCLUDE": "-I",
+              "CK_EXTRA_LIB_M": "-lm",
+              "CK_OPT_ALL_WARNINGS": "-Wall",
+              "CK_COMPILER_FLAG_STD90": "-std=c90",
+              "CK_FLAGS_STATIC_LIB": "-fPIC",
+              "CK_COMPILER_FLAG_CPP14": "-std=c++14"
+            },
+            "env_script": "env.sh",
+            "soft_alias": "compiler.gcc",
+            "setup": {
+              "version_split": [
+                6,
+                4,
+                0
+              ],
+              "target_os_bits": "64",
+              "target_os_uoa": "4258b5fe54828a50",
+              "host_os_uoa": "4258b5fe54828a50",
+              "version": "6.4.0"
+            },
+            "customize": {
+              "search_numeric_ext_on_linux": "yes",
+              "tool_postfix_configured": "yes",
+              "version": "6.4.0",
+              "limit_recursion_dir_search": {
+                "win": 4,
+                "linux": 3
+              },
+              "soft_file_from_host_os": "yes",
+              "soft_file": {
+                "win": "gcc.exe",
+                "linux": "gcc"
+              },
+              "build_dir_name": "gcc",
+              "languages": [
+                "C",
+                "CPP"
+              ],
+              "tool_prefix": "",
+              "sort": 100,
+              "retarget": "no",
+              "env_prefix": "CK_ENV_COMPILER_GCC",
+              "add_only_with_version": "yes",
+              "add_to_path": "yes",
+              "full_path": "/usr/bin/gcc-6",
+              "check_that_exists": "yes",
+              "can_strip_dynamic_lib": "yes",
+              "tool_postfix": "-6",
+              "skip_path": "yes",
+              "only_for_target_os_tags": [
+                "mingw",
+                "windows",
+                "linux"
+              ],
+              "version_split": [
+                6,
+                4,
+                0
+              ],
+              "soft_version_cmd": {
+                "win": " --version > $#filename#$ 2>&1",
+                "linux": "--version > $#filename#$ 2>&1"
+              },
+              "tool_prefix_configured": "yes",
+              "soft_path_example": {
+                "win": "C:\\Program Files\\GCC-4.9.2-x64\\bin\\gcc.exe",
+                "linux": "/usr/bin/gcc"
+              },
+              "ck_version": 10
+            },
+            "deps": {},
+            "data_name": "GNU C compiler",
+            "tags": [
+              "64bits",
+              "compiler",
+              "gcc",
+              "host-os-linux-64",
+              "lang-c",
+              "lang-cpp",
+              "target-os-linux-64",
+              "v6",
+              "v6.4",
+              "v6.4.0"
+            ],
+            "soft_uoa": "3a8a82fa40bf992d"
+          },
+          "tags": "compiler,lang-cpp",
+          "ver": "6.4.0"
+        },
+        "cmake": {
+          "name": "CMake",
+          "choices": [
+            "2564764d7438cbf6"
+          ],
+          "detected_ver": "3.5.1",
+          "dict": {
+            "env": {
+              "CK_ENV_TOOL_CMAKE_BIN": "/usr/bin",
+              "CK_CMAKE": "cmake",
+              "CK_ENV_TOOL_CMAKE": "/usr"
+            },
+            "env_script": "env.sh",
+            "soft_alias": "tool.cmake",
+            "setup": {
+              "version_split": [
+                3,
+                5,
+                1
+              ],
+              "target_os_bits": "64",
+              "target_os_uoa": "4258b5fe54828a50",
+              "host_os_uoa": "4258b5fe54828a50",
+              "version": "3.5.1"
+            },
+            "customize": {
+              "env_prefix": "CK_ENV_TOOL_CMAKE",
+              "only_for_host_os_tags": [
+                "windows",
+                "linux"
+              ],
+              "add_to_path": "yes",
+              "full_path": "/usr/bin/cmake",
+              "version_split": [
+                3,
+                5,
+                1
+              ],
+              "check_that_exists": "yes",
+              "soft_file_from_host_os": "yes",
+              "soft_file": {
+                "win": "cmake.exe",
+                "linux": "cmake"
+              },
+              "build_dir_name": "cmake",
+              "ck_version": 10,
+              "skip_path": "yes",
+              "limit_recursion_dir_search": {
+                "win": 3,
+                "linux": 3
+              },
+              "soft_version_cmd": {
+                "win": "--version > $#filename#$ 2>&1",
+                "linux": "--version > $#filename#$ 2>&1"
+              },
+              "soft_path_example": {
+                "win": "C:\\Program Files (x86)\\CMake\\bin\\cmake.exe",
+                "linux": "/usr/bin/cmake"
+              },
+              "version": "3.5.1",
+              "add_only_with_version": "yes"
+            },
+            "deps": {},
+            "data_name": "cmake",
+            "tags": [
+              "64bits",
+              "cmake",
+              "host-os-linux-64",
+              "target-os-linux-64",
+              "tool",
+              "v3",
+              "v3.5",
+              "v3.5.1"
+            ],
+            "soft_uoa": "77ef5e31404d9589"
+          },
+          "local": "yes",
+          "force_target_as_host": "yes",
+          "num_entries": 1,
+          "uoa": "2564764d7438cbf6",
+          "build_dir_name": "cmake",
+          "bat": ". /home/nikolay/CK/local/env/2564764d7438cbf6/env.sh\n",
+          "sort": 5,
+          "tags": "tool,cmake",
+          "ver": "3.5.1"
+        }
+      },
+      "customize": {
+        "env_prefix": "CK_ENV_LIB_TENSORFLOW_CC",
+        "path_include": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/include/tensorflow",
+        "skip_path": "yes",
+        "git_src_dir": "tensorflow_cc",
+        "used_package_uid": "c4baab22d1740334",
+        "extra_dir": "",
+        "full_path": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/lib/tensorflow_cc/libtensorflow_cc.so",
+        "check_that_exists": "yes",
+        "install_env": {
+          "PACKAGE_CONFIGURE_FLAGS_WINDOWS": "",
+          "PACKAGE_SKIP_CLEAN_SRC_DIR": "YES",
+          "PACKAGE_URL": "https://github.com/ctuning/tensorflow_cc.git",
+          "PACKAGE_GIT_CHECKOUT": "lib-tensorflow_cc-shared-1.7.0",
+          "PACKAGE_CONFIGURE_FLAGS_ANDROID": "-DBUILD_SHARED_LIBS=OFF",
+          "CK_HOST_CPU_NUMBER_OF_PROCESSORS": "4",
+          "CK_CMAKE_EXTRA": "",
+          "CK_HOST_OS_ID": "linux",
+          "CK_CC_PATH_FOR_CMAKE": "/usr/bin/gcc-6",
+          "CK_CXX_PATH_FOR_CMAKE_MINGW": "/usr/bin/g++-6",
+          "CK_ARMEABI_V7A": "OFF",
+          "PACKAGE_PATCH": "YES",
+          "CK_ARMEABI_V7A_HARD": "OFF",
+          "PACKAGE_CONFIGURE_FLAGS": "",
+          "PACKAGE_GIT": "YES",
+          "PACKAGE_VERSION": "1.7",
+          "CK_AR_PATH_FOR_CMAKE": "/usr/bin/ar",
+          "PACKAGE_SKIP_CLEAN_PACKAGE": "NO",
+          "PACKAGE_SUB_DIR": "tensorflow_cc",
+          "CK_CPU_ARM_NEON": "OFF",
+          "PACKAGE_SKIP_CLEAN_INSTALL": "NO",
+          "PACKAGE_SKIP_CLEAN_OBJ": "YES",
+          "PACKAGE_AUTOGEN": "NO",
+          "PACKAGE_BUILD_TYPE": "cmake",
+          "CK_CC_PATH_FOR_CMAKE_MINGW": "/usr/bin/gcc-6",
+          "CK_AR_PATH_FOR_CMAKE_MINGW": "/usr/bin/ar",
+          "CK_TARGET_OS_ID": "linux",
+          "PACKAGE_SKIP_CMAKE_TARGET": "NO",
+          "CK_CC_FLAGS_FOR_CMAKE_MINGW": "${CK_COMPILER_FLAGS_OBLIGATORY}",
+          "CK_COMPILER_PATH_FOR_CMAKE": "/usr/bin",
+          "PACKAGE_CONFIGURE_FLAGS_LINUX": "",
+          "CK_CC_FLAGS_FOR_CMAKE": "${CK_COMPILER_FLAGS_OBLIGATORY}",
+          "PACKAGE_SUB_DIR1": "tensorflow_cc/tensorflow_cc",
+          "CMAKE_CONFIG": "Release",
+          "CK_CXX_PATH_FOR_CMAKE": "/usr/bin/g++-6",
+          "CK_CXX_FLAGS_FOR_CMAKE_MINGW": "${CK_COMPILER_FLAGS_OBLIGATORY}",
+          "CK_TARGET_CPU_BITS": "64",
+          "CK_CPU_ARM_VFPV3": "OFF",
+          "CK_COMPILER_PATH_FOR_CMAKE_MINGW": "/usr/bin",
+          "CK_CXX_FLAGS_FOR_CMAKE": "${CK_COMPILER_FLAGS_OBLIGATORY}"
+        },
+        "soft_file": {
+          "android": "tensorflow/contrib/makefile/gen/lib/libtensorflow-core.a",
+          "linux": "install/lib/tensorflow_cc/libtensorflow_cc.so"
+        },
+        "ck_version": 10,
+        "dynamic_lib": "libtensorflow_cc.so",
+        "limit_recursion_dir_search": {
+          "win": 4,
+          "linux": 5
+        },
+        "version_split": [
+          1,
+          7
+        ],
+        "path_lib": "/home/nikolay/CK-TOOLS/lib-tensorflow_cc-shared-1.7-gcc-6.4.0-linux-64/install/lib/tensorflow_cc",
+        "version": "1.7",
+        "used_package_uoa": "lib-tensorflow_cc-shared-1.7.0"
+      },
+      "tags": [
+        "64bits",
+        "api",
+        "bazel",
+        "channel-stable",
+        "compiled-by-gcc",
+        "compiled-by-gcc-6.4.0",
+        "host-os-linux-64",
+        "lib",
+        "target-os-linux-64",
+        "tensorflow",
+        "tensorflow_cc",
+        "v1",
+        "v1.7",
+        "v1.7.0",
+        "vmaster",
+        "vshared",
+        "vsrc"
+      ],
+      "soft_uoa": "0cdc7594d430ab2b"
+    },
+    "tags": "lib,tensorflow_cc",
+    "ver": "1.7"
+  },
+  "xopenme": {
+    "name": "xOpenME library",
+    "choices": [
+      "9a01a05a5c7569f7"
+    ],
+    "package_uoa": "0573487b8121d094",
+    "cus": {
+      "env_prefix": "CK_ENV_LIB_RTL_XOPENME",
+      "path_include": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64/include",
+      "skip_path": "yes",
+      "include_name": "xopenme.h",
+      "used_package_uid": "0573487b8121d094",
+      "extra_dir": "",
+      "full_path": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64/lib/librtlxopenme.a",
+      "version": "0.3",
+      "used_package_uoa": "lib-rtl-xopenme",
+      "static_lib": "librtlxopenme.a",
+      "version_split": [
+        0,
+        3
+      ],
+      "path_lib": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64/lib",
+      "dynamic_lib": "librtlxopenme.so"
+    },
+    "local": "yes",
+    "num_entries": 1,
+    "uoa": "9a01a05a5c7569f7",
+    "bat": ". /home/nikolay/CK/local/env/9a01a05a5c7569f7/env.sh\n",
+    "sort": 100,
+    "dict": {
+      "env": {
+        "CK_ENV_LIB_RTL_XOPENME": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64",
+        "CK_ENV_LIB_RTL_XOPENME_INCLUDE_NAME": "xopenme.h",
+        "CK_ENV_LIB_RTL_XOPENME_DYNAMIC_NAME": "librtlxopenme.so",
+        "CK_ENV_LIB_RTL_XOPENME_STATIC_NAME": "librtlxopenme.a"
+      },
+      "env_script": "env.sh",
+      "soft_alias": "lib.rtl.xopenme",
+      "setup": {
+        "host_os_uoa": "4258b5fe54828a50",
+        "target_os_uoa": "4258b5fe54828a50",
+        "version_split": [
+          0,
+          3
+        ],
+        "target_os_bits": "64",
+        "deps_compiler": "9698607419bb66de",
+        "version": "0.3"
+      },
+      "package_uoa": "0573487b8121d094",
+      "data_name": "xOpenME run-time library",
+      "deps": {
+        "compiler": {
+          "name": "C compiler",
+          "choices": [
+            "9698607419bb66de"
+          ],
+          "detected_ver": "6.4.0",
+          "dict": {
+            "env": {
+              "CK_LB": "ar rcs",
+              "CK_OBJDUMP": "objdump -d",
+              "CK_PROFILER": "gprof",
+              "CK_LIB_EXT": ".a",
+              "CK_EXE_EXT": ".out",
+              "CK_COMPILER_FLAG_PTHREAD_LIB": "-lpthread",
+              "CK_ENV_COMPILER_GCC": "/usr",
+              "CK_COMPILER_FLAG_OPENMP": "-fopenmp",
+              "CK_COMPILER_FLAG_CPP11": "-std=c++11",
+              "CK_COMPILER_FLAG_CPP0X": "-std=c++0x",
+              "CK_CXX": "g++-6",
+              "CK_ENV_COMPILER_GCC_LIB": "/usr/lib/gcc/x86_64-linux-gnu/6",
+              "CK_FLAG_PREFIX_VAR": "-D",
+              "CK_FLAGS_DYNAMIC_BIN": " ",
+              "CK_AR": "ar",
+              "CK_FLAGS_OUTPUT": "-o ",
+              "CK_LD_FLAGS_EXTRA": "",
+              "CK_COMPILER_POSTFIX": "-6",
+              "CK_EXTRA_LIB_DL": "-ldl",
+              "CK_FLAGS_STATIC_BIN": "-static -fPIC",
+              "CK_OPT_SIZE": "-Os",
+              "CK_COMPILER_TOOLCHAIN_NAME": "gcc",
+              "CK_OPT_SPEED": "-O3",
+              "CK_COMPILER_FLAG_PLUGIN": "-fplugin=",
+              "CK_COMPILER_FLAG_CPP1Z": "-std=c++1z",
+              "CK_ASM_EXT": ".s",
+              "CK_COMPILER_FLAG_STD99": "-std=c99",
+              "CK_FLAGS_CREATE_OBJ": "-c",
+              "CK_OPT_UNWIND": " ",
+              "CK_FLAGS_DLL": "-shared -fPIC",
+              "CK_CC": "gcc-6",
+              "CK_LINKER_FLAG_OPENMP": "-lgomp -lrt",
+              "CK_FLAG_PREFIX_LIB_DIR": "-L",
+              "CK_LD": "ld",
+              "CK_MAKE": "make",
+              "CK_DLL_EXT": ".so",
+              "CK_RANLIB": "ranlib",
+              "CK_OBJ_EXT": ".o",
+              "CK_GPROF_OUT_FILE": "gmon.out",
+              "CK_COMPILER_FLAG_GPROF": "-pg",
+              "CK_COMPILER_FLAGS_OBLIGATORY": "",
+              "CK_FLAGS_CREATE_ASM": "-S",
+              "CK_FLAGS_DLL_EXTRA": "",
+              "CK_PLUGIN_FLAG": "-fplugin=",
+              "CK_OPT_SPEED_SAFE": "-O2",
+              "CK_LB_OUTPUT": "-o ",
+              "CK_FLAG_PREFIX_INCLUDE": "-I",
+              "CK_EXTRA_LIB_M": "-lm",
+              "CK_OPT_ALL_WARNINGS": "-Wall",
+              "CK_COMPILER_FLAG_STD90": "-std=c90",
+              "CK_FLAGS_STATIC_LIB": "-fPIC",
+              "CK_COMPILER_FLAG_CPP14": "-std=c++14"
+            },
+            "env_script": "env.sh",
+            "soft_alias": "compiler.gcc",
+            "setup": {
+              "version_split": [
+                6,
+                4,
+                0
+              ],
+              "target_os_bits": "64",
+              "target_os_uoa": "4258b5fe54828a50",
+              "host_os_uoa": "4258b5fe54828a50",
+              "version": "6.4.0"
+            },
+            "customize": {
+              "search_numeric_ext_on_linux": "yes",
+              "tool_postfix_configured": "yes",
+              "version": "6.4.0",
+              "limit_recursion_dir_search": {
+                "win": 4,
+                "linux": 3
+              },
+              "soft_file_from_host_os": "yes",
+              "soft_file": {
+                "win": "gcc.exe",
+                "linux": "gcc"
+              },
+              "build_dir_name": "gcc",
+              "languages": [
+                "C",
+                "CPP"
+              ],
+              "tool_prefix": "",
+              "sort": 100,
+              "retarget": "no",
+              "env_prefix": "CK_ENV_COMPILER_GCC",
+              "add_only_with_version": "yes",
+              "add_to_path": "yes",
+              "full_path": "/usr/bin/gcc-6",
+              "check_that_exists": "yes",
+              "can_strip_dynamic_lib": "yes",
+              "tool_postfix": "-6",
+              "skip_path": "yes",
+              "only_for_target_os_tags": [
+                "mingw",
+                "windows",
+                "linux"
+              ],
+              "version_split": [
+                6,
+                4,
+                0
+              ],
+              "soft_version_cmd": {
+                "win": " --version > $#filename#$ 2>&1",
+                "linux": "--version > $#filename#$ 2>&1"
+              },
+              "tool_prefix_configured": "yes",
+              "soft_path_example": {
+                "win": "C:\\Program Files\\GCC-4.9.2-x64\\bin\\gcc.exe",
+                "linux": "/usr/bin/gcc"
+              },
+              "ck_version": 10
+            },
+            "deps": {},
+            "data_name": "GNU C compiler",
+            "tags": [
+              "64bits",
+              "compiler",
+              "gcc",
+              "host-os-linux-64",
+              "lang-c",
+              "lang-cpp",
+              "target-os-linux-64",
+              "v6",
+              "v6.4",
+              "v6.4.0"
+            ],
+            "soft_uoa": "3a8a82fa40bf992d"
+          },
+          "local": "yes",
+          "num_entries": 1,
+          "uoa": "9698607419bb66de",
+          "build_dir_name": "gcc",
+          "bat": ". /home/nikolay/CK/local/env/9698607419bb66de/env.sh\n",
+          "sort": 10,
+          "tags": "compiler,lang-c",
+          "ver": "6.4.0"
+        }
+      },
+      "customize": {
+        "env_prefix": "CK_ENV_LIB_RTL_XOPENME",
+        "path_include": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64/include",
+        "skip_path": "yes",
+        "include_name": "xopenme.h",
+        "used_package_uid": "0573487b8121d094",
+        "extra_dir": "",
+        "full_path": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64/lib/librtlxopenme.a",
+        "version": "0.3",
+        "used_package_uoa": "lib-rtl-xopenme",
+        "static_lib": "librtlxopenme.a",
+        "version_split": [
+          0,
+          3
+        ],
+        "path_lib": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64/lib",
+        "dynamic_lib": "librtlxopenme.so"
+      },
+      "tags": [
+        "64bits",
+        "channel-stable",
+        "compiled-by-gcc",
+        "compiled-by-gcc-6.4.0",
+        "host-os-linux-64",
+        "lang-c",
+        "lang-cpp",
+        "lang-f77",
+        "lang-f90",
+        "lang-f95",
+        "lib",
+        "rtl",
+        "target-os-linux-64",
+        "v0",
+        "v0.3",
+        "xopenme"
+      ],
+      "soft_uoa": "673507878d649b4a"
+    },
+    "tags": "lib,xopenme",
+    "ver": "0.3"
+  },
+  "compiler": {
+    "name": "C++ compiler",
+    "choices": [
+      "9698607419bb66de"
+    ],
+    "detected_ver": "6.4.0",
+    "cus": {
+      "search_numeric_ext_on_linux": "yes",
+      "tool_postfix_configured": "yes",
+      "version": "6.4.0",
+      "limit_recursion_dir_search": {
+        "win": 4,
+        "linux": 3
+      },
+      "soft_file_from_host_os": "yes",
+      "soft_file": {
+        "win": "gcc.exe",
+        "linux": "gcc"
+      },
+      "build_dir_name": "gcc",
+      "languages": [
+        "C",
+        "CPP"
+      ],
+      "tool_prefix": "",
+      "sort": 100,
+      "retarget": "no",
+      "env_prefix": "CK_ENV_COMPILER_GCC",
+      "add_only_with_version": "yes",
+      "add_to_path": "yes",
+      "full_path": "/usr/bin/gcc-6",
+      "check_that_exists": "yes",
+      "can_strip_dynamic_lib": "yes",
+      "tool_postfix": "-6",
+      "skip_path": "yes",
+      "only_for_target_os_tags": [
+        "mingw",
+        "windows",
+        "linux"
+      ],
+      "version_split": [
+        6,
+        4,
+        0
+      ],
+      "soft_version_cmd": {
+        "win": " --version > $#filename#$ 2>&1",
+        "linux": "--version > $#filename#$ 2>&1"
+      },
+      "tool_prefix_configured": "yes",
+      "soft_path_example": {
+        "win": "C:\\Program Files\\GCC-4.9.2-x64\\bin\\gcc.exe",
+        "linux": "/usr/bin/gcc"
+      },
+      "ck_version": 10
+    },
+    "local": "yes",
+    "num_entries": 1,
+    "uoa": "9698607419bb66de",
+    "build_dir_name": "gcc",
+    "bat": ". /home/nikolay/CK/local/env/9698607419bb66de/env.sh\n",
+    "sort": 0,
+    "dict": {
+      "env": {
+        "CK_LB": "ar rcs",
+        "CK_OBJDUMP": "objdump -d",
+        "CK_PROFILER": "gprof",
+        "CK_LIB_EXT": ".a",
+        "CK_EXE_EXT": ".out",
+        "CK_COMPILER_FLAG_PTHREAD_LIB": "-lpthread",
+        "CK_ENV_COMPILER_GCC": "/usr",
+        "CK_COMPILER_FLAG_OPENMP": "-fopenmp",
+        "CK_COMPILER_FLAG_CPP11": "-std=c++11",
+        "CK_COMPILER_FLAG_CPP0X": "-std=c++0x",
+        "CK_CXX": "g++-6",
+        "CK_ENV_COMPILER_GCC_LIB": "/usr/lib/gcc/x86_64-linux-gnu/6",
+        "CK_FLAG_PREFIX_VAR": "-D",
+        "CK_FLAGS_DYNAMIC_BIN": " ",
+        "CK_AR": "ar",
+        "CK_FLAGS_OUTPUT": "-o ",
+        "CK_LD_FLAGS_EXTRA": "",
+        "CK_COMPILER_POSTFIX": "-6",
+        "CK_EXTRA_LIB_DL": "-ldl",
+        "CK_FLAGS_STATIC_BIN": "-static -fPIC",
+        "CK_OPT_SIZE": "-Os",
+        "CK_COMPILER_TOOLCHAIN_NAME": "gcc",
+        "CK_OPT_SPEED": "-O3",
+        "CK_COMPILER_FLAG_PLUGIN": "-fplugin=",
+        "CK_COMPILER_FLAG_CPP1Z": "-std=c++1z",
+        "CK_ASM_EXT": ".s",
+        "CK_COMPILER_FLAG_STD99": "-std=c99",
+        "CK_FLAGS_CREATE_OBJ": "-c",
+        "CK_OPT_UNWIND": " ",
+        "CK_FLAGS_DLL": "-shared -fPIC",
+        "CK_CC": "gcc-6",
+        "CK_LINKER_FLAG_OPENMP": "-lgomp -lrt",
+        "CK_FLAG_PREFIX_LIB_DIR": "-L",
+        "CK_LD": "ld",
+        "CK_MAKE": "make",
+        "CK_DLL_EXT": ".so",
+        "CK_RANLIB": "ranlib",
+        "CK_OBJ_EXT": ".o",
+        "CK_GPROF_OUT_FILE": "gmon.out",
+        "CK_COMPILER_FLAG_GPROF": "-pg",
+        "CK_COMPILER_FLAGS_OBLIGATORY": "",
+        "CK_FLAGS_CREATE_ASM": "-S",
+        "CK_FLAGS_DLL_EXTRA": "",
+        "CK_PLUGIN_FLAG": "-fplugin=",
+        "CK_OPT_SPEED_SAFE": "-O2",
+        "CK_LB_OUTPUT": "-o ",
+        "CK_FLAG_PREFIX_INCLUDE": "-I",
+        "CK_EXTRA_LIB_M": "-lm",
+        "CK_OPT_ALL_WARNINGS": "-Wall",
+        "CK_COMPILER_FLAG_STD90": "-std=c90",
+        "CK_FLAGS_STATIC_LIB": "-fPIC",
+        "CK_COMPILER_FLAG_CPP14": "-std=c++14"
+      },
+      "env_script": "env.sh",
+      "soft_alias": "compiler.gcc",
+      "setup": {
+        "version_split": [
+          6,
+          4,
+          0
+        ],
+        "target_os_bits": "64",
+        "target_os_uoa": "4258b5fe54828a50",
+        "host_os_uoa": "4258b5fe54828a50",
+        "version": "6.4.0"
+      },
+      "data_name": "GNU C compiler",
+      "deps": {},
+      "customize": {
+        "search_numeric_ext_on_linux": "yes",
+        "tool_postfix_configured": "yes",
+        "version": "6.4.0",
+        "limit_recursion_dir_search": {
+          "win": 4,
+          "linux": 3
+        },
+        "soft_file_from_host_os": "yes",
+        "soft_file": {
+          "win": "gcc.exe",
+          "linux": "gcc"
+        },
+        "build_dir_name": "gcc",
+        "languages": [
+          "C",
+          "CPP"
+        ],
+        "tool_prefix": "",
+        "sort": 100,
+        "retarget": "no",
+        "env_prefix": "CK_ENV_COMPILER_GCC",
+        "add_only_with_version": "yes",
+        "add_to_path": "yes",
+        "full_path": "/usr/bin/gcc-6",
+        "check_that_exists": "yes",
+        "can_strip_dynamic_lib": "yes",
+        "tool_postfix": "-6",
+        "skip_path": "yes",
+        "only_for_target_os_tags": [
+          "mingw",
+          "windows",
+          "linux"
+        ],
+        "version_split": [
+          6,
+          4,
+          0
+        ],
+        "soft_version_cmd": {
+          "win": " --version > $#filename#$ 2>&1",
+          "linux": "--version > $#filename#$ 2>&1"
+        },
+        "tool_prefix_configured": "yes",
+        "soft_path_example": {
+          "win": "C:\\Program Files\\GCC-4.9.2-x64\\bin\\gcc.exe",
+          "linux": "/usr/bin/gcc"
+        },
+        "ck_version": 10
+      },
+      "tags": [
+        "64bits",
+        "compiler",
+        "gcc",
+        "host-os-linux-64",
+        "lang-c",
+        "lang-cpp",
+        "target-os-linux-64",
+        "v6",
+        "v6.4",
+        "v6.4.0"
+      ],
+      "soft_uoa": "3a8a82fa40bf992d"
+    },
+    "tags": "compiler,lang-cpp",
+    "ver": "6.4.0"
+  },
+  "lib-nntest": {
+    "name": "NNTest library",
+    "choices": [
+      "431181afddc0d160"
+    ],
+    "package_uoa": "a6f6a5e9a44c7999",
+    "cus": {
+      "env_prefix": "CK_ENV_LIB_NNTEST",
+      "path_include": "/home/nikolay/CK-TOOLS/lib-nntest-0.1-gcc-6.4.0-linux-64/install/include",
+      "skip_add_to_path": "yes",
+      "full_path": "/home/nikolay/CK-TOOLS/lib-nntest-0.1-gcc-6.4.0-linux-64/install/include/ck_nntest_common.h",
+      "used_package_uid": "a6f6a5e9a44c7999",
+      "limit_recursion_dir_search": {
+        "win": 4,
+        "linux": 4
+      },
+      "extra_dir": "",
+      "version": "0.1",
+      "soft_file": {
+        "win": "include\\ck_nntest_common.h",
+        "linux": "include/ck_nntest_common.h"
+      },
+      "skip_path": "yes",
+      "add_include_path": "yes",
+      "version_split": [
+        0,
+        1
+      ],
+      "skip_add_to_bin": "yes",
+      "used_package_uoa": "lib-nntest"
+    },
+    "local": "yes",
+    "num_entries": 1,
+    "uoa": "431181afddc0d160",
+    "bat": ". /home/nikolay/CK/local/env/431181afddc0d160/env.sh\n",
+    "sort": 2,
+    "dict": {
+      "env": {
+        "CK_ENV_LIB_NNTEST": "/home/nikolay/CK-TOOLS/lib-nntest-0.1-gcc-6.4.0-linux-64/install"
+      },
+      "env_script": "env.sh",
+      "soft_alias": "lib.nntest",
+      "setup": {
+        "deps_xopenme": "9a01a05a5c7569f7",
+        "host_os_uoa": "4258b5fe54828a50",
+        "target_os_uoa": "4258b5fe54828a50",
+        "version_split": [
+          0,
+          1
+        ],
+        "target_os_bits": "64",
+        "deps_compiler": "9698607419bb66de",
+        "version": "0.1"
+      },
+      "package_uoa": "a6f6a5e9a44c7999",
+      "data_name": "NNTest library",
+      "deps": {
+        "xopenme": {
+          "num_entries": 1,
+          "name": "xOpenME library",
+          "uoa": "9a01a05a5c7569f7",
+          "tags": "lib,xopenme",
+          "choices": [
+            "9a01a05a5c7569f7"
+          ],
+          "package_uoa": "0573487b8121d094",
+          "sort": 100,
+          "dict": {
+            "env": {
+              "CK_ENV_LIB_RTL_XOPENME": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64",
+              "CK_ENV_LIB_RTL_XOPENME_INCLUDE_NAME": "xopenme.h",
+              "CK_ENV_LIB_RTL_XOPENME_DYNAMIC_NAME": "librtlxopenme.so",
+              "CK_ENV_LIB_RTL_XOPENME_STATIC_NAME": "librtlxopenme.a"
+            },
+            "env_script": "env.sh",
+            "setup": {
+              "host_os_uoa": "4258b5fe54828a50",
+              "target_os_uoa": "4258b5fe54828a50",
+              "version_split": [
+                0,
+                3
+              ],
+              "target_os_bits": "64",
+              "deps_compiler": "9698607419bb66de",
+              "version": "0.3"
+            },
+            "soft_uoa": "673507878d649b4a",
+            "package_uoa": "0573487b8121d094",
+            "customize": {
+              "env_prefix": "CK_ENV_LIB_RTL_XOPENME",
+              "path_include": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64/include",
+              "skip_path": "yes",
+              "include_name": "xopenme.h",
+              "used_package_uid": "0573487b8121d094",
+              "extra_dir": "",
+              "full_path": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64/lib/librtlxopenme.a",
+              "version": "0.3",
+              "used_package_uoa": "lib-rtl-xopenme",
+              "static_lib": "librtlxopenme.a",
+              "version_split": [
+                0,
+                3
+              ],
+              "path_lib": "/home/nikolay/CK-TOOLS/lib-rtl-xopenme-0.3-gcc-6.4.0-linux-64/lib",
+              "dynamic_lib": "librtlxopenme.so"
+            },
+            "deps": {
+              "compiler": {
+                "name": "C compiler",
+                "choices": [
+                  "9698607419bb66de"
+                ],
+                "detected_ver": "6.4.0",
+                "dict": {
+                  "env": {
+                    "CK_LB": "ar rcs",
+                    "CK_OBJDUMP": "objdump -d",
+                    "CK_PROFILER": "gprof",
+                    "CK_LIB_EXT": ".a",
+                    "CK_EXE_EXT": ".out",
+                    "CK_COMPILER_FLAG_PTHREAD_LIB": "-lpthread",
+                    "CK_ENV_COMPILER_GCC": "/usr",
+                    "CK_COMPILER_FLAG_OPENMP": "-fopenmp",
+                    "CK_COMPILER_FLAG_CPP11": "-std=c++11",
+                    "CK_COMPILER_FLAG_CPP0X": "-std=c++0x",
+                    "CK_CXX": "g++-6",
+                    "CK_ENV_COMPILER_GCC_LIB": "/usr/lib/gcc/x86_64-linux-gnu/6",
+                    "CK_FLAG_PREFIX_VAR": "-D",
+                    "CK_FLAGS_DYNAMIC_BIN": " ",
+                    "CK_AR": "ar",
+                    "CK_FLAGS_OUTPUT": "-o ",
+                    "CK_LD_FLAGS_EXTRA": "",
+                    "CK_COMPILER_POSTFIX": "-6",
+                    "CK_EXTRA_LIB_DL": "-ldl",
+                    "CK_FLAGS_STATIC_BIN": "-static -fPIC",
+                    "CK_OPT_SIZE": "-Os",
+                    "CK_COMPILER_TOOLCHAIN_NAME": "gcc",
+                    "CK_OPT_SPEED": "-O3",
+                    "CK_COMPILER_FLAG_PLUGIN": "-fplugin=",
+                    "CK_COMPILER_FLAG_CPP1Z": "-std=c++1z",
+                    "CK_ASM_EXT": ".s",
+                    "CK_COMPILER_FLAG_STD99": "-std=c99",
+                    "CK_FLAGS_CREATE_OBJ": "-c",
+                    "CK_OPT_UNWIND": " ",
+                    "CK_FLAGS_DLL": "-shared -fPIC",
+                    "CK_CC": "gcc-6",
+                    "CK_LINKER_FLAG_OPENMP": "-lgomp -lrt",
+                    "CK_FLAG_PREFIX_LIB_DIR": "-L",
+                    "CK_LD": "ld",
+                    "CK_MAKE": "make",
+                    "CK_DLL_EXT": ".so",
+                    "CK_RANLIB": "ranlib",
+                    "CK_OBJ_EXT": ".o",
+                    "CK_GPROF_OUT_FILE": "gmon.out",
+                    "CK_COMPILER_FLAG_GPROF": "-pg",
+                    "CK_COMPILER_FLAGS_OBLIGATORY": "",
+                    "CK_FLAGS_CREATE_ASM": "-S",
+                    "CK_FLAGS_DLL_EXTRA": "",
+                    "CK_PLUGIN_FLAG": "-fplugin=",
+                    "CK_OPT_SPEED_SAFE": "-O2",
+                    "CK_LB_OUTPUT": "-o ",
+                    "CK_FLAG_PREFIX_INCLUDE": "-I",
+                    "CK_EXTRA_LIB_M": "-lm",
+                    "CK_OPT_ALL_WARNINGS": "-Wall",
+                    "CK_COMPILER_FLAG_STD90": "-std=c90",
+                    "CK_FLAGS_STATIC_LIB": "-fPIC",
+                    "CK_COMPILER_FLAG_CPP14": "-std=c++14"
+                  },
+                  "env_script": "env.sh",
+                  "soft_alias": "compiler.gcc",
+                  "setup": {
+                    "version_split": [
+                      6,
+                      4,
+                      0
+                    ],
+                    "target_os_bits": "64",
+                    "target_os_uoa": "4258b5fe54828a50",
+                    "host_os_uoa": "4258b5fe54828a50",
+                    "version": "6.4.0"
+                  },
+                  "customize": {
+                    "search_numeric_ext_on_linux": "yes",
+                    "tool_postfix_configured": "yes",
+                    "version": "6.4.0",
+                    "limit_recursion_dir_search": {
+                      "win": 4,
+                      "linux": 3
+                    },
+                    "soft_file_from_host_os": "yes",
+                    "soft_file": {
+                      "win": "gcc.exe",
+                      "linux": "gcc"
+                    },
+                    "build_dir_name": "gcc",
+                    "languages": [
+                      "C",
+                      "CPP"
+                    ],
+                    "tool_prefix": "",
+                    "sort": 100,
+                    "retarget": "no",
+                    "env_prefix": "CK_ENV_COMPILER_GCC",
+                    "add_only_with_version": "yes",
+                    "add_to_path": "yes",
+                    "full_path": "/usr/bin/gcc-6",
+                    "check_that_exists": "yes",
+                    "can_strip_dynamic_lib": "yes",
+                    "tool_postfix": "-6",
+                    "skip_path": "yes",
+                    "only_for_target_os_tags": [
+                      "mingw",
+                      "windows",
+                      "linux"
+                    ],
+                    "version_split": [
+                      6,
+                      4,
+                      0
+                    ],
+                    "soft_version_cmd": {
+                      "win": " --version > $#filename#$ 2>&1",
+                      "linux": "--version > $#filename#$ 2>&1"
+                    },
+                    "tool_prefix_configured": "yes",
+                    "soft_path_example": {
+                      "win": "C:\\Program Files\\GCC-4.9.2-x64\\bin\\gcc.exe",
+                      "linux": "/usr/bin/gcc"
+                    },
+                    "ck_version": 10
+                  },
+                  "deps": {},
+                  "data_name": "GNU C compiler",
+                  "tags": [
+                    "64bits",
+                    "compiler",
+                    "gcc",
+                    "host-os-linux-64",
+                    "lang-c",
+                    "lang-cpp",
+                    "target-os-linux-64",
+                    "v6",
+                    "v6.4",
+                    "v6.4.0"
+                  ],
+                  "soft_uoa": "3a8a82fa40bf992d"
+                },
+                "local": "yes",
+                "num_entries": 1,
+                "uoa": "9698607419bb66de",
+                "build_dir_name": "gcc",
+                "bat": ". /home/nikolay/CK/local/env/9698607419bb66de/env.sh\n",
+                "sort": 10,
+                "tags": "compiler,lang-c",
+                "ver": "6.4.0"
+              }
+            },
+            "data_name": "xOpenME run-time library",
+            "tags": [
+              "64bits",
+              "channel-stable",
+              "compiled-by-gcc",
+              "compiled-by-gcc-6.4.0",
+              "host-os-linux-64",
+              "lang-c",
+              "lang-cpp",
+              "lang-f77",
+              "lang-f90",
+              "lang-f95",
+              "lib",
+              "rtl",
+              "target-os-linux-64",
+              "v0",
+              "v0.3",
+              "xopenme"
+            ],
+            "soft_alias": "lib.rtl.xopenme"
+          },
+          "local": "yes",
+          "bat": ". /home/nikolay/CK/local/env/9a01a05a5c7569f7/env.sh\n",
+          "ver": "0.3"
+        },
+        "compiler": {
+          "name": "C compiler",
+          "choices": [
+            "9698607419bb66de"
+          ],
+          "detected_ver": "6.4.0",
+          "dict": {
+            "env": {
+              "CK_LB": "ar rcs",
+              "CK_OBJDUMP": "objdump -d",
+              "CK_PROFILER": "gprof",
+              "CK_LIB_EXT": ".a",
+              "CK_EXE_EXT": ".out",
+              "CK_COMPILER_FLAG_PTHREAD_LIB": "-lpthread",
+              "CK_ENV_COMPILER_GCC": "/usr",
+              "CK_COMPILER_FLAG_OPENMP": "-fopenmp",
+              "CK_COMPILER_FLAG_CPP11": "-std=c++11",
+              "CK_COMPILER_FLAG_CPP0X": "-std=c++0x",
+              "CK_CXX": "g++-6",
+              "CK_ENV_COMPILER_GCC_LIB": "/usr/lib/gcc/x86_64-linux-gnu/6",
+              "CK_FLAG_PREFIX_VAR": "-D",
+              "CK_FLAGS_DYNAMIC_BIN": " ",
+              "CK_AR": "ar",
+              "CK_FLAGS_OUTPUT": "-o ",
+              "CK_LD_FLAGS_EXTRA": "",
+              "CK_COMPILER_POSTFIX": "-6",
+              "CK_EXTRA_LIB_DL": "-ldl",
+              "CK_FLAGS_STATIC_BIN": "-static -fPIC",
+              "CK_OPT_SIZE": "-Os",
+              "CK_COMPILER_TOOLCHAIN_NAME": "gcc",
+              "CK_OPT_SPEED": "-O3",
+              "CK_COMPILER_FLAG_PLUGIN": "-fplugin=",
+              "CK_COMPILER_FLAG_CPP1Z": "-std=c++1z",
+              "CK_ASM_EXT": ".s",
+              "CK_COMPILER_FLAG_STD99": "-std=c99",
+              "CK_FLAGS_CREATE_OBJ": "-c",
+              "CK_OPT_UNWIND": " ",
+              "CK_FLAGS_DLL": "-shared -fPIC",
+              "CK_CC": "gcc-6",
+              "CK_LINKER_FLAG_OPENMP": "-lgomp -lrt",
+              "CK_FLAG_PREFIX_LIB_DIR": "-L",
+              "CK_LD": "ld",
+              "CK_MAKE": "make",
+              "CK_DLL_EXT": ".so",
+              "CK_RANLIB": "ranlib",
+              "CK_OBJ_EXT": ".o",
+              "CK_GPROF_OUT_FILE": "gmon.out",
+              "CK_COMPILER_FLAG_GPROF": "-pg",
+              "CK_COMPILER_FLAGS_OBLIGATORY": "",
+              "CK_FLAGS_CREATE_ASM": "-S",
+              "CK_FLAGS_DLL_EXTRA": "",
+              "CK_PLUGIN_FLAG": "-fplugin=",
+              "CK_OPT_SPEED_SAFE": "-O2",
+              "CK_LB_OUTPUT": "-o ",
+              "CK_FLAG_PREFIX_INCLUDE": "-I",
+              "CK_EXTRA_LIB_M": "-lm",
+              "CK_OPT_ALL_WARNINGS": "-Wall",
+              "CK_COMPILER_FLAG_STD90": "-std=c90",
+              "CK_FLAGS_STATIC_LIB": "-fPIC",
+              "CK_COMPILER_FLAG_CPP14": "-std=c++14"
+            },
+            "env_script": "env.sh",
+            "soft_alias": "compiler.gcc",
+            "setup": {
+              "version_split": [
+                6,
+                4,
+                0
+              ],
+              "target_os_bits": "64",
+              "target_os_uoa": "4258b5fe54828a50",
+              "host_os_uoa": "4258b5fe54828a50",
+              "version": "6.4.0"
+            },
+            "customize": {
+              "search_numeric_ext_on_linux": "yes",
+              "tool_postfix_configured": "yes",
+              "version": "6.4.0",
+              "limit_recursion_dir_search": {
+                "win": 4,
+                "linux": 3
+              },
+              "soft_file_from_host_os": "yes",
+              "soft_file": {
+                "win": "gcc.exe",
+                "linux": "gcc"
+              },
+              "build_dir_name": "gcc",
+              "languages": [
+                "C",
+                "CPP"
+              ],
+              "tool_prefix": "",
+              "sort": 100,
+              "retarget": "no",
+              "env_prefix": "CK_ENV_COMPILER_GCC",
+              "add_only_with_version": "yes",
+              "add_to_path": "yes",
+              "full_path": "/usr/bin/gcc-6",
+              "check_that_exists": "yes",
+              "can_strip_dynamic_lib": "yes",
+              "tool_postfix": "-6",
+              "skip_path": "yes",
+              "only_for_target_os_tags": [
+                "mingw",
+                "windows",
+                "linux"
+              ],
+              "version_split": [
+                6,
+                4,
+                0
+              ],
+              "soft_version_cmd": {
+                "win": " --version > $#filename#$ 2>&1",
+                "linux": "--version > $#filename#$ 2>&1"
+              },
+              "tool_prefix_configured": "yes",
+              "soft_path_example": {
+                "win": "C:\\Program Files\\GCC-4.9.2-x64\\bin\\gcc.exe",
+                "linux": "/usr/bin/gcc"
+              },
+              "ck_version": 10
+            },
+            "deps": {},
+            "data_name": "GNU C compiler",
+            "tags": [
+              "64bits",
+              "compiler",
+              "gcc",
+              "host-os-linux-64",
+              "lang-c",
+              "lang-cpp",
+              "target-os-linux-64",
+              "v6",
+              "v6.4",
+              "v6.4.0"
+            ],
+            "soft_uoa": "3a8a82fa40bf992d"
+          },
+          "local": "yes",
+          "num_entries": 1,
+          "uoa": "9698607419bb66de",
+          "build_dir_name": "gcc",
+          "bat": ". /home/nikolay/CK/local/env/9698607419bb66de/env.sh\n",
+          "sort": 10,
+          "tags": "compiler,lang-cpp",
+          "ver": "6.4.0"
+        }
+      },
+      "customize": {
+        "env_prefix": "CK_ENV_LIB_NNTEST",
+        "path_include": "/home/nikolay/CK-TOOLS/lib-nntest-0.1-gcc-6.4.0-linux-64/install/include",
+        "skip_add_to_path": "yes",
+        "full_path": "/home/nikolay/CK-TOOLS/lib-nntest-0.1-gcc-6.4.0-linux-64/install/include/ck_nntest_common.h",
+        "used_package_uid": "a6f6a5e9a44c7999",
+        "limit_recursion_dir_search": {
+          "win": 4,
+          "linux": 4
+        },
+        "extra_dir": "",
+        "version": "0.1",
+        "soft_file": {
+          "win": "include\\ck_nntest_common.h",
+          "linux": "include/ck_nntest_common.h"
+        },
+        "skip_path": "yes",
+        "add_include_path": "yes",
+        "version_split": [
+          0,
+          1
+        ],
+        "skip_add_to_bin": "yes",
+        "used_package_uoa": "lib-nntest"
+      },
+      "tags": [
+        "64bits",
+        "channel-stable",
+        "compiled-by-gcc",
+        "compiled-by-gcc-6.4.0",
+        "host-os-linux-64",
+        "lang-cpp",
+        "lib",
+        "nntest",
+        "target-os-linux-64",
+        "v0",
+        "v0.1"
+      ],
+      "soft_uoa": "3f3beda1a806ad96"
+    },
+    "tags": "lib,nntest",
+    "ver": "0.1"
+  }
+}
