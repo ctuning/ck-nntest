@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/resizebilinear_armcl_opencl.dir/autotune/tuner_scale.cpp.o CMakeFiles/resizebilinear_armcl_opencl.dir/resizebilinear.cpp.o  -o resizebilinear_armcl_opencl 
