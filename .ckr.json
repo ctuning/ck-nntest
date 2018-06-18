@@ -4,6 +4,7 @@
   "data_alias": "ck-nntest",
   "data_name": "ck-nntest",
   "dict": {
+    "private": "yes",
     "shared": "git",
     "url": "https://github.com/dividiti/ck-nntest"
   }
