@@ -17,7 +17,7 @@ Note that you can install CK locally as described [here](https://github.com/ctun
 ### CK-NNTEST
 
 ```
-ck install package:lib-nntest
+$ ck install package:lib-nntest
 ```
 
 ### Compute Library (OpenCL)
