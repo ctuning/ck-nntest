@@ -138,3 +138,45 @@ $ ck run nntest:conv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platfo
 ```
 $ ck run nntest:conv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
+
+
+#### depthwise convolution fp32
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:depthwiseconv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:depthwiseconv-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### depthwise convolution uint8
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:depthwiseconv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:depthwiseconv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### direct convolution fp32
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:directconv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:directconv-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### direct convolution uint8
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:directconv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:directconv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+```
+
