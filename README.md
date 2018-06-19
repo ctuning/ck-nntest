@@ -97,7 +97,7 @@ CK-NNTEST supports the following operators:
 * gemm ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#gemm-to-fix))
 * reshape ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#reshape-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#reshape-uint8))
 * resize bilinear ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#resize-bilinear-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#resize-bilinear-uint8))
-* softmax ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmax-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmaxr-uint8))
+* softmax ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmax-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmax-uint8))
 
 #### average pool fp32
 * For profiling of OpenCL kernel:
@@ -265,7 +265,7 @@ $ ck run nntest:softmax-armcl-opencl --dvdt_prof --record --timestamp=<platform>
 $ ck run nntest:softmax-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
-#### softmaxr uint8
+#### softmax uint8
 * For profiling of OpenCL kernel:
 ```
 $ ck run nntest:softmax-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
