@@ -34,9 +34,10 @@ $ ck list package:lib-armcl-opencl-*
 
 To use TensorFlow CPU tests, install a third-party [TensorFlow_CC](https://github.com/FloopCZ/tensorflow_cc) package:
 ```
-$ ck pull repo --url=git@github.com:dividiti/ck-tensorflow-private
-$ ck install package:lib-tensorflow_cc-shared [--env.CK_HOST_CPU_NUMBER_OF_PROCESSORS=2]
+$ ck pull repo --url=git@github.com:dividiti/ck-tensorflow
+$ ck install package:lib-tensorflow_cc-shared-1.7.0 [--env.CK_HOST_CPU_NUMBER_OF_PROCESSORS=2]
 ```
+To install, follow the instructions in the [Readme](https://github.com/ctuning/ck-tensorflow/blob/master/package/lib-tensorflow_cc-shared-1.7.0/README.md)
 **NB:** You may want to limit the number of build threads on a memory-constrained platform (e.g. to 2 as above).
 
 ### Caffe
