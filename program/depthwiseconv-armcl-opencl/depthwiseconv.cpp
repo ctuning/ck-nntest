@@ -29,7 +29,7 @@ enum TENSOR {
 
 void init_tensor_data(CLTensor *tensor, const Shape &shape, const char *env_var, const char *title) {
   float *in_data = get_random_raw_data<float>(shape);
-  // We should change data layout to match the results with Tensroflow and AndroidNN tests
+  // We should change data layout to match the results with TensorFlow tests
   convert_data_layout_NHWC_to_NCHW(in_data, shape);
   log_raw_data(in_data, shape, env_var, title);
   copy_raw_data_to_tensor(tensor, in_data, shape);
@@ -141,7 +141,7 @@ int main() {
 
   float *out_data = new float[output_shape.data_count()];
   copy_raw_data_from_tensor(tensors + OUTPUT, out_data, output_shape);
-  // We should change data layout to match the results with Tensroflow and AndroidNN tests
+  // We should change data layout to match the results with TensorFlow tests
   convert_data_layout_NCHW_to_NHWC(out_data, output_shape);
   print_output_raw_data(out_data, output_shape);
   dump_output_raw_data(out_data, output_shape);
