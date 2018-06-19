@@ -293,3 +293,159 @@ $ ck run nntest:softmax-armcl-opencl --iterations=1
 
 **NB:** By default, `ck run nntest:*` iterates over the batch sizes ranging from 1 to 16;
 `--iterations=1` stops the test after the first iteration (for the batch size of 1).
+
+### Override dataset values
+
+To override one or more keys in a dataset, use e.g.:
+```
+$ ck run program:softmax-armcl-opencl --env.CK_IN_SHAPE_C=256
+```
+
+
+### Record test results locally
+
+By default, test results are printed to the standard output. To save test
+results in a local repository, use e.g.:
+
+```
+$ ck run nntest:softmax-armcl-opencl --iterations=1 --record
+```
+
+To list the results saved locally, use e.g.:
+```
+$ ck list local:experiment:nntest-softmax-armcl-opencl-*
+```
+
+### Output validation
+
+When a test is invoked with a particular dataset for the first time, CK saves
+its output as reference (e.g. a vector of floating-point values).  In
+subsequent invocations of this test with the same dataset, CK validates its output
+against the reference.
+
+To replace the reference output, use e.g.:
+```
+$ ck run program:softmax-armcl-opencl --overwrite_reference_output
+```
+
+Output validation is performed within a certain threshold specified via the
+`CK_ABS_DIFF_THRESHOLD` key in the `runs_vars` dictionary in the program
+metadata. That is, any differences smaller than the threshold are ignored.
+
+To override the threshold value at run-time, use e.g.:
+```
+$ ck run program:softmax-armcl-opencl --env.CK_ABS_DIFF_THRESHOLD=0.01
+```
+
+#### Output naming convention
+
+Each reference output gets a unique name e.g. `default-3cda82464112173d-1000-1-1-2-42`. Here:
+- `default` is the command key of the given test program;
+- `3cda82464112173d` is the unique id of the dataset (`ck-nntest:dataset:tensor-0001`);
+- `1000-1-1` are the dash-separated values of the keys in the dataset file (`shape-1000-1-1.json`) listed in the alphabetical order (i.e. `CK_IN_SHAPE_C`, `CK_IN_SHAPE_H`, `CK_IN_SHAPE_W`);
+- `2-42` are the dash-separated values of selected keys in the `run_vars` dictionary in the program metadata file listed in the alphabetical order (i.e. `CK_IN_SHAPE_N`, `CK_SEED`).
+
+
+### Visualise test results
+
+To visualize test results in a web browser, run:
+```
+$ ck dashboard nntest
+```
+and select "Raw results".
+
+It is possible to run this dashboard on a different host and port:
+```
+$ ck dashboard nntest --host=192.168.99.1 --port=3355
+```
+
+It is also possible to specify external host and port useful for Docker instances:
+```
+$ ck dashboard nntest --wfe_host=192.168.99.1 --wfe_port=3355
+```
+
+### Replay test results
+
+You will be able to replay individual tests (to validate performance or fix bugs).
+
+The simplest way is to select a given experiment from the above nntest dashboard,
+and then click on a button "Copy to clipboard" in the `Reproduce` field.
+
+You can then paste and run a command in your shell. It will look similar to
+```
+$ ck replay experiment:186380dfcd98cd7a --point=4e9e9476bab09b2c
+```
+
+Alternatively, you can see all available raw nntest experiments on your machine as follows:
+```
+$ ck search experiment --tags=nntest
+```
+
+### Test outputs of all tensor shapes and batch sizes:
+
+```
+$ ck run nntest:*softmax* --iterations=4 --repetitions=1 --pause_if_fail
+```
+
+### Run on other platforms
+
+You can run some of the test directly on Android devices connected to your host machine via ADB
+as follows (you need to have Android NDK and SDK installed):
+
+```
+$ ck compile program:softmax-armcl-opencl --speed --target_os=android23-arm64
+$ ck run program:asoftmax-armcl-opencl --speed --target_os=android23-arm64
+```
+
+We plan to add support to compile and run ARMCL-based clients on Android too
+(there are some minor issues at this stage):
+
+```
+$ ck install package --tags=armcl,vopencl,vavgpool --env.USE_EMBEDDED_KERNELS=ON --target_os=android23-arm64
+$ ck compile program:avgpool-armcl-opencl --speed --target_os=android23-arm64
+$ ck run program:avgpool-armcl-opencl --speed --target_os=android23-arm64
+```
+
+### Notes
+
+Extra environment variables for developemnt:
+
+* --env.CK_ADD_RAW_DVDT_PROF=yes - add DVDT raw profile to the CK pipeline (mainly for development/debugging)
+* --env.CK_ADD_RAW_NNTEST_OUTPUT=yes - add vector output to the CK pipeline (mainly for development/debugging)
+* --env.CK_ADD_RAW_MALI_HWC=yes - add all Mali HWC to the CK pipeline (mainly for development/debugging)
+
+Recording hostname to meta of all experiments:
+
+$ ck set kernel var.record_nntest_hostname=yes
+
+Turning off recording of hostname to experiments:
+
+$ ck set kernel var.record_nntest_hostname=no
+or
+$ ck set kernel var.record_nntest_hostname=
+
+# Native validation of ARM OpenCL kernels
+
+ARM Compute Library includes validation suite which tests all internal ARM routines. 
+It can be compiled for any ARMCL CK package as follows:
+
+```
+$ ck compile compile program:validation-armcl-opencl
+```
+
+It is possible to customize this build via --env.KEY=val
+For example, you can add CXX flags as follows:
+
+```
+$ ck compile program:validation-armcl-opencl --env.EXTRA_CXX_FLAGS="-DDVDT_DEBUG"
+```
+
+You can now run validation as follows (select "run" command line):
+```
+$ ck run program:validation-armcl-opencl
+```
+
+You can also filter tests such as for SoftMax as follows:
+```
+$ ck run program:validation-armcl-opencl --env.FILTER=CL/.*Softmax
+```
