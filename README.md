@@ -78,3 +78,16 @@ To compile and run a single test listed above, use e.g.:
 ```
 $ ck run nntest:softmax-armcl-opencl
 ```
+
+### Run Experiments on Compute Libray (OpenCL)
+
+CK-NNTEST supports the following operators:
+* avgpool (fp32, uint8)
+* convolution (fp32, uint8)
+* depthwise convolution (fp32, uint8)
+* direct convolution (fp32, uint8)
+* fully connected (fp32, uint8)
+* gemm (fp32)
+* reshape (fp32, uint8)
+* resize bilinear (fp32, uint8)
+* softmax (fp32, uint8)
