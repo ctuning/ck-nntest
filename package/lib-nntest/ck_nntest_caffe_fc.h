@@ -6,8 +6,8 @@
  * See CK LICENSE.txt for licensing details.
  */
 
-#ifndef CK_NNTEST_CAFFE_AVGPOOL_H
-#define CK_NNTEST_CAFFE_AVGPOOL_H
+#ifndef CK_NNTEST_CAFFE_FC_H
+#define CK_NNTEST_CAFFE_FC_H
 
 #include <vector>
 
@@ -86,4 +86,4 @@ inline void test_fc() {
 } // namespace Caffe
 } // namespace CK
 
-#endif // CK_NNTEST_CAFFE_AVGPOOL_H
+#endif // CK_NNTEST_CAFFE_FC_H
