@@ -14,6 +14,12 @@ $ ck pull repo --url=https://github.com/dividiti/ck-nntest
 
 Note that you can install CK locally as described [here](https://github.com/ctuning/ck#minimal-installation).
 
+### CK-NNTEST
+
+```
+ck install package:lib-nntest
+```
+
 ### Compute Library (OpenCL)
 
 To use Compute Library (OpenCL) tests with the master branch of the public [repository](https://github.com/ARM-software/ComputeLibrary.git), install:
