@@ -180,3 +180,98 @@ $ ck run nntest:directconv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<
 $ ck run nntest:directconv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
+
+#### fully connected 
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:fullyconnected-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:fullyconnected-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### fully connected uint8
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:fullyconnected-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:fullyconnected-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+
+#### gemm [TO FIX]
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:fullyconnected-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:fullyconnected-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+
+
+
+#### reshape
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:reshape-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:reshape-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### reshape uint8
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:reshape-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:reshape-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### resize bilinear
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:resizebilinear-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:resizebilinear-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### resize bilinear uint8
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:resizebilinear-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:resizebilinear-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### softmax
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:softmax-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:softmax-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### softmaxr uint8
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:softmax-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:softmax-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+```
+
