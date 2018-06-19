@@ -1,0 +1,17 @@
+{
+  "dataset_files": [
+    "shape-1000-1-1"
+  ],
+  "desc_dataset_files": {
+    "shape-1000-1-1": {
+      "name": "Imagenet softmax/classifier input 1x1x1000"
+    }
+  },
+  "tags": [
+    "dataset",
+    "nntest",
+    "tensor-softmax",
+    "softmax",
+    "imagenet"
+  ]
+}

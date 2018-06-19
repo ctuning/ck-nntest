@@ -1,0 +1,16 @@
+{
+  "backup_data_uid": "56173d720ccb412b",
+  "backup_module_uid": "8a7141c59cd335f5",
+  "backup_module_uoa": "dataset",
+  "control": {
+    "engine": "CK",
+    "iso_datetime": "2018-03-13T12:26:07.957294",
+    "version": [
+      "1",
+      "9",
+      "4",
+      "1"
+    ]
+  },
+  "data_name": "tensor-softmax-imagenet"
+}

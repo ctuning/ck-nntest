@@ -1,0 +1,24 @@
+{
+  "dataset_files": [
+    "shape-1024-1-1",
+    "shape-4096-1-1",
+    "shape-5250000-1-1"
+  ],
+  "desc_dataset_files": {
+    "shape-1024-1-1": {
+      "name": "ZynqNet-CNN loss input 1x1x1024"
+    },
+    "shape-4096-1-1": {
+      "name": "Synthetic softmax input 1x1x4096"
+    },
+    "shape-5250000-1-1": {
+      "name": "FCN-16s output/softmax input 21x500x500"
+    }
+  },
+  "tags": [
+    "dataset",
+    "nntest",
+    "tensor-softmax",
+    "softmax"
+  ]
+}

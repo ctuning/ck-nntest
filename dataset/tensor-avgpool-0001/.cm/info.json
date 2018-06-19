@@ -1,0 +1,16 @@
+{
+  "backup_data_uid": "e841933b94edaa96",
+  "backup_module_uid": "8a7141c59cd335f5",
+  "backup_module_uoa": "dataset",
+  "control": {
+    "engine": "CK",
+    "iso_datetime": "2017-09-20T10:18:24.243571",
+    "version": [
+      "1",
+      "9",
+      "1",
+      "1"
+    ]
+  },
+  "data_name": "tensor-avgpool-0001"
+}
