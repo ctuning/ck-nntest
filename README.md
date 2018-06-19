@@ -93,11 +93,11 @@ CK-NNTEST supports the following operators:
 * convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#convolution-uint8))
 * depthwise convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#depthwise-convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#depthwise-convolution-uint8))
 * direct convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#direct-convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#direct-convolution-uint8))
-* fully connected ([fp32](), uint8)
-* gemm (fp32)
-* reshape (fp32, uint8)
-* resize bilinear (fp32, uint8)
-* softmax (fp32, uint8)
+* fully connected ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#fully-connected-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#fully-connected-uint8))
+* gemm ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#gemm-to-fix))
+* reshape ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#reshape-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#reshape-uint8))
+* resize bilinear ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#resize-bilinear-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#resize-bilinear-uint8))
+* softmax ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmax-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmaxr-uint8))
 
 #### average pool fp32
 * For profiling of OpenCL kernel:
