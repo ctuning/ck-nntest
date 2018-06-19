@@ -275,3 +275,21 @@ $ ck run nntest:softmax-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<pla
 $ ck run nntest:softmax-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
+
+### Choose a dataset
+
+If more than one dataset suitable for the operator under test (`softmax`
+above) is found, make the choice.
+
+To test with a particular dataset, use e.g.:
+```
+$ ck run program:softmax-armcl-opencl --dataset_file=shape-1024-1-1
+```
+
+To test with all suitable datasets, use e.g.:
+```
+$ ck run nntest:softmax-armcl-opencl --iterations=1
+```
+
+**NB:** By default, `ck run nntest:*` iterates over the batch sizes ranging from 1 to 16;
+`--iterations=1` stops the test after the first iteration (for the batch size of 1).
