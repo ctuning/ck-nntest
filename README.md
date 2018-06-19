@@ -89,7 +89,7 @@ $ ck run nntest:softmax-armcl-opencl
 ### Run Experiments on Compute Libray (OpenCL)
 
 CK-NNTEST supports the following operators:
-* avgpool (fp32, uint8)
+* average pool (fp32, uint8)
 * convolution (fp32, uint8)
 * depthwise convolution (fp32, uint8)
 * direct convolution (fp32, uint8)
@@ -98,3 +98,43 @@ CK-NNTEST supports the following operators:
 * reshape (fp32, uint8)
 * resize bilinear (fp32, uint8)
 * softmax (fp32, uint8)
+
+#### average pool fp32
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:avgpool-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:avgpool-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### average pool uint8
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:avgpool-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:avgpool-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### convolution fp32
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:conv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:conv-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+```
+
+#### convolution uint8
+* For profiling of OpenCL kernel:
+```
+$ ck run nntest:conv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* For the validation:
+```
+$ ck run nntest:conv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+```
