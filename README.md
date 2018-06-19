@@ -16,12 +16,12 @@ Note that you can install CK locally as described [here](https://github.com/ctun
 
 ### Compute Library (OpenCL)
 
-To use Compute Library (OpenCL) tests with the master branch of the public [repo](https://github.com/ARM-software/ComputeLibrary.git) repository, install:
+To use Compute Library (OpenCL) tests with the master branch of the public [repository](https://github.com/ARM-software/ComputeLibrary.git), install:
 ```
 $ ck install package:lib-armcl-opencl-master
 ```
 
-To install a specific version of the library, use:
+To install a specific version of the library (e.g., 18.05), use:
 ```
 $ ck install package:lib-armcl-opencl-18.05 
 ```
