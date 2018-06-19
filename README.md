@@ -89,11 +89,11 @@ $ ck run nntest:softmax-armcl-opencl
 ### Run Experiments on Compute Libray (OpenCL)
 
 CK-NNTEST supports the following operators:
-* average pool (fp32, uint8)
-* convolution (fp32, uint8)
-* depthwise convolution (fp32, uint8)
-* direct convolution (fp32, uint8)
-* fully connected (fp32, uint8)
+* average pool ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#average-pool-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#average-pool-uint8))
+* convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#convolution-uint8))
+* depthwise convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#depthwise-convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#depthwise-convolution-uint8))
+* direct convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#direct-convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#direct-convolution-uint8))
+* fully connected ([fp32](), uint8)
 * gemm (fp32)
 * reshape (fp32, uint8)
 * resize bilinear (fp32, uint8)
@@ -181,7 +181,7 @@ $ ck run nntest:directconv-armcl-opencl-uint8 --repetitions=15 --record --timest
 ```
 
 
-#### fully connected 
+#### fully connected fp32
 * For profiling of OpenCL kernel:
 ```
 $ ck run nntest:fullyconnected-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
@@ -215,7 +215,7 @@ $ ck run nntest:fullyconnected-armcl-opencl --repetitions=15 --record --timestam
 
 
 
-#### reshape
+#### reshape fp32
 * For profiling of OpenCL kernel:
 ```
 $ ck run nntest:reshape-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
@@ -235,7 +235,7 @@ $ ck run nntest:reshape-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<pla
 $ ck run nntest:reshape-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
-#### resize bilinear
+#### resize bilinear fp32
 * For profiling of OpenCL kernel:
 ```
 $ ck run nntest:resizebilinear-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
@@ -255,7 +255,7 @@ $ ck run nntest:resizebilinear-armcl-opencl-uint8 --dvdt_prof --record --timesta
 $ ck run nntest:resizebilinear-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
-#### softmax
+#### softmax fp32
 * For profiling of OpenCL kernel:
 ```
 $ ck run nntest:softmax-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
