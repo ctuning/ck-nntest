@@ -6,6 +6,18 @@
   "dict": {
     "private": "yes",
     "shared": "git",
-    "url": "https://github.com/dividiti/ck-nntest"
+    "url": "https://github.com/dividiti/ck-nntest",
+    "repo_deps": [
+       {
+         "repo_uoa": "ck-tensorflow"
+       },
+       {
+         "repo_uoa": "ck-math"
+       },
+       {
+         "repo_uoa": "ck-caffe",
+         "repo_url": "https://github.com/dividiti/ck-caffe"
+       }
+    ]
   }
 }
