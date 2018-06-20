@@ -205,11 +205,11 @@ $ ck run nntest:fullyconnected-armcl-opencl-uint8 --repetitions=15 --record --ti
 #### gemm [TO FIX]
 * For profiling of OpenCL kernel:
 ```
-$ ck run nntest:fullyconnected-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:gemm-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
 ```
 * For the validation:
 ```
-$ ck run nntest:fullyconnected-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:gemm-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 
