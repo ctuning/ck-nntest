@@ -408,21 +408,26 @@ $ ck run program:avgpool-armcl-opencl --speed --target_os=android23-arm64
 
 ### Notes
 
-Extra environment variables for developemnt:
+Extra environment variables for development/debugging:
 
-* --env.CK_ADD_RAW_DVDT_PROF=yes - add DVDT raw profile to the CK pipeline (mainly for development/debugging)
-* --env.CK_ADD_RAW_NNTEST_OUTPUT=yes - add vector output to the CK pipeline (mainly for development/debugging)
-* --env.CK_ADD_RAW_MALI_HWC=yes - add all Mali HWC to the CK pipeline (mainly for development/debugging)
+* `--env.CK_ADD_RAW_NNTEST_OUTPUT=yes` - add vector output to the CK pipeline
+* `--env.CK_ADD_RAW_DVDT_PROF=yes` - add raw `dvdt_prof` profile to the CK pipeline
+* `--env.CK_ADD_RAW_MALI_HWC=yes` - add Mali hardware performance counters to the CK pipeline
 
-Recording hostname to meta of all experiments:
+To record the hostname to meta of all experiments:
 
+```
 $ ck set kernel var.record_nntest_hostname=yes
+```
 
-Turning off recording of hostname to experiments:
-
+To turning off recording the hostname:
+```
 $ ck set kernel var.record_nntest_hostname=no
+```
 or
+```
 $ ck set kernel var.record_nntest_hostname=
+```
 
 # Native validation of ARM OpenCL kernels
 
@@ -445,7 +450,7 @@ You can now run validation as follows (select "run" command line):
 $ ck run program:validation-armcl-opencl
 ```
 
-You can also filter tests such as for SoftMax as follows:
+You can also filter tests such as for `softmax` as follows:
 ```
 $ ck run program:validation-armcl-opencl --env.FILTER=CL/.*Softmax
 ```
