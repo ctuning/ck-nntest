@@ -100,114 +100,114 @@ CK-NNTEST supports the following operators:
 * softmax ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmax-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmax-uint8))
 
 #### average pool fp32
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:avgpool-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:avgpool-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### average pool uint8
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:avgpool-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:avgpool-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### convolution fp32
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:conv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:conv-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### convolution uint8
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:conv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:conv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 
 #### depthwise convolution fp32
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:depthwiseconv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:depthwiseconv-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### depthwise convolution uint8
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:depthwiseconv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:depthwiseconv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### direct convolution fp32
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:directconv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:directconv-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### direct convolution uint8
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:directconv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:directconv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 
 #### fully connected fp32
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:fullyconnected-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:fullyconnected-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### fully connected uint8
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:fullyconnected-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:fullyconnected-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 
 #### gemm [TO FIX]
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:gemm-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:gemm-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
@@ -216,61 +216,61 @@ $ ck run nntest:gemm-armcl-opencl --repetitions=15 --record --timestamp=<platfor
 
 
 #### reshape fp32
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:reshape-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:reshape-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### reshape uint8
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:reshape-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:reshape-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### resize bilinear fp32
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:resizebilinear-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:resizebilinear-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### resize bilinear uint8
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:resizebilinear-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:resizebilinear-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### softmax fp32
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:softmax-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:softmax-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
 ```
 
 #### softmax uint8
-* For profiling of OpenCL kernel:
+* Kernel profiling:
 ```
 $ ck run nntest:softmax-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
 ```
-* For the validation:
+* Validation:
 ```
 $ ck run nntest:softmax-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
 ```
