@@ -1,5 +1,3 @@
-# ck-nntest
-AI/SW/HW co-design repository
 # CK-NNTest - testing and benchmarking common Neural Network operations via Collective Knowledge
 
 [![logo](https://github.com/ctuning/ck-guide-images/blob/master/logo-powered-by-ck.png)](http://cKnowledge.org)
@@ -12,7 +10,7 @@ $ sudo pip install ck
 $ ck pull repo --url=https://github.com/dividiti/ck-nntest
 ```
 
-Note that you can install CK locally as described [here](https://github.com/ctuning/ck#minimal-installation).
+**NB:** You may prefer to install CK locally as described [here](https://github.com/ctuning/ck#minimal-installation).
 
 ### CK-NNTest
 
@@ -20,16 +18,16 @@ Note that you can install CK locally as described [here](https://github.com/ctun
 $ ck install package:lib-nntest
 ```
 
-### Compute Library (OpenCL)
+### Arm Compute Library with OpenCL
 
-To use Compute Library (OpenCL) tests with the master branch of the public [repository](https://github.com/Arm-software/ComputeLibrary.git), install:
+To use Arm Compute Library (OpenCL) tests with the master branch of the public [repository](https://github.com/Arm-software/ComputeLibrary.git), install:
 ```
 $ ck install package:lib-armcl-opencl-master
 ```
 
 To install a specific version of the library (e.g., 18.05), use:
 ```
-$ ck install package:lib-armcl-opencl-18.05 
+$ ck install package:lib-armcl-opencl-18.05
 ```
 To check out other versions available, use:
 ```
@@ -86,9 +84,9 @@ To compile and run a single test listed above, use e.g.:
 $ ck run nntest:softmax-armcl-opencl
 ```
 
-### Run Experiments on Compute Libray (OpenCL)
+### Run experiments using Arm Compute Library with OpenCL
 
-CK-NNTest supports the following operators:
+CK-NNTest supports the following operators for the Arm Compute Library:
 * average pool ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#average-pool-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#average-pool-uint8))
 * convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#convolution-uint8))
 * depthwise convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#depthwise-convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#depthwise-convolution-uint8))
@@ -98,6 +96,9 @@ CK-NNTest supports the following operators:
 * reshape ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#reshape-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#reshape-uint8))
 * resize bilinear ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#resize-bilinear-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#resize-bilinear-uint8))
 * softmax ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmax-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmax-uint8))
+* winograd convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#winograd-convolution-fp32))
+
+**NB:** Not all operators are supported for all libraries.
 
 #### average pool fp32
 * Kernel profiling:
@@ -275,6 +276,16 @@ $ ck run nntest:softmax-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<pla
 $ ck run nntest:softmax-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
+#### winograd convolution fp32
+* Kernel profiling:
+```
+$ ck run nntest:winogradconv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+```
+* Validation:
+```
+$ ck run nntest:winogradconv-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+```
+
 
 ### Choose a dataset
 
@@ -322,6 +333,11 @@ When a test is invoked with a particular dataset for the first time, CK saves
 its output as reference (e.g. a vector of floating-point values).  In
 subsequent invocations of this test with the same dataset, CK validates its output
 against the reference.
+
+To skip output validation, use e.g.:
+```
+$ ck run program:softmax-armcl-opencl --skip_output_validation
+```
 
 To replace the reference output, use e.g.:
 ```
@@ -431,7 +447,7 @@ $ ck set kernel var.record_nntest_hostname=
 
 # Native validation of Arm OpenCL kernels
 
-The Arm Compute Library includes validation suite which tests all internal Arm routines. 
+The Arm Compute Library includes validation suite which tests all internal Arm routines.
 It can be compiled for any ArmCL package as follows:
 
 ```
