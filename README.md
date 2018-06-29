@@ -14,7 +14,7 @@ $ ck pull repo --url=https://github.com/dividiti/ck-nntest
 
 Note that you can install CK locally as described [here](https://github.com/ctuning/ck#minimal-installation).
 
-### CK-NNTEST
+### CK-NNTest
 
 ```
 $ ck install package:lib-nntest
@@ -22,7 +22,7 @@ $ ck install package:lib-nntest
 
 ### Compute Library (OpenCL)
 
-To use Compute Library (OpenCL) tests with the master branch of the public [repository](https://github.com/ARM-software/ComputeLibrary.git), install:
+To use Compute Library (OpenCL) tests with the master branch of the public [repository](https://github.com/Arm-software/ComputeLibrary.git), install:
 ```
 $ ck install package:lib-armcl-opencl-master
 ```
@@ -88,7 +88,7 @@ $ ck run nntest:softmax-armcl-opencl
 
 ### Run Experiments on Compute Libray (OpenCL)
 
-CK-NNTEST supports the following operators:
+CK-NNTest supports the following operators:
 * average pool ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#average-pool-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#average-pool-uint8))
 * convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#convolution-uint8))
 * depthwise convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#depthwise-convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#depthwise-convolution-uint8))
@@ -397,7 +397,7 @@ $ ck compile program:softmax-armcl-opencl --speed --target_os=android23-arm64
 $ ck run program:asoftmax-armcl-opencl --speed --target_os=android23-arm64
 ```
 
-We plan to add support to compile and run ARMCL-based clients on Android too
+We plan to add support to compile and run ArmCL-based clients on Android too
 (there are some minor issues at this stage):
 
 ```
@@ -414,13 +414,13 @@ Extra environment variables for development/debugging:
 * `--env.CK_ADD_RAW_DVDT_PROF=yes` - add raw `dvdt_prof` profile to the CK pipeline
 * `--env.CK_ADD_RAW_MALI_HWC=yes` - add Mali hardware performance counters to the CK pipeline
 
-To record the hostname to meta of all experiments:
+To record the hostname to the meta of all experimental entries:
 
 ```
 $ ck set kernel var.record_nntest_hostname=yes
 ```
 
-To turning off recording the hostname:
+To turn off recording the hostname:
 ```
 $ ck set kernel var.record_nntest_hostname=no
 ```
@@ -429,23 +429,23 @@ or
 $ ck set kernel var.record_nntest_hostname=
 ```
 
-# Native validation of ARM OpenCL kernels
+# Native validation of Arm OpenCL kernels
 
-ARM Compute Library includes validation suite which tests all internal ARM routines. 
-It can be compiled for any ARMCL CK package as follows:
+The Arm Compute Library includes validation suite which tests all internal Arm routines. 
+It can be compiled for any ArmCL package as follows:
 
 ```
 $ ck compile compile program:validation-armcl-opencl
 ```
 
-It is possible to customize this build via --env.KEY=val
+It is possible to customize this build via `--env.KEY=val`.
 For example, you can add CXX flags as follows:
 
 ```
 $ ck compile program:validation-armcl-opencl --env.EXTRA_CXX_FLAGS="-DDVDT_DEBUG"
 ```
 
-You can now run validation as follows (select "run" command line):
+You can now run validation as follows (select the `run` command):
 ```
 $ ck run program:validation-armcl-opencl
 ```
