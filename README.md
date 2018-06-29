@@ -106,7 +106,7 @@ $ ck run nntest:avgpool-armcl-opencl --dvdt_prof --record --timestamp=<platform>
 ```
 * Validation:
 ```
-$ ck run nntest:avgpool-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:avgpool-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### average pool uint8
@@ -116,7 +116,7 @@ $ ck run nntest:avgpool-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<pla
 ```
 * Validation:
 ```
-$ ck run nntest:avgpool-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:avgpool-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### convolution fp32
@@ -126,7 +126,7 @@ $ ck run nntest:conv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-pr
 ```
 * Validation:
 ```
-$ ck run nntest:conv-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:conv-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### convolution uint8
@@ -136,7 +136,7 @@ $ ck run nntest:conv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platfo
 ```
 * Validation:
 ```
-$ ck run nntest:conv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:conv-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 
@@ -147,7 +147,7 @@ $ ck run nntest:depthwiseconv-armcl-opencl --dvdt_prof --record --timestamp=<pla
 ```
 * Validation:
 ```
-$ ck run nntest:depthwiseconv-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:depthwiseconv-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### depthwise convolution uint8
@@ -157,7 +157,7 @@ $ ck run nntest:depthwiseconv-armcl-opencl-uint8 --dvdt_prof --record --timestam
 ```
 * Validation:
 ```
-$ ck run nntest:depthwiseconv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:depthwiseconv-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### direct convolution fp32
@@ -167,7 +167,7 @@ $ ck run nntest:directconv-armcl-opencl --dvdt_prof --record --timestamp=<platfo
 ```
 * Validation:
 ```
-$ ck run nntest:directconv-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:directconv-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### direct convolution uint8
@@ -177,7 +177,7 @@ $ ck run nntest:directconv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<
 ```
 * Validation:
 ```
-$ ck run nntest:directconv-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:directconv-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 
@@ -188,7 +188,7 @@ $ ck run nntest:fullyconnected-armcl-opencl --dvdt_prof --record --timestamp=<pl
 ```
 * Validation:
 ```
-$ ck run nntest:fullyconnected-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:fullyconnected-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### fully connected uint8
@@ -198,7 +198,7 @@ $ ck run nntest:fullyconnected-armcl-opencl-uint8 --dvdt_prof --record --timesta
 ```
 * Validation:
 ```
-$ ck run nntest:fullyconnected-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:fullyconnected-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 
@@ -209,7 +209,7 @@ $ ck run nntest:gemm-armcl-opencl --dvdt_prof --record --timestamp=<platform>-pr
 ```
 * Validation:
 ```
-$ ck run nntest:gemm-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:gemm-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 
@@ -222,7 +222,7 @@ $ ck run nntest:reshape-armcl-opencl --dvdt_prof --record --timestamp=<platform>
 ```
 * Validation:
 ```
-$ ck run nntest:reshape-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:reshape-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### reshape uint8
@@ -232,7 +232,7 @@ $ ck run nntest:reshape-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<pla
 ```
 * Validation:
 ```
-$ ck run nntest:reshape-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:reshape-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### resize bilinear fp32
@@ -242,7 +242,7 @@ $ ck run nntest:resizebilinear-armcl-opencl --dvdt_prof --record --timestamp=<pl
 ```
 * Validation:
 ```
-$ ck run nntest:resizebilinear-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:resizebilinear-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### resize bilinear uint8
@@ -252,7 +252,7 @@ $ ck run nntest:resizebilinear-armcl-opencl-uint8 --dvdt_prof --record --timesta
 ```
 * Validation:
 ```
-$ ck run nntest:resizebilinear-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:resizebilinear-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### softmax fp32
@@ -262,7 +262,7 @@ $ ck run nntest:softmax-armcl-opencl --dvdt_prof --record --timestamp=<platform>
 ```
 * Validation:
 ```
-$ ck run nntest:softmax-armcl-opencl --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:softmax-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 #### softmax uint8
@@ -272,7 +272,7 @@ $ ck run nntest:softmax-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<pla
 ```
 * Validation:
 ```
-$ ck run nntest:softmax-armcl-opencl-uint8 --repetitions=15 --record --timestamp=<platform>-validation
+$ ck run nntest:softmax-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
 ```
 
 
