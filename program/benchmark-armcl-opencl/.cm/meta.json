@@ -42,16 +42,14 @@
   "compiler_env": "CK_CXX",
   "compiler_flags_as_env": "$<<CK_COMPILER_FLAG_CPP11>>$ $<<CK_FLAG_PREFIX_INCLUDE>>$$<<CK_ENV_LIB_ARMCL_INCLUDE>>$ -Wno-ignored-attributes",
   "data_name": "benchmark-armcl-opencl",
-  "linker_add_lib_as_env": [
-    "CK_CXX_EXTRA",
-    "CK_ENV_LIB_STDCPP_STATIC"
-  ],
+  "extra_ld_vars": "$<<CK_ENV_LIB_STDCPP_DYNAMIC>>$",
   "main_language": "cpp",
   "only_for_target_os_tags": [
     "android",
     "linux"
   ],
   "print_files_after_run": [
+    "tmp-stdout.tmp",
     "tmp-stderr.tmp"
   ],
   "process_in_tmp": "yes",
@@ -61,15 +59,16 @@
       "ignore_return_code": "yes",
       "run_time": {
         "fine_grain_timer_file": "tmp-ck-timer.json",
+        "pre_process_via_ck": {
+          "script_name": "preprocess"
+        },
         "need_compute_device": "opencl",
         "output_invariant_of_repeat": "yes",
         "run_cmd_main": "$#BIN_FILE#$",
         "run_cmd_out1": "tmp-stdout.tmp",
         "run_cmd_out2": "tmp-stderr.tmp",
         "run_output_files": [
-          "tmp-ck-timer.json",
-          "tmp-ck-output.bin",
-          "tmp-ck-output.json"
+          "tmp-ck-timer.json"
         ]
       }
     }
