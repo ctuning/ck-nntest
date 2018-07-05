@@ -26,7 +26,7 @@ def ck_preprocess(i):
 
     new_env = {}
     files_to_push = []
-    if i['target_os_dict'].get('remote','') == 'yes':
+    if i['target_os_dict'].get('remote','') == 'yes' and env.get('CK_PUSH_LIBS_TO_REMOTE', 'yes').lower() == 'yes':
         lib_dir = i['deps']['library']['dict']['env'].get('CK_ENV_LIB_ARMCL')
         lib_name = i['deps']['library']['dict']['env'].get('CK_ENV_LIB_ARMCL_DYNAMIC_CORE_NAME')
         new_env['CK_ENV_ARMCL_CORE_LIB_PATH'] = os.path.join(lib_dir, 'lib', lib_name)
