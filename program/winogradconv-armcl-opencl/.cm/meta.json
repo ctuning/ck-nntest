@@ -46,10 +46,7 @@
   "compiler_env": "CK_CXX", 
   "compiler_flags_as_env": "$<<CK_COMPILER_FLAG_CPP11>>$ $<<CK_FLAG_PREFIX_INCLUDE>>$$<<CK_ENV_LIB_ARMCL_INCLUDE>>$ -Wno-ignored-attributes", 
   "data_name": "winogradconv-armcl-opencl", 
-  "linker_add_lib_as_env": [
-    "CK_CXX_EXTRA", 
-    "CK_ENV_LIB_STDCPP_STATIC"
-  ], 
+  "extra_ld_vars": "$<<CK_ENV_LIB_STDCPP_DYNAMIC>>$",
   "main_language": "cpp", 
   "only_for_target_os_tags": [
     "android", 
@@ -126,15 +123,15 @@
   "tags": [
     "nntest", 
     "armcl", 
-    "direct-convolution", 
-    "direct_convolution", 
-    "direct-conv", 
-    "direct_conv", 
-    "directconv", 
+    "winograd-convolution", 
+    "winograd_convolution", 
+    "winograd-conv", 
+    "winograd_conv", 
+    "winogradconv", 
     "float32", 
     "vopencl"
   ], 
-  "target_file": "directconv", 
+  "target_file": "winogradconv", 
   "use_preprocess_compilation_scripts": {
     "data_uoa": "3144372763a44cd2", 
     "module_uoa": "84e27ad9dd12e734", 
