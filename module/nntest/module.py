@@ -611,7 +611,7 @@ def run(i):
               (user)                - force different user ID/email for demos
 
               (data_uoa)            - program UOA to benchmark it
-              (tags)                - prune programs by tags (opencl, cpu, androidnn, armcl, caffe, tensorflow ...)
+              (tags)                - prune programs by tags (opencl, cpu, armcl, caffe, tensorflow ...)
               (species)             - list of species
 
               (cmd_key)             - prune by CMD key, otherwise trying all
