@@ -38,6 +38,38 @@
       "sort": -1,
       "tags": "lib,caffe,vopencl"
     },
+    "lib-boost": {
+      "local": "yes",
+      "name": "Boost library",
+      "skip_default": "yes",
+      "sort": 50,
+      "tags": "lib,boost"
+    },
+    "lib-gflags": {
+      "force_env_init": "yes",
+      "local": "yes",
+      "name": "GFlags library",
+      "skip_installed": {
+        "android": "yes",
+        "win": "yes"
+      },
+      "sort": 60,
+      "tags": "lib,gflags",
+      "update_tags_by_target_platform2": {
+        "android": "v2.2.0",
+        "win": "v2.2.0"
+      }
+    },
+    "lib-glog": {
+      "local": "yes",
+      "name": "GLog library",
+      "skip_installed": {
+        "android": "yes",
+        "win": "yes"
+      },
+      "sort": 70,
+      "tags": "lib,glog"
+    },
     "xopenme": {
       "local": "yes",
       "name": "xOpenME library",

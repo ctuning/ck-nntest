@@ -86,7 +86,7 @@ struct Shape {
 
 /**
  * Convolution and Pooling padding scheme.
- * Padding scheme is used by TensorFlow and AndroidNN. See here:
+ * Padding scheme is used by TensorFlow. See here:
  * https://www.tensorflow.org/api_guides/python/nn#Pooling
  * But Caffe and ArmCL use explicit padding in pixels instead.
  */
