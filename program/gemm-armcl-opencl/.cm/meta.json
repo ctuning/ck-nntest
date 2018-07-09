@@ -45,11 +45,8 @@
   ],
   "compiler_env": "CK_CXX",
   "compiler_flags_as_env": "$<<CK_COMPILER_FLAG_CPP11>>$ $<<CK_FLAG_PREFIX_INCLUDE>>$$<<CK_ENV_LIB_ARMCL_INCLUDE>>$",
+  "extra_ld_vars": "$<<CK_ENV_LIB_STDCPP_DYNAMIC>>$",
   "data_name": "gemm-armcl-opencl",
-  "linker_add_lib_as_env": [
-    "CK_CXX_EXTRA",
-    "CK_ENV_LIB_STDCPP_STATIC"
-  ],
   "main_language": "cpp",
   "only_for_target_os_tags": [
     "android",

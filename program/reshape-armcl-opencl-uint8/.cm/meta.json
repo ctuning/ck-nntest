@@ -46,10 +46,7 @@
   "compiler_env": "CK_CXX",
   "compiler_flags_as_env": "$<<CK_COMPILER_FLAG_CPP11>>$ $<<CK_FLAG_PREFIX_INCLUDE>>$$<<CK_ENV_LIB_ARMCL_INCLUDE>>$",
   "data_name": "reshape-armcl-opencl-uint8",
-  "linker_add_lib_as_env": [
-    "CK_CXX_EXTRA",
-    "CK_ENV_LIB_STDCPP_STATIC"
-  ],
+  "extra_ld_vars": "$<<CK_ENV_LIB_STDCPP_DYNAMIC>>$",
   "main_language": "cpp",
   "only_for_target_os_tags": [
     "android",
@@ -77,7 +74,7 @@
         ],
         "post_process_via_ck": "yes",
         "pre_process_via_ck": {
-          "data_uoa": "62d70884718bc0f2",
+          "data_uoa": "a4165b5bcc134e49",
           "module_uoa": "script",
           "script_name": "process"
         },
