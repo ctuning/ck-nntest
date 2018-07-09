@@ -7,7 +7,7 @@
 
 ```
 $ sudo pip install ck
-$ ck pull repo --url=https://github.com/dividiti/ck-nntest
+$ ck pull repo:ck-nntest
 ```
 
 **NB:** You may prefer to install CK locally as described [here](https://github.com/ctuning/ck#minimal-installation).
@@ -38,7 +38,7 @@ $ ck list package:lib-armcl-opencl-*
 
 To use TensorFlow CPU tests, install a third-party [TensorFlow_CC](https://github.com/FloopCZ/tensorflow_cc) package:
 ```
-$ ck pull repo --url=git@github.com:dividiti/ck-tensorflow
+$ ck pull repo:ck-tensorflow
 $ ck install package:lib-tensorflow_cc-shared-1.7.0 [--env.CK_HOST_CPU_NUMBER_OF_PROCESSORS=2]
 ```
 To install, follow the instructions in the [Readme](https://github.com/ctuning/ck-tensorflow/blob/master/package/lib-tensorflow_cc-shared-1.7.0/README.md)
@@ -87,16 +87,16 @@ $ ck run nntest:softmax-armcl-opencl
 ### Run experiments using Arm Compute Library with OpenCL
 
 CK-NNTest supports the following operators for the Arm Compute Library:
-* average pool ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#average-pool-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#average-pool-uint8))
-* convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#convolution-uint8))
-* depthwise convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#depthwise-convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#depthwise-convolution-uint8))
-* direct convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#direct-convolution-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#direct-convolution-uint8))
-* fully connected ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#fully-connected-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#fully-connected-uint8))
-* gemm ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#gemm-to-fix))
-* reshape ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#reshape-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#reshape-uint8))
-* resize bilinear ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#resize-bilinear-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#resize-bilinear-uint8))
-* softmax ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmax-fp32), [uint8](https://github.com/dividiti/ck-nntest/blob/master/README.md#softmax-uint8))
-* winograd convolution ([fp32](https://github.com/dividiti/ck-nntest/blob/master/README.md#winograd-convolution-fp32))
+* average pool ([fp32](https://github.com/ctuning/ck-nntest/blob/master/README.md#average-pool-fp32), [uint8](https://github.com/ctuning/ck-nntest/blob/master/README.md#average-pool-uint8))
+* convolution ([fp32](https://github.com/ctuning/ck-nntest/blob/master/README.md#convolution-fp32), [uint8](https://github.com/ctuning/ck-nntest/blob/master/README.md#convolution-uint8))
+* depthwise convolution ([fp32](https://github.com/ctuning/ck-nntest/blob/master/README.md#depthwise-convolution-fp32), [uint8](https://github.com/ctuning/ck-nntest/blob/master/README.md#depthwise-convolution-uint8))
+* direct convolution ([fp32](https://github.com/ctuning/ck-nntest/blob/master/README.md#direct-convolution-fp32), [uint8](https://github.com/ctuning/ck-nntest/blob/master/README.md#direct-convolution-uint8))
+* fully connected ([fp32](https://github.com/ctuning/ck-nntest/blob/master/README.md#fully-connected-fp32), [uint8](https://github.com/ctuning/ck-nntest/blob/master/README.md#fully-connected-uint8))
+* gemm ([fp32](https://github.com/ctuning/ck-nntest/blob/master/README.md#gemm-to-fix))
+* reshape ([fp32](https://github.com/ctuning/ck-nntest/blob/master/README.md#reshape-fp32), [uint8](https://github.com/ctuning/ck-nntest/blob/master/README.md#reshape-uint8))
+* resize bilinear ([fp32](https://github.com/ctuning/ck-nntest/blob/master/README.md#resize-bilinear-fp32), [uint8](https://github.com/ctuning/ck-nntest/blob/master/README.md#resize-bilinear-uint8))
+* softmax ([fp32](https://github.com/ctuning/ck-nntest/blob/master/README.md#softmax-fp32), [uint8](https://github.com/ctuning/ck-nntest/blob/master/README.md#softmax-uint8))
+* winograd convolution ([fp32](https://github.com/ctuning/ck-nntest/blob/master/README.md#winograd-convolution-fp32))
 
 **NB:** Not all operators are supported for all libraries.
 
