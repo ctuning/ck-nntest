@@ -1,12 +1,16 @@
 /*
- * Copyright (c) 2017 cTuning foundation.
+ * Copyright (c) 2017-2018 cTuning foundation.
  * See CK COPYRIGHT.txt for copyright details.
  *
  * SPDX-License-Identifier: BSD-3-Clause.
  * See CK LICENSE.txt for licensing details.
  */
 
+#if defined(ARMCL_18_05_PLUS)
+#include <arm_compute/runtime/CL/functions/CLGEMMConvolutionLayer.h>
+#else
 #include <arm_compute/runtime/CL/functions/CLConvolutionLayer.h>
+#endif
 
 #include "ck_nntest_armcl.h"
 
@@ -28,7 +32,11 @@ int main() {
   init_armcl();
 
   CLTensor input, output, weights, biases;
+#if defined(ARMCL_18_05_PLUS)
+  CLGEMMConvolutionLayer layer;
+#else
   CLConvolutionLayer layer;
+#endif
 
   // Prepare input shape
   Shape in_shape = get_input_shape_from_env(DEFAULT_IN_N, DEFAULT_IN_C,
