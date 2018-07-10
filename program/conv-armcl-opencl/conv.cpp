@@ -6,7 +6,11 @@
  * See CK LICENSE.txt for licensing details.
  */
 
+#if defined(ARMCL_18_05_PLUS)
+#include <arm_compute/runtime/CL/functions/CLGEMMConvolutionLayer.h>
+#else
 #include <arm_compute/runtime/CL/functions/CLConvolutionLayer.h>
+#endif
 
 #include "autotune/tuner_convolution.h"
 
@@ -34,7 +38,11 @@ int main() {
   init_armcl(tuner);
 
   CLTensor input, output, weights, biases;
+#if defined(ARMCL_18_05_PLUS)
+  CLGEMMConvolutionLayer layer;
+#else
   CLConvolutionLayer layer;
+#endif
 
   // Prepare input shape
   Shape in_shape = get_input_shape_from_env(DEFAULT_IN_N, DEFAULT_IN_C,
