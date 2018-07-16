@@ -644,7 +644,7 @@ def run(i):
               (custom_autotuning)   - dict to customize autotuning (can be added via external file in cmd @some-name.json)
               (autotune_id)         - get autotune/{autotune_id}.json from program entry to start autotuning
 
-              (record)              - if 'yes', record experiments using UIDs ("no" by default)
+              (no_record)           - if "yes", do not record experiments, "no" by default, experiments will be recorded using UIDs
               (record_uoa)          - use this experiment UOA to record all data to 
               (timestamp)           - use this instead of timestamp
               (record_repo)         - if !='', record to this repo (local by default)
@@ -667,9 +667,6 @@ def run(i):
 
     i['local']='yes'
 
-    if i.get('record','')=='': 
-       i['record']='no'
-
     return crowdsource(i)
 
 ##############################################################################
@@ -681,7 +678,7 @@ def crowdsource(i):
               See ck run nntest --help
 
               (local)               - if 'yes', local crowd-benchmarking, instead of public
-              (record)              - if 'yes', record experiments using UIDs (default)
+              (no_record)           - if "yes", do not record experiments, "no" by default, experiments will be recorded using UIDs
             }
 
     Output: {
@@ -691,6 +688,8 @@ def crowdsource(i):
             }
 
     """
+
+    def yes_no(bool_flag): return 'yes' if bool_flag else 'no'
 
     # Initializing various workflow parameters
     import copy
@@ -720,8 +719,9 @@ def crowdsource(i):
     target=i.get('target','')
 
      # Check working repository (possibly remote)
-    record=i.get('record','')
-    if record=='': record='yes'
+    OPTIONS_record = True
+    if i.get('no_record') == 'yes':
+        OPTIONS_record = False
 
     local=i.get('local','')
     if local=='yes': 
@@ -1281,7 +1281,7 @@ def crowdsource(i):
                           tags=[ 'nntest', test_uoa, library_id ]
 
                           record_uoa=''
-                          if record=='yes':
+                          if OPTIONS_record:
                              if xrecord_uoa!='':
                                 record_uoa=xrecord_uoa
                              else:
@@ -1302,7 +1302,7 @@ def crowdsource(i):
                           ck.out('- Compiler: %s v%s (%s)' % (cdeps['compiler']['dict']['data_name'],
                                                               cdeps['compiler']['ver'], 
                                                               cdeps['compiler']['uoa']))
-                          if record=='yes':
+                          if OPTIONS_record:
                              ck.out('- Experiment: %s:%s' % (er, record_uoa))
                           ck.out('- Tags: %s' % tags)
                           ck.out('---------------------------------------------------------------------------------------')
@@ -1375,7 +1375,7 @@ def crowdsource(i):
                               'iterations':iterations,
                               'repetitions':num_repetitions,
 
-                              'record':record,
+                              'record': yes_no(OPTIONS_record),
                               'record_repo':er,
                               'record_experiment_repo':esr,
                               'record_uoa':record_uoa,
