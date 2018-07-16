@@ -111,7 +111,7 @@
     "CK_IN_SHAPE_N": 1, 
     "CK_OUT_RAW_DATA": "tmp-ck-output.bin", 
     "CK_SEED": 42,
-    "CK_ENABLE_FAST_MATH": 0
+    "CK_ENABLE_FAST_MATH": 1
   }, 
   "skip_bin_ext": "yes", 
   "source_files": [
