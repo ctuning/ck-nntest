@@ -682,12 +682,85 @@ class CKException(Exception):
         self.ck_result = ck_result
 
 
+def yes_no(bool_flag):
+    return 'yes' if bool_flag else 'no'
+
+
 def ck_access(params_json, skip_error_codes = []):
+    '''
+    Performs call to ck-kernel and raises an exception when an error.
+    Returns the result of ck-operation.
+    '''
     result = ck.access(params_json)
     error_code = result['return']
     if error_code > 0 and not (error_code in skip_error_codes):
         raise CKException(result)
     return result
+
+
+def get_user_from_module_config():
+    r = ck_access({'action': 'load',
+                    'module_uoa': 'module',
+                    'data_uoa': cfg['module_deps']['program.optimization']
+                })
+    mcfg = r['dict']
+
+    dcfg = {}
+    r = ck_access({'action': 'load',
+                    'module_uoa': mcfg['module_deps']['cfg'],
+                    'data_uoa': mcfg['cfg_uoa']
+                }, skip_error_codes = [16])
+
+    # TODO: code 16 is not an error but we can't get user when it's returned? 
+    # TODO: what does it mean - 16? comment or speaking name is required
+    if r['return'] != 16:
+        dcfg = r['dict']
+
+    return dcfg.get('user_email')
+
+
+def get_program_species(program_meta):
+    '''
+    Returns comma separated species string the program belongs to (to prepare experiment tags)
+    '''
+    all_species = []
+    for species in program_meta.get('species', []):
+        r = ck_access({'action': 'load',
+                        'module_uoa': cfg['module_deps']['program.species'],
+                        'data_uoa': species})
+        all_species.append(r['data_uoa'])
+    return ','.join(all_species)
+
+
+def get_library_env_uoas(compile_deps, platform):
+    '''
+    Resolve library environment UOA(s) (don't use cache to get all choices)
+    '''
+    if not compile_deps.get('library', None):
+        return [''] # Empty for at least one iteration even if library is not used
+
+    r = ck_access({'action': 'resolve',
+                    'module_uoa': cfg['module_deps']['env'],
+                    'host_os': platform.host_os,
+                    'target_os': platform.target_os,
+                    'device_id': platform.device_id,
+                    'deps': {
+                        'library': copy.deepcopy(compile_deps['library']) # TODO why `deepcopy` here?
+                    }
+                })
+
+    library_env_uoas = r['deps']['library'].get('choices',[])
+
+    if not library_env_uoas:
+        # Check that maybe 1 env was installed during resolving
+        x = r.get('deps',{}).get('library',{}).get('uoa','')
+        if x:
+            library_env_uoas.append(x)
+
+    if not library_env_uoas:
+        raise CKException({'return': 1, 'error': 'expected at least one library environment'})
+
+    return library_env_uoas
 
 
 def get_sorted_library_env_uoas(library_env_uoas):
@@ -705,39 +778,6 @@ def get_sorted_library_env_uoas(library_env_uoas):
     return sorted(libs, key = lambda x: x.get('dict', {})
                                          .get('customize', {})
                                          .get('lib_id', 99999))
-
-
-def get_program_species(program_meta):
-    '''
-    Returns comma separated species string the program belongs to (to prepare experiment tags)
-    '''
-    all_species = []
-    for species in program_meta.get('species', []):
-        r = ck_access({'action': 'load',
-                        'module_uoa': cfg['module_deps']['program.species'],
-                        'data_uoa': species})
-        all_species.append(r['data_uoa'])
-    return ','.join(all_species)
-
-
-class LibraryEnv:
-    def __init__(self, library_env):
-        self.env = library_env
-
-    def data_uoa(self):
-        return self.env.get('data_uoa','')
-
-    def data_name(self):
-        return self.env.get('data_name','')
-
-    def version(self):
-        return self.env['dict']['customize']['version']
-
-    def tags(self):
-        return self.env['data_name'].lower().replace(', ','-').replace(' ','-').replace(',','-').replace('(','').replace(')','')
-
-    def lib_id(self):
-        return str(self.env.get('dict',{}).get('customize',{}).get('lib_id', 0))
 
 
 def make_library_id(tags, version):
@@ -760,6 +800,54 @@ def make_library_id(tags, version):
             x1=x1[:j1]
 
     return x1+'-'+x2
+
+
+class PlatformInfo:
+    def __init__(self, action_params_json, local, exchange_repo, exchange_subrepo):
+        self.user = None
+
+        info = action_params_json.get('platform_info', {})
+        if not info:
+            params_json = copy.deepcopy(action_params_json)
+            params_json.update({
+                'action': 'initialize',
+                'module_uoa': cfg['module_deps']['program.optimization'],
+                'data_uoa': 'caffe', # TODO why `caffe` here? comment needed
+                'exchange_repo': exchange_repo,
+                'exchange_subrepo': exchange_subrepo,
+                'skip_welcome': 'yes',
+                'skip_log_wait': 'yes',
+                'crowdtuning_type': 'nntest',
+                'update_platform_init': action_params_json.get('update_platform_init'),
+                'local_autotuning': local
+            })
+            r = ck_access(params_json)
+            info = r['platform_info']
+            self.user = r.get('user')
+
+        self.host_os = info['host_os_uoa']
+        self.host_os_uid = info['host_os_uid']
+        self.target_os = info['os_uoa']
+        self.target_os_uid = info['os_uid']
+        self.device_id = info['device_id']
+        self.features = info.get('features', {})
+        self.name = self.features.get('platform', {}).get('name')
+        self.uid = self.features.get('platform_uid')
+        self.os_name = self.features.get('os', {}).get('name')
+        self.os_uid = self.features.get('os_uid')
+        self.cpu_abi = self.features.get('cpu',{}).get('cpu_abi')
+        self.cpu_name = self.features.get('cpu',{}).get('name') or 'unknown-' + self.cpu_abi
+        self.cpu_uid = self.features.get('cpu_uid')
+
+
+class LibraryEnv:
+    def __init__(self, library_env):
+        self.env = library_env
+        self.data_uoa = self.env.get('data_uoa')
+        self.data_name = self.env.get('data_name')
+        self.version = self.env['dict']['customize']['version']
+        self.tags = self.env['data_name'].lower().replace(', ','-').replace(' ','-').replace(',','-').replace('(','').replace(')','')
+        self.lib_id = str(self.env.get('dict',{}).get('customize',{}).get('lib_id', 0))
 
 
 class Pipeline:
@@ -833,89 +921,6 @@ class Pipeline:
         return r
 
 
-class PlatformInfo:
-    def __init__(self, action_params_json, local, exchange_repo, exchange_subrepo):
-        self.user = None
-
-        info = action_params_json.get('platform_info', {})
-        if not info:
-            params_json = copy.deepcopy(action_params_json)
-            params_json.update({
-                'action': 'initialize',
-                'module_uoa': cfg['module_deps']['program.optimization'],
-                'data_uoa': 'caffe', # TODO why `caffe` here? comment needed
-                'exchange_repo': exchange_repo,
-                'exchange_subrepo': exchange_subrepo,
-                'skip_welcome': 'yes',
-                'skip_log_wait': 'yes',
-                'crowdtuning_type': 'nntest',
-                'update_platform_init': action_params_json.get('update_platform_init'),
-                'local_autotuning': local
-            })
-            r = ck_access(params_json)
-            info = r['platform_info']
-            self.user = r.get('user')
-
-        self.host_os = info['host_os_uoa']
-        self.host_os_uid = info['host_os_uid']
-        self.target_os = info['os_uoa']
-        self.target_os_uid = info['os_uid']
-        self.device_id = info['device_id']
-        self.features = info.get('features', {})
-
-
-def get_library_env_uoas(compile_deps, platform):
-    '''
-    Resolve library environment UOA(s) (don't use cache to get all choices)
-    '''
-    if not compile_deps.get('library', None):
-        return [''] # Empty for at least one iteration even if library is not used
-
-    r = ck_access({'action': 'resolve',
-                    'module_uoa': cfg['module_deps']['env'],
-                    'host_os': platform.host_os,
-                    'target_os': platform.target_os,
-                    'device_id': platform.device_id,
-                    'deps': {
-                        'library': copy.deepcopy(compile_deps['library']) # TODO why `deepcopy` here?
-                    }
-                })
-
-    library_env_uoas = r['deps']['library'].get('choices',[])
-
-    if not library_env_uoas:
-        # Check that maybe 1 env was installed during resolving
-        x = r.get('deps',{}).get('library',{}).get('uoa','')
-        if x:
-            library_env_uoas.append(x)
-
-    if not library_env_uoas:
-        raise CKException({'return': 1, 'error': 'expected at least one library environment'})
-
-    return library_env_uoas
-
-
-def get_user_from_module_config():
-    r = ck_access({'action': 'load',
-                    'module_uoa': 'module',
-                    'data_uoa': cfg['module_deps']['program.optimization']
-                })
-    mcfg = r['dict']
-
-    dcfg = {}
-    r = ck_access({'action': 'load',
-                    'module_uoa': mcfg['module_deps']['cfg'],
-                    'data_uoa': mcfg['cfg_uoa']
-                }, skip_error_codes = [16])
-
-    # TODO: code 16 is not an error but we can't get user when it's returned? 
-    # TODO: what does it mean - 16? comment or speaking name is required
-    if r['return'] != 16:
-        dcfg = r['dict']
-
-    return dcfg.get('user_email')
-
-
 def crowdsource(i):
     """
     Input:  {
@@ -932,8 +937,6 @@ def crowdsource(i):
             }
 
     """
-
-    def yes_no(bool_flag): return 'yes' if bool_flag else 'no'
 
     # Initializing various workflow parameters
 
@@ -1067,18 +1070,10 @@ def crowdsource(i):
     PLATFORM = PlatformInfo(i, local, er, esr)
     
     # Check user
+    # TODO user can be passed via commad line as described in docstring,
+    # TODO but there is not code acquiring them from there (from the parameter `i`)
     user = PLATFORM.user or get_user_from_module_config()
-
-    plat_name=PLATFORM.features.get('platform',{}).get('name','')
-    plat_uid=PLATFORM.features.get('platform_uid','')
-    os_name=PLATFORM.features.get('os',{}).get('name','')
-    os_uid=PLATFORM.features.get('os_uid','')
-    cpu_name=PLATFORM.features.get('cpu',{}).get('name','')
-    cpu_abi=PLATFORM.features.get('cpu',{}).get('cpu_abi','')
-    if cpu_name=='': cpu_name='unknown-'+cpu_abi
-    cpu_uid=PLATFORM.features.get('cpu_uid','')
-    sn=PLATFORM.features.get('os',{}).get('serial_number','')
-
+    
     # Now checking which tests to run
     if o=='con':
        ck.out(sep)
@@ -1088,7 +1083,6 @@ def crowdsource(i):
 
     if i.get('tags','')!='':
        tags+=i['tags'].split(',')
-
 
     # Check species
     species_uid=[]
@@ -1260,10 +1254,10 @@ def crowdsource(i):
                       if pause=='yes':
                          ck.inp({'text':'Press Enter to continue ...'})
 
-                      # TODO it does not depend on dataset, so can be done outside of loop through dataset files
+                      # TODO it does not depend on a dataset, so can be done outside of loop through dataset files
                       species = get_program_species(mm)
 
-                      # TODO it does not depend on dataset, so can be done outside of loop through dataset files
+                      # TODO it does not depend on a dataset, so can be done outside of loop through dataset files
                       library_env_uoas = get_sorted_library_env_uoas(
                           [lib_uoa] if lib_uoa else get_library_env_uoas(saved_cdeps, PLATFORM)
                       )
@@ -1271,7 +1265,7 @@ def crowdsource(i):
                       cdeps = copy.deepcopy(saved_cdeps)
                       
                       for library_env in library_env_uoas:
-                          library = LibraryEnv(library_env)
+                          LIBRARY = LibraryEnv(library_env)
 
                           autotune_id=xautotune_id
 
@@ -1281,17 +1275,17 @@ def crowdsource(i):
                           else:
                              if o=='con':
                                 ck.out('        '+sep)
-                                ck.out('        Analyzing library: ' + library.data_uoa())
+                                ck.out('        Analyzing library: ' + LIBRARY.data_uoa)
                                 ck.out('')
 
-                             cdeps['library']['uoa'] = library.data_uoa() # here still clean deps
+                             cdeps['library']['uoa'] = LIBRARY.data_uoa # here still clean deps
                              cdeps['library']['skip_cache']='yes' # do not cache since we will iterate over it
 
-                             library_id = make_library_id(library.tags(), library.version())
+                             library_id = make_library_id(LIBRARY.tags, LIBRARY.version)
 
                              # Get specific autotuner
                              if autotune_id=='':
-                                autotune_id=str(library.lib_id())
+                                autotune_id=str(LIBRARY.lib_id)
 
                           if autotune_id=='':
                              autotune_id='0'
@@ -1374,7 +1368,7 @@ def crowdsource(i):
                           print_report('- Program: %s (%s)' % (test_uoa, test_uid))
 
                           if library_env:
-                              print_report('- Library: %s (%s)'  % (library.data_name(), library.data_uoa()))
+                              print_report('- Library: %s (%s)'  % (LIBRARY.data_name, LIBRARY.data_uoa))
 
                           print_report('- Compiler: %s v%s (%s)' % (cdeps['compiler']['dict']['data_name'],
                                                               cdeps['compiler']['ver'], 
@@ -1396,15 +1390,15 @@ def crowdsource(i):
                                 'target_os_uid': PLATFORM.target_os_uid,
                                 'target_device_id': PLATFORM.device_id,
 
-                                'cpu_name':cpu_name,
-                                'cpu_abi':cpu_abi,
-                                'cpu_uid':cpu_uid,
+                                'cpu_name': PLATFORM.cpu_name,
+                                'cpu_abi': PLATFORM.cpu_abi,
+                                'cpu_uid': PLATFORM.cpu_uid,
 
-                                'os_name':os_name,
-                                'os_uid':os_uid,
+                                'os_name': PLATFORM.os_name,
+                                'os_uid': PLATFORM.os_uid,
 
-                                'plat_name':plat_name,
-                                'plat_uid':plat_uid,
+                                'plat_name': PLATFORM.name,
+                                'plat_uid': PLATFORM.uid,
 
                                 'gpu_name':gpu_name,
 
