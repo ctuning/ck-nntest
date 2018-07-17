@@ -681,6 +681,10 @@ class CKException(Exception):
     def __init__(self, ck_result):
         self.ck_result = ck_result
 
+    @staticmethod
+    def throw(message, code=1):
+        raise CKException({'return': code, 'error': message})
+
 
 def yes_no(bool_flag):
     return 'yes' if bool_flag else 'no'
@@ -716,7 +720,34 @@ def get_user_from_module_config():
     if r['return'] != 16:
         dcfg = r['dict']
 
-    return dcfg.get('user_email')
+    return dcfg.get('user_email','')
+
+
+def get_programs_for_test(data_uoa, tags_list, species_uids):
+    r = ck_access({'action':'search',
+                   'module_uoa': cfg['module_deps']['program'],
+                   'data_uoa': data_uoa,
+                   'tags': ','.join(tags_list),
+                   'add_meta':'yes'})
+    programs = r['lst']
+
+    # it's possible to skip some tests
+    programs = [p for p in programs if p['meta'].get('skip_from_tests') != 'yes']
+
+    if species_uids:
+        filtered = []
+        for p in programs:
+            program_species = p['meta'].get('species',[])
+            for s in species_uids:
+                if s in program_species:
+                    filtered.append(p)
+                    break
+        programs = filtered
+
+    if not programs:
+        CKException.throw('no programs selected')
+
+    return sorted(programs, key = lambda p: p.get('data_uoa',''))
 
 
 def get_program_species(program_meta):
@@ -758,55 +789,80 @@ def get_library_env_uoas(compile_deps, platform):
             library_env_uoas.append(x)
 
     if not library_env_uoas:
-        raise CKException({'return': 1, 'error': 'expected at least one library environment'})
+        raise CKException.throw('expected at least one library environment')
 
     return library_env_uoas
 
 
-def get_sorted_library_env_uoas(library_env_uoas):
+def load_library_envs_sorted_by_id(library_env_uoas):
     '''
-    Returns list of library uoas sorted by lib_id
+    Loads all library envs and returns them as a list sorted by `lib_id`
     '''
-    libs = []
+    lib_envs = []
     for uoa in library_env_uoas:
         if not uoa:
-            libs.append({})
+            lib_envs.append({})
         else:
-            libs.append(ck_access({'action': 'load',
-                                   'module_uoa': 'env',
-                                   'data_uoa': uoa}))
-    return sorted(libs, key = lambda x: x.get('dict', {})
-                                         .get('customize', {})
-                                         .get('lib_id', 99999))
+            lib_envs.append(ck_access({'action': 'load',
+                                       'module_uoa': 'env',
+                                       'data_uoa': uoa}))
+
+    return sorted(lib_envs, key = lambda x: x.get('dict',{})
+                                             .get('customize',{})
+                                             .get('lib_id',99999))
 
 
-def make_library_id(tags, version):
-    '''
-    Remove duplicates at the end of `tags` and beginning of `version` (e.g. avgpool-avgpool)
-    '''
-    x1 = tags
-    x2 = version
+def get_versions_of_all_deps(deps):
+    r = ck_access({'action': 'get_all_versions_in_deps',
+                   'module_uoa': cfg['module_deps']['env'],
+                   'deps': deps})
+    return r['versions']
 
-    j1=tags.rfind('-')
-    if j1>0:
-        xx=x1[j1+1:]
 
-        yy=x2
-        j2 = x2.find('-')
-        if j2>0:
-            yy=x2[:j2]
+def resolve_all_deps(deps, platform):
+    r = ck_access({'action': 'resolve',
+                   'module_uoa': 'env',
+                   'host_os': platform.host_os,
+                   'target_os': platform.target_os,
+                   'device_id': platform.device_id,
+                   'deps': deps})
+    return r
 
-        if xx==yy:
-            x1=x1[:j1]
 
-    return x1+'-'+x2
+class ActionOptions:
+    def __init__(self, i):
+        self.record = i.get('no_record') != 'yes'
+        self.dry_run = i.get('dry_run') == 'yes'
+        self.data_uoa = i.get('data_uoa','')
+        self.species = i.get('species','')
+        self.tags = ['nntest']
+        
+        if 'tags' in i:
+            for tag in i['tags'].split(','):
+                t = tag.strip()
+                # Check opencl, cuda and cpu keywoards and add v
+                if t == 'opencl': t = 'vopencl'
+                elif x == 'cuda': t = 'vcuda'
+                elif t == 'cpu': t = 'vcpu'
+                self.tags.append(t)
+
+    def get_species_uids(self):
+        uids = []
+        for s in self.species.split(','):
+            s = s.strip()
+            if s:
+                r = ck_access({'action':'load',
+                               'module_uoa': cfg['module_deps']['program.species'],
+                               'data_uoa': s})
+                uids.append(r['data_uid'])
+        return uids
 
 
 class PlatformInfo:
     def __init__(self, action_params_json, local, exchange_repo, exchange_subrepo):
         self.user = None
 
-        info = action_params_json.get('platform_info', {})
+        info = action_params_json.get('platform_info',{})
         if not info:
             params_json = copy.deepcopy(action_params_json)
             params_json.update({
@@ -818,37 +874,67 @@ class PlatformInfo:
                 'skip_welcome': 'yes',
                 'skip_log_wait': 'yes',
                 'crowdtuning_type': 'nntest',
-                'update_platform_init': action_params_json.get('update_platform_init'),
+                'update_platform_init': action_params_json.get('update_platform_init',''),
                 'local_autotuning': local
             })
             r = ck_access(params_json)
             info = r['platform_info']
-            self.user = r.get('user')
+            self.user = r.get('user','')
 
         self.host_os = info['host_os_uoa']
         self.host_os_uid = info['host_os_uid']
         self.target_os = info['os_uoa']
         self.target_os_uid = info['os_uid']
         self.device_id = info['device_id']
-        self.features = info.get('features', {})
-        self.name = self.features.get('platform', {}).get('name')
+        self.features = info.get('features',{})
+        self.name = self.features.get('platform', {}).get('name','')
         self.uid = self.features.get('platform_uid')
-        self.os_name = self.features.get('os', {}).get('name')
-        self.os_uid = self.features.get('os_uid')
-        self.cpu_abi = self.features.get('cpu',{}).get('cpu_abi')
-        self.cpu_name = self.features.get('cpu',{}).get('name') or 'unknown-' + self.cpu_abi
-        self.cpu_uid = self.features.get('cpu_uid')
+        self.os_name = self.features.get('os',{}).get('name','')
+        self.os_uid = self.features.get('os_uid','')
+        self.cpu_abi = self.features.get('cpu',{}).get('cpu_abi','')
+        self.cpu_name = self.features.get('cpu',{}).get('name','') or ('unknown-' + self.cpu_abi)
+        self.cpu_uid = self.features.get('cpu_uid','')
+        self.gpu_name = self.features.get('gpu',{}).get('name','')
+        self.gpgpu_name = self.features.get('gpgpu',{}).get('name','')
+        self.gpgpu_vendor = self.features.get('gpgpu',{}).get('vendor','')
+        self.gpgpu_name2 = (self.gpgpu_vendor + ' ' + self.gpgpu_name) if self.gpgpu_vendor else self.gpgpu_name
+        self.opencl_version = self.features.get('gpgpu_misc',{}).get('opencl c version','')
 
 
 class LibraryEnv:
     def __init__(self, library_env):
         self.env = library_env
-        self.data_uoa = self.env.get('data_uoa')
-        self.data_name = self.env.get('data_name')
+        self.data_uoa = self.env.get('data_uoa','')
+        self.data_name = self.env.get('data_name','')
         self.version = self.env['dict']['customize']['version']
         self.tags = self.env['data_name'].lower().replace(', ','-').replace(' ','-').replace(',','-').replace('(','').replace(')','')
         self.lib_id = str(self.env.get('dict',{}).get('customize',{}).get('lib_id', 0))
 
+    def is_set(self):
+        return len(self.env) > 0
+
+    def get_tags_for_test(self):
+        if not self.is_set():
+            return 'no-library'
+
+        # Remove duplicates at the end of `tags` and beginning of `version` (e.g. avgpool-avgpool)
+        x1 = self.tags
+        x2 = self.version
+
+        j1=x1.rfind('-')
+        if j1>0:
+            xx=x1[j1+1:]
+
+            yy=x2
+            j2 = x2.find('-')
+            if j2>0:
+                yy=x2[:j2]
+
+            if xx==yy:
+                x1=x1[:j1]
+
+        return x1+'-'+x2
+        
 
 class Pipeline:
     def __init__(self, compile_deps, deps_cache, reuse_deps, 
@@ -913,12 +999,20 @@ class Pipeline:
 
         if r.get('fail') == 'yes':
             reason = r.get('fail_reason') or 'unknown reason'
-            raise CKException({'return': 10, 'error': 'pipeline failed (%s)' % reason})
+            CKException.throw('pipeline failed (%s)' % reason, code=10)
 
         if r.get('ready') != 'yes':
-            raise CKException({'return': 11, 'error': 'pipeline not ready'})
+            CKException.throw('pipeline not ready', code=11)
 
-        return r
+        # Remember resolved deps for this benchmarking session.
+        self.deps = r.get('dependencies', {})
+
+        # Clean pipeline.
+        if 'ready' in r: del(r['ready'])
+        if 'fail' in r: del(r['fail'])
+        if 'return' in r: del(r['return'])
+
+        self.prepared_pipeline = r
 
 
 def crowdsource(i):
@@ -939,6 +1033,7 @@ def crowdsource(i):
     """
 
     # Initializing various workflow parameters
+    OPTIONS = ActionOptions(i)
 
     # Get current timestamp
     r=ck.get_current_date_time({})
@@ -963,9 +1058,6 @@ def crowdsource(i):
     target=i.get('target','')
 
      # Check working repository (possibly remote)
-    OPTIONS_record = True
-    if i.get('no_record') == 'yes':
-        OPTIONS_record = False
 
     local=i.get('local','')
     if local=='yes': 
@@ -1002,10 +1094,6 @@ def crowdsource(i):
 
     see_tests=i.get('see_tests','')
     
-    OPTIONS_dry_run = i.get('dry_run') == 'yes'
-    if OPTIONS_dry_run:
-        dry_run_report = []
-
     xmali_hwc=i.get('mali_hwc','')
 
     xdvdt_prof=i.get('dvdt_prof','')
@@ -1079,69 +1167,12 @@ def crowdsource(i):
        ck.out(sep)
        ck.out('Preparing a list of tests ...')
 
-    tags=['nntest']
-
-    if i.get('tags','')!='':
-       tags+=i['tags'].split(',')
-
-    # Check species
-    species_uid=[]
-    species=i.get('species','').split(',')
-    for q in species:
-        q=q.strip()
-        if q!='':
-           r=ck.access({'action':'load',
-                        'module_uoa':cfg['module_deps']['program.species'],
-                        'data_uoa':q})
-           if r['return']>0: return r
-           species_uid.append(r['data_uid'])
-
-    # Check opencl, cuda and cpu keywoards and add v
-    stags=''
-    for q in range(0, len(tags)):
-        x=tags[q].strip()
-
-        if x=='opencl': 
-           x='vopencl'
-        elif x=='cpu': 
-           x='vcpu'
-        elif x=='cuda':
-           x='vcuda'
-
-        if stags!='': stags+=','
-        stags+=x
-
-    duoa=i.get('data_uoa','')
-
-    ii={'action':'search',
-        'module_uoa':cfg['module_deps']['program'],
-        'data_uoa':duoa,
-        'tags':stags,
-        'add_meta':'yes'}
-    r=ck.access(ii)
-    if r['return']>0: return r
-
-    lst=r['lst']
-
-    if len(species_uid)>0:
-       xlst=[]
-       for q in lst:
-           if q['meta'].get('skip_from_tests','')!='yes': # it's possible to skip some tests
-              for s in species_uid:
-                  if s in q['meta'].get('species',[]):
-                     xlst.append(q)
-                     break
-       lst=xlst
-
-    nlst=len(lst)
-
-    if nlst==0:
-       return {'return':1, 'error':'no programs selected'}
+    programs = get_programs_for_test(OPTIONS.data_uoa, OPTIONS.tags, OPTIONS.get_species_uids())
 
     # Start iterating over programs
-    ip=-1
-    for p in sorted(lst, key=lambda x: x.get('data_uoa','')):
-        ip+=1
+    program_index = -1
+    for p in programs:
+        program_index += 1
 
         test_uoa=p['data_uoa']
         test_uid=p['data_uid']
@@ -1160,7 +1191,7 @@ def crowdsource(i):
 
         if o=='con':
            ck.out(sep)
-           ck.out('Analyzing program '+str(ip+1)+' of '+str(nlst)+': '+test_uoa+' ('+test_uid+')')
+           ck.out('Analyzing program {} of {}: {} ({})'.format(program_index+1, len(programs), test_uoa, test_uid))
 
         # Check and iterate over all or pruned command lines
         run_cmds=mm.get('run_cmds',{})
@@ -1258,21 +1289,14 @@ def crowdsource(i):
                       species = get_program_species(mm)
 
                       # TODO it does not depend on a dataset, so can be done outside of loop through dataset files
-                      library_env_uoas = get_sorted_library_env_uoas(
+                      library_envs = load_library_envs_sorted_by_id(
                           [lib_uoa] if lib_uoa else get_library_env_uoas(saved_cdeps, PLATFORM)
                       )
 
                       cdeps = copy.deepcopy(saved_cdeps)
-                      
-                      for library_env in library_env_uoas:
-                          LIBRARY = LibraryEnv(library_env)
 
-                          autotune_id=xautotune_id
-
-                          if len(library_env)==0:
-                             library_env=None
-                             library_id='no-library'
-                          else:
+                      for LIBRARY in map(LibraryEnv, library_envs):
+                          if LIBRARY.is_set():
                              if o=='con':
                                 ck.out('        '+sep)
                                 ck.out('        Analyzing library: ' + LIBRARY.data_uoa)
@@ -1281,14 +1305,8 @@ def crowdsource(i):
                              cdeps['library']['uoa'] = LIBRARY.data_uoa # here still clean deps
                              cdeps['library']['skip_cache']='yes' # do not cache since we will iterate over it
 
-                             library_id = make_library_id(LIBRARY.tags, LIBRARY.version)
-
-                             # Get specific autotuner
-                             if autotune_id=='':
-                                autotune_id=str(LIBRARY.lib_id)
-
-                          if autotune_id=='':
-                             autotune_id='0'
+                          # Get specific autotuner, 
+                          autotune_id = xautotune_id or LIBRARY.lib_id or '0'
 
                           if o=='con':
                              ck.out('        Autotune ID: '+autotune_id)
@@ -1298,82 +1316,36 @@ def crowdsource(i):
                              continue
 
                           # Prepare pipeline.
-                          pipeline = Pipeline(cdeps, deps_cache, reuse_deps, target, test_uoa, 
+                          PIPELINE = Pipeline(cdeps, deps_cache, reuse_deps, target, test_uoa, 
                                 kcmd, dduoa, dfile, dvdt_prof, mali_hwc, env, flags, PLATFORM)
-                          pipeline.pass_vars_from_input(pass_vars_to_autotune, i)
-                          r = pipeline.prepare()
+                          PIPELINE.pass_vars_from_input(pass_vars_to_autotune, i)
+                          PIPELINE.prepare()
 
-                          # Remember resolved deps for this benchmarking session.
-                          xcdeps=r.get('dependencies',{})
+                          # TODO: what does it need for? its result is not used, comment needed
+                          resolve_all_deps(PIPELINE.deps, PLATFORM)
 
-                          # Get extra features (resolved GPGPU if needed)
-                          pfeatures = PLATFORM.features
-
-                          fgpu=pfeatures.get('gpu',{})
-                          gpu_name=fgpu.get('name','')
-
-                          fgpgpu=pfeatures.get('gpgpu',{})
-                          gpgpu_name=fgpgpu.get('name','')
-                          gpgpu_vendor=fgpgpu.get('vendor','')
-                          gpgpu_type=fgpgpu.get('type','')
-
-                          gpgpu_name2=gpgpu_name
-                          if gpgpu_vendor!='': gpgpu_name2=gpgpu_vendor+' '+gpgpu_name
-
-                          fgpgpu_misc=pfeatures.get('gpgpu_misc',{})
-                          opencl=fgpgpu_misc.get('opencl c version','')
-
-                          # Clean pipeline.
-                          if 'ready' in r: del(r['ready'])
-                          if 'fail' in r: del(r['fail'])
-                          if 'return' in r: del(r['return'])
-
-                          pipeline=copy.deepcopy(r)
-                          jj={'action':'resolve',
-                              'module_uoa':'env',
-                              'host_os': PLATFORM.host_os,
-                              'target_os': PLATFORM.target_os,
-                              'device_id': PLATFORM.device_id,
-                              'deps':xcdeps}
-                          r=ck.access(jj)
-                          if r['return']>0: return r
-
-                          # Get versions of all deps
-                          versions = ck_access({'action': 'get_all_versions_in_deps',
-                                                'module_uoa': cfg['module_deps']['env'],
-        #                                       'only_root': 'yes',
-                                                'deps': xcdeps})
-
-                          tags=[ 'nntest', test_uoa, library_id ]
+                          tags = ['nntest', test_uoa, LIBRARY.get_tags_for_test()]
 
                           record_uoa=''
-                          if OPTIONS_record:
+                          if OPTIONS.record:
                              if xrecord_uoa!='':
                                 record_uoa=xrecord_uoa
                              else:
-                                x=stimestamp
-                                if i.get('timestamp','')!='': x=i['timestamp']
+                                x= i.get('timestamp','') or stimestamp
                                 record_uoa='-'.join(tags)+'-'+x
 
-                          tags.append(timestamp)
-                          tags.append(stimestamp)
-                          tags.append(species)
-
-                          def print_report(message):
-                              ck.out(message)
-                              if OPTIONS_dry_run:
-                                  dry_run_report.append(message)
+                          tags.extend([timestamp, stimestamp, species])
 
                           ck.out('---------------------------------------------------------------------------------------')
-                          print_report('- Program: %s (%s)' % (test_uoa, test_uid))
+                          ck.out('- Program: %s (%s)' % (test_uoa, test_uid))
 
-                          if library_env:
-                              print_report('- Library: %s (%s)'  % (LIBRARY.data_name, LIBRARY.data_uoa))
+                          if LIBRARY.is_set():
+                              ck.out('- Library: %s (%s)'  % (LIBRARY.data_name, LIBRARY.data_uoa))
 
-                          print_report('- Compiler: %s v%s (%s)' % (cdeps['compiler']['dict']['data_name'],
+                          ck.out('- Compiler: %s v%s (%s)' % (cdeps['compiler']['dict']['data_name'],
                                                               cdeps['compiler']['ver'], 
                                                               cdeps['compiler']['uoa']))
-                          if OPTIONS_record:
+                          if OPTIONS.record:
                              ck.out('- Experiment: %s:%s' % (er, record_uoa))
                           ck.out('- Tags: %s' % tags)
                           ck.out('---------------------------------------------------------------------------------------')
@@ -1400,11 +1372,11 @@ def crowdsource(i):
                                 'plat_name': PLATFORM.name,
                                 'plat_uid': PLATFORM.uid,
 
-                                'gpu_name':gpu_name,
+                                'gpu_name': PLATFORM.gpu_name,
 
-                                'gpgpu_name':gpgpu_name2,
-                                'gpgpu_vendor':gpgpu_vendor,
-                                'opencl':opencl,
+                                'gpgpu_name': PLATFORM.gpgpu_name2,
+                                'gpgpu_vendor': PLATFORM.gpgpu_vendor,
+                                'opencl': PLATFORM.opencl_version,
 
                                 'prog_uoa':test_uoa,
                                 'prog_uid':test_uid,
@@ -1415,7 +1387,7 @@ def crowdsource(i):
 
                                 'cmd_key':kcmd,
 
-                                'versions':versions,
+                                'versions': get_versions_of_all_deps(PIPELINE.deps),
 
                                 'dataset_uoa':dduoa,
                                 'dataset_uid':dduid,
@@ -1446,7 +1418,7 @@ def crowdsource(i):
                               'iterations':iterations,
                               'repetitions':num_repetitions,
 
-                              'record': yes_no(OPTIONS_record),
+                              'record': yes_no(OPTIONS.record),
                               'record_repo':er,
                               'record_experiment_repo':esr,
                               'record_uoa':record_uoa,
@@ -1458,12 +1430,12 @@ def crowdsource(i):
                               'pause':pause,
                               'pause_if_fail':pause_if_fail,
 
-                              'pipeline':pipeline,
+                              'pipeline': PIPELINE.prepared_pipeline,
                               'out':'con'}
 
                           if dvdt_prof=='yes': ii['skip_stat_analysis']='yes' # too much raw statistics
 
-                          if OPTIONS_dry_run: continue
+                          if OPTIONS.dry_run: continue
 
                           # Check if program meta has global autotuning
                           autotuning=mm.get('autotuning',{})
