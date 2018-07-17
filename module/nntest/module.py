@@ -682,9 +682,10 @@ class CKException(Exception):
         self.ck_result = ck_result
 
 
-def ck_access(params_json):
+def ck_access(params_json, skip_error_codes = []):
     result = ck.access(params_json)
-    if result['return'] > 0:
+    error_code = result['return']
+    if error_code > 0 and not (error_code in skip_error_codes):
         raise CKException(result)
     return result
 
@@ -836,9 +837,10 @@ class PlatformInfo:
     def __init__(self, action_params_json, local, exchange_repo, exchange_subrepo):
         self.user = None
 
-        pi = action_params_json.get('platform_info',{})
-        if not pi:
-            r = ck_access(copy.deepcopy(action_params_json).update({
+        info = action_params_json.get('platform_info', {})
+        if not info:
+            params_json = copy.deepcopy(action_params_json)
+            params_json.update({
                 'action': 'initialize',
                 'module_uoa': cfg['module_deps']['program.optimization'],
                 'data_uoa': 'caffe', # TODO why `caffe` here? comment needed
@@ -849,13 +851,17 @@ class PlatformInfo:
                 'crowdtuning_type': 'nntest',
                 'update_platform_init': action_params_json.get('update_platform_init'),
                 'local_autotuning': local
-            }))
-            pi = r['platform_info']
-            self.user = r.get('user','')
+            })
+            r = ck_access(params_json)
+            info = r['platform_info']
+            self.user = r.get('user')
 
-        self.host_os = pi['host_os_uoa']
-        self.target_os = pi['os_uoa']
-        self.device_id = pi['device_id']
+        self.host_os = info['host_os_uoa']
+        self.host_os_uid = info['host_os_uid']
+        self.target_os = info['os_uoa']
+        self.target_os_uid = info['os_uid']
+        self.device_id = info['device_id']
+        self.features = info.get('features', {})
 
 
 def get_library_env_uoas(compile_deps, platform):
@@ -868,7 +874,7 @@ def get_library_env_uoas(compile_deps, platform):
     r = ck_access({'action': 'resolve',
                     'module_uoa': cfg['module_deps']['env'],
                     'host_os': platform.host_os,
-                    'target_os': platform.target_od,
+                    'target_os': platform.target_os,
                     'device_id': platform.device_id,
                     'deps': {
                         'library': copy.deepcopy(compile_deps['library']) # TODO why `deepcopy` here?
@@ -887,6 +893,27 @@ def get_library_env_uoas(compile_deps, platform):
         raise CKException({'return': 1, 'error': 'expected at least one library environment'})
 
     return library_env_uoas
+
+
+def get_user_from_module_config():
+    r = ck_access({'action': 'load',
+                    'module_uoa': 'module',
+                    'data_uoa': cfg['module_deps']['program.optimization']
+                })
+    mcfg = r['dict']
+
+    dcfg = {}
+    r = ck_access({'action': 'load',
+                    'module_uoa': mcfg['module_deps']['cfg'],
+                    'data_uoa': mcfg['cfg_uoa']
+                }, skip_error_codes = [16])
+
+    # TODO: code 16 is not an error but we can't get user when it's returned? 
+    # TODO: what does it mean - 16? comment or speaking name is required
+    if r['return'] != 16:
+        dcfg = r['dict']
+
+    return dcfg.get('user_email')
 
 
 def crowdsource(i):
@@ -1036,80 +1063,21 @@ def crowdsource(i):
 
     env=i.get('env',{})
 
-    # Check user
-    user=''
-
-    mcfg={}
-    ii={'action':'load',
-        'module_uoa':'module',
-        'data_uoa':cfg['module_deps']['program.optimization']}
-    r=ck.access(ii)
-    if r['return']==0:
-       mcfg=r['dict']
-
-       dcfg={}
-       ii={'action':'load',
-           'module_uoa':mcfg['module_deps']['cfg'],
-           'data_uoa':mcfg['cfg_uoa']}
-       r=ck.access(ii)
-       if r['return']>0 and r['return']!=16: return r
-       if r['return']!=16:
-          dcfg=r['dict']
-
-       user=dcfg.get('user_email','')
-
     # Initialize local environment for program optimization ***********************************************************
-    pi=i.get('platform_info',{})
-    if len(pi)==0:
-       ii=copy.deepcopy(i)
-       ii['action']='initialize'
-       ii['module_uoa']=cfg['module_deps']['program.optimization']
-       ii['data_uoa']='caffe'
-       ii['exchange_repo']=er
-       ii['exchange_subrepo']=esr
-       ii['skip_welcome']='yes'
-       ii['skip_log_wait']='yes'
-       ii['crowdtuning_type']='nntest'
-       ii['update_platform_init']=i.get('update_platform_init','')
-       if local=='yes': ii['local_autotuning']='yes'
-       r=ck.access(ii)
-       if r['return']>0: return r
-
-       pi=r['platform_info']
-       user=r.get('user','')
-
-    hos=pi['host_os_uoa']
-    hos_uid=pi['host_os_uid']
-    hosd=pi['host_os_dict']
-
-    tos=pi['os_uoa']
-    tos_uid=pi['os_uid']
-    tosd=pi['os_dict']
-    tbits=tosd.get('bits','')
-
-    remote=tosd.get('remote','')
-
-    tdid=pi['device_id']
-
-    features=pi.get('features',{})
-
     PLATFORM = PlatformInfo(i, local, er, esr)
-    if PLATFORM.user:
-        user = PLATFORM.user
+    
+    # Check user
+    user = PLATFORM.user or get_user_from_module_config()
 
-    fplat=features.get('platform',{})
-    fos=features.get('os',{})
-    fcpu=features.get('cpu',{})
-
-    plat_name=fplat.get('name','')
-    plat_uid=features.get('platform_uid','')
-    os_name=fos.get('name','')
-    os_uid=features.get('os_uid','')
-    cpu_name=fcpu.get('name','')
-    cpu_abi=fcpu.get('cpu_abi','')
+    plat_name=PLATFORM.features.get('platform',{}).get('name','')
+    plat_uid=PLATFORM.features.get('platform_uid','')
+    os_name=PLATFORM.features.get('os',{}).get('name','')
+    os_uid=PLATFORM.features.get('os_uid','')
+    cpu_name=PLATFORM.features.get('cpu',{}).get('name','')
+    cpu_abi=PLATFORM.features.get('cpu',{}).get('cpu_abi','')
     if cpu_name=='': cpu_name='unknown-'+cpu_abi
-    cpu_uid=features.get('cpu_uid','')
-    sn=fos.get('serial_number','')
+    cpu_uid=PLATFORM.features.get('cpu_uid','')
+    sn=PLATFORM.features.get('os',{}).get('serial_number','')
 
     # Now checking which tests to run
     if o=='con':
@@ -1345,7 +1313,7 @@ def crowdsource(i):
                           xcdeps=r.get('dependencies',{})
 
                           # Get extra features (resolved GPGPU if needed)
-                          pfeatures=pi.get('features',{})
+                          pfeatures = PLATFORM.features
 
                           fgpu=pfeatures.get('gpu',{})
                           gpu_name=fgpu.get('name','')
@@ -1424,9 +1392,9 @@ def crowdsource(i):
 
                                 'scenario_module_uoa':work['self_module_uid'],
 
-                                'host_os_uid':hos_uid,
-                                'target_os_uid':tos_uid,
-                                'target_device_id':tdid,
+                                'host_os_uid': PLATFORM.host_os_uid,
+                                'target_os_uid': PLATFORM.target_os_uid,
+                                'target_device_id': PLATFORM.device_id,
 
                                 'cpu_name':cpu_name,
                                 'cpu_abi':cpu_abi,
