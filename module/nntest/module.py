@@ -12,6 +12,7 @@
 #   - Grigori Fursin, cTuning foundation, 2017
 #
 
+import json
 import copy
 import os
 from time import strftime, gmtime
@@ -723,7 +724,7 @@ def get_user_from_module_config():
     return dcfg.get('user_email','')
 
 
-def get_programs_for_test(data_uoa, tags_list, species_uids):
+def get_programs(data_uoa, tags_list, species_uids):
     r = ck_access({'action':'search',
                    'module_uoa': cfg['module_deps']['program'],
                    'data_uoa': data_uoa,
@@ -750,51 +751,7 @@ def get_programs_for_test(data_uoa, tags_list, species_uids):
     return sorted(programs, key = lambda p: p.get('data_uoa',''))
 
 
-def get_program_species(program_meta):
-    '''
-    Returns comma separated species string the program belongs to (to prepare experiment tags)
-    '''
-    all_species = []
-    for species in program_meta.get('species', []):
-        r = ck_access({'action': 'load',
-                        'module_uoa': cfg['module_deps']['program.species'],
-                        'data_uoa': species})
-        all_species.append(r['data_uoa'])
-    return ','.join(all_species)
-
-
-def get_library_env_uoas(compile_deps, platform):
-    '''
-    Resolve library environment UOA(s) (don't use cache to get all choices)
-    '''
-    if not compile_deps.get('library', None):
-        return [''] # Empty for at least one iteration even if library is not used
-
-    r = ck_access({'action': 'resolve',
-                    'module_uoa': cfg['module_deps']['env'],
-                    'host_os': platform.host_os,
-                    'target_os': platform.target_os,
-                    'device_id': platform.device_id,
-                    'deps': {
-                        'library': copy.deepcopy(compile_deps['library']) # TODO why `deepcopy` here?
-                    }
-                })
-
-    library_env_uoas = r['deps']['library'].get('choices',[])
-
-    if not library_env_uoas:
-        # Check that maybe 1 env was installed during resolving
-        x = r.get('deps',{}).get('library',{}).get('uoa','')
-        if x:
-            library_env_uoas.append(x)
-
-    if not library_env_uoas:
-        raise CKException.throw('expected at least one library environment')
-
-    return library_env_uoas
-
-
-def load_library_envs_sorted_by_id(library_env_uoas):
+def load_lib_envs_sorted_by_id(library_env_uoas):
     '''
     Loads all library envs and returns them as a list sorted by `lib_id`
     '''
@@ -831,12 +788,40 @@ def resolve_all_deps(deps, platform):
 
 class ActionOptions:
     def __init__(self, i):
-        self.record = i.get('no_record') != 'yes'
-        self.dry_run = i.get('dry_run') == 'yes'
         self.data_uoa = i.get('data_uoa','')
+        self.lib_uoa = i.get('library_uoa','')
         self.species = i.get('species','')
-        self.tags = ['nntest']
+        self.cmd_key = i.get('cmd_key','')
+        self.target = i.get('target','')
+
+        files = i.get('dataset_file','')
+        self.dataset_files = files.split(',') if (',' in files) else []
+        self.dataset_uoa = i.get('dataset_uoa','')
+
+        self.tags = self.__get_input_tags(i)
+        self.autotune_id = str(i.get('autotune_id')) or '0'
+
+        self.record = i.get('no_record') != 'yes'
+        self.record_uoa = i.get('record_uoa','')
+
+        self.dry_run = i.get('dry_run') == 'yes'
+        self.mali_hwc = i.get('mali_hwc') == 'yes'
+        self.dvdt_prof = i.get('dvdt_prof') == 'yes'
+        self.see_tests = i.get('see_tests') == 'yes'
+        self.pause = i.get('pause') == 'yes'
+        self.pause_if_fail = i.get('pause_if_fail') == 'yes'
+        self.console = i.get('out') == 'con'
+
+        self.flags = i.get('flags') or '-O3'
+        self.env = i.get('env',{})
+
+        self.num_repetitions = int(i.get('repetitions') or 3)
+        self.iterations = int(i.get('repetitions') or -1)
+        if i.get('overwrite_reference_output','') == 'yes':
+            self.iterations = 1
         
+    def __get_input_tags(self, i):
+        tags = ['nntest']
         if 'tags' in i:
             for tag in i['tags'].split(','):
                 t = tag.strip()
@@ -844,7 +829,8 @@ class ActionOptions:
                 if t == 'opencl': t = 'vopencl'
                 elif x == 'cuda': t = 'vcuda'
                 elif t == 'cpu': t = 'vcpu'
-                self.tags.append(t)
+                tags.append(t)
+        return tags
 
     def get_species_uids(self):
         uids = []
@@ -901,6 +887,113 @@ class PlatformInfo:
         self.opencl_version = self.features.get('gpgpu_misc',{}).get('opencl c version','')
 
 
+class Program:
+    def __init__(self, p):
+        self.uoa = p['data_uoa']
+        self.uid = p['data_uid']
+        self.meta = p['meta']
+        self.path = p['path']
+        self.compile_deps = self.meta.get('compile_deps',{})
+        
+        self.commands = self.meta.get('run_cmds',{})
+        if not self.commands:
+            CKException.throw('no CMD for run in program {} ({})'.format(self.uoa, self.uid))
+
+        tags = self.meta.get('tags',[])
+        if 'vopencl' in tags: self.type = 'opencl'
+        elif 'vcuda' in tags: self.type = 'cuda'
+        else: self.type = 'cpu'
+
+        # Comma separated species string the program belongs to (to prepare experiment tags)
+        self.species_uoas_str = self.__make_species_uoas_str()
+
+    def __make_species_uoas_str(self):
+        uoas = []
+        for s in self.meta.get('species', []):
+            r = ck_access({'action': 'load',
+                            'module_uoa': cfg['module_deps']['program.species'],
+                            'data_uoa': s})
+            uoas.append(r['data_uoa'])
+        return ','.join(uoas)
+
+    def get_cmd_keys(self, options):
+        # Do process only key given in the input
+        if options.cmd_key:
+            return [k for k in self.commands if k == options.cmd_key]
+        # Ignore development keys
+        return sorted([k for k in self.commands if not k.startswith('dev')])
+
+    def get_lib_env_uoas(self, platform):
+        '''
+        Resolve library environment UOA(s) (don't use cache to get all choices)
+        '''
+        lib = self.compile_deps.get('library')
+        # Empty for at least one iteration even if library is not used
+        if not lib: return [''] 
+
+        r = ck_access({'action': 'resolve',
+                        'module_uoa': cfg['module_deps']['env'],
+                        'host_os': platform.host_os,
+                        'target_os': platform.target_os,
+                        'device_id': platform.device_id,
+                        'deps': {'library': copy.deepcopy(lib)}
+                    })
+        uoas = r['deps']['library'].get('choices',[])
+        if not uoas:
+            # Check that maybe 1 env was installed during resolving
+            x = r.get('deps',{}).get('library',{}).get('uoa','')
+            if x:
+                uoas.append(x)
+        if not uoas:
+            raise CKException.throw('expected at least one library environment')
+        return uoas
+
+
+class ProgramCommand:
+    '''
+    Meta related to the selected command line
+    '''
+    def __init__(self, program, cmd_key):
+        self.key = cmd_key
+        self.cmd = program.commands[cmd_key]
+        self.is_opencl = self.cmd.get('run_time',{}).get('need_compute_device','') == 'opencl'
+        self.dataset_tags = self.cmd.get('dataset_tags',[])
+        self.autotuning = self.cmd.get('autotuning',{})
+
+    def get_datasets(self, dataset_uoa):
+        '''
+        Find datasets by command's dataset tags or by explicitly specified input uoa
+        '''
+        if not self.dataset_tags:
+            return []
+        params = {'action':'search',
+                  'module_uoa':cfg['module_deps']['dataset'],
+                  'add_meta':'yes'}
+        if dataset_uoa:
+            params['data_uoa'] = dataset_uoa
+        else:
+            params['tags'] = ','.join(self.dataset_tags)
+        r = ck_access(params)
+        return sorted(r['lst'], key = lambda x: x.get('data_uoa',''))
+
+
+class Dataset:
+    def __init__(self, json):
+        self.uoa = json['data_uoa']
+        self.uid = json['data_uid']
+        self.files = json['meta'].get('dataset_files',[])
+
+    def get_files(self, requested_files):
+        if requested_files:
+            files = [f for f in self.files if f in requested_files]
+        else:
+            files = self.files
+        # add empty for 1 iteration without a file
+        if not files: 
+            files.append('')
+        return files
+
+
 class LibraryEnv:
     def __init__(self, library_env):
         self.env = library_env
@@ -910,11 +1003,8 @@ class LibraryEnv:
         self.tags = self.env['data_name'].lower().replace(', ','-').replace(' ','-').replace(',','-').replace('(','').replace(')','')
         self.lib_id = str(self.env.get('dict',{}).get('customize',{}).get('lib_id', 0))
 
-    def is_set(self):
-        return len(self.env) > 0
-
     def get_tags_for_test(self):
-        if not self.is_set():
+        if not self.data_uoa:
             return 'no-library'
 
         # Remove duplicates at the end of `tags` and beginning of `version` (e.g. avgpool-avgpool)
@@ -937,34 +1027,45 @@ class LibraryEnv:
         
 
 class Pipeline:
-    def __init__(self, compile_deps, deps_cache, reuse_deps, 
-                 target, program_uoa, 
-                 cmd_key, dataset_uoa, dataset_file, 
-                 dvdt_prof, mali_hwc, env, flags, platform):
+    def __init__(self, options, platform, deps_cache, reuse_deps, 
+                 program, command, dataset, dataset_file, library):
+
+        self.dvdt_prof = options.dvdt_prof and command.is_opencl
+        self.mali_hwc = options.mali_hwc and command.is_opencl
+        if self.mali_hwc:
+            self.env = copy.deepcopy(options.env)
+            self.env['CK_ADD_RAW_MALI_HWC'] = 'yes'
+        else:
+            self.env = options.env
+
+        self.compile_deps = copy.deepcopy(program.compile_deps)
+        if library.data_uoa:
+            self.compile_deps['library']['uoa'] = library.data_uoa # here still clean deps
+            self.compile_deps['library']['skip_cache']='yes' # do not cache since we will iterate over it
 
         self.params_json = {
             'action': 'pipeline',
 
-            'dependencies': compile_deps,
+            'dependencies': self.compile_deps,
             'deps_cache': deps_cache,
             'reuse_deps': reuse_deps,
 
             'host_os': platform.host_os,
-            'target': target,
+            'target': options.target,
             'target_os': platform.target_os,
             'device_id': platform.device_id,
 
             'module_uoa': cfg['module_deps']['program'],
-            'data_uoa': program_uoa,
+            'data_uoa': program.uoa,
 
-            'cmd_key': cmd_key,
-            'dataset_uoa': dataset_uoa,
+            'cmd_key': command.key,
+            'dataset_uoa': dataset.uoa,
             'dataset_file': dataset_file,
 
-            'dvdt_prof': dvdt_prof,
-            'mali_hwc': mali_hwc,
+            'dvdt_prof': yes_no(self.dvdt_prof),
+            'mali_hwc': yes_no(self.mali_hwc),
 
-            'env': env,
+            'env': self.env,
 
             'no_state_check': 'yes',
             'no_compiler_description': 'yes',
@@ -973,19 +1074,19 @@ class Pipeline:
             'cpu_freq':'max',
             'gpu_freq':'max',
 
-            'flags': flags,
+            'flags': options.flags,
             'speed': 'no',
             'energy': 'no',
 
             'skip_print_timers': 'yes',
-            'out': 'con'
+            'out': 'con' # TODO should it be the same as `i.get('out','')` ?
         }
 
-    def pass_vars_from_input(self, vars, action_params_json):
+    def pass_vars_from_input(self, action_params_json):
         '''
         Pass vars from input to pipeline
         '''
-        for var in vars:
+        for var in pass_vars_to_autotune:
             if var in action_params_json:
                 self.params_json[var] = action_params_json[var]
 
@@ -1014,6 +1115,15 @@ class Pipeline:
 
         self.prepared_pipeline = r
 
+    def get_compiler_str(self):
+        '''
+        Returns description string of a compiler resolved by the pipeline.
+        NB: Result is only valid after call of `prepare` function.
+        '''
+        c = self.compile_deps['compiler']
+        return '{} v{} ({})'.format(c['dict']['data_name'], c['ver'], c['uoa']) 
+
+
 
 def crowdsource(i):
     """
@@ -1035,6 +1145,10 @@ def crowdsource(i):
     # Initializing various workflow parameters
     OPTIONS = ActionOptions(i)
 
+    def ck_out(msg):
+        if OPTIONS.console:
+            ck.out(msg)
+
     # Get current timestamp
     r=ck.get_current_date_time({})
     if r['return']>0: return r
@@ -1048,17 +1162,8 @@ def crowdsource(i):
 
     # Setting output and checking misc vars
     o=i.get('out','')
-    oo=''
-    if o=='con': oo='con'
 
-    quiet=i.get('quiet','')
-
-    xautotune_id=i.get('autotune_id','')
-
-    target=i.get('target','')
-
-     # Check working repository (possibly remote)
-
+    # Check working repository (possibly remote)
     local=i.get('local','')
     if local=='yes': 
        er='local'
@@ -1073,43 +1178,11 @@ def crowdsource(i):
        if esr=='': esr=ck.cfg.get('default_exchange_subrepo_uoa','')
 
     if i.get('record_repo','')!='': er=i['record_repo']
-    xrecord_uoa=i.get('record_uoa','')
 
     # Misc params
-    num_repetitions=i.get('repetitions','')
-    if num_repetitions=='': num_repetitions=3
-    num_repetitions=int(num_repetitions)
 
-    iterations=i.get('iterations','')
-    if iterations=='': iterations=-1
-    iterations=int(iterations)
-
-    if i.get('overwrite_reference_output','')=='yes':
-       iterations=1
-
-    pause=i.get('pause','')
-    pause_if_fail=i.get('pause_if_fail','')
-
-    lib_uoa=i.get('library_uoa','')
-
-    see_tests=i.get('see_tests','')
-    
-    xmali_hwc=i.get('mali_hwc','')
-
-    xdvdt_prof=i.get('dvdt_prof','')
-    flags=i.get('flags','')
-    if flags=='': flags='-O3'
-
-    if xmali_hwc=='yes' and xdvdt_prof=='yes':
+    if OPTIONS.mali_hwc and OPTIONS.dvdt_prof:
        ck.out('[WARNING] Shouldn\'t use --mali_hwc and --dvdt_prof at the same time ...')
-
-    ikcmd=i.get('cmd_key','')
-    idduoa=i.get('dataset_uoa','')
-    idfile=i.get('dataset_file','')
-
-    ldfile=[]
-    if idfile.find(',')>0:
-       ldfile=idfile.split(',')
 
     custom_autotuning=i.get('custom_autotuning',{})
 
@@ -1152,9 +1225,7 @@ def crowdsource(i):
             r=ck.set_by_flat_key({'dict':i, 'key':kk, 'value':v})
             if r['return']>0: return r
 
-    env=i.get('env',{})
-
-    # Initialize local environment for program optimization ***********************************************************
+    # Initialize local environment for program optimization
     PLATFORM = PlatformInfo(i, local, er, esr)
     
     # Check user
@@ -1163,192 +1234,96 @@ def crowdsource(i):
     user = PLATFORM.user or get_user_from_module_config()
     
     # Now checking which tests to run
-    if o=='con':
-       ck.out(sep)
-       ck.out('Preparing a list of tests ...')
-
-    programs = get_programs_for_test(OPTIONS.data_uoa, OPTIONS.tags, OPTIONS.get_species_uids())
+    # Iteration order PROGRAM -> COMMAND -> DATASET -> DATASET_FILE -> LIBRARY
+    ck_out(sep)
+    ck_out('Preparing a list of tests ...')
 
     # Start iterating over programs
-    program_index = -1
-    for p in programs:
-        program_index += 1
+    programs = get_programs(OPTIONS.data_uoa, OPTIONS.tags, OPTIONS.get_species_uids())
+    for program_index, PROGRAM in enumerate(map(Program, programs)):
+        ck_out(sep)
+        ck_out('Analyzing program {} of {}: {} ({})'.format(
+            program_index+1, len(programs), PROGRAM.uoa, PROGRAM.uid))
 
-        test_uoa=p['data_uoa']
-        test_uid=p['data_uid']
-        mm=copy.deepcopy(p['meta']) # program meta
-
-        # Get and save dependencies
-        saved_cdeps=copy.deepcopy(mm.get('compile_deps',{}))
-
-        path=p['path']
-
-        prog_tags=mm.get('tags',[])
-        prog_type=''
-        if 'vopencl' in prog_tags: prog_type='opencl'
-        elif 'vcuda' in prog_tags: prog_type='cuda'
-        else: prog_type='cpu'
-
-        if o=='con':
-           ck.out(sep)
-           ck.out('Analyzing program {} of {}: {} ({})'.format(program_index+1, len(programs), test_uoa, test_uid))
-
+        # Get libraries from dependencies
+        library_envs = load_lib_envs_sorted_by_id(
+             [OPTIONS.lib_uoa] if OPTIONS.lib_uoa else PROGRAM.get_lib_env_uoas(PLATFORM)
+        )
+           
         # Check and iterate over all or pruned command lines
-        run_cmds=mm.get('run_cmds',{})
-        if len(run_cmds)==0:
-           return {'return':1, 'error':'no CMD for run'}
-
-        krun_cmds=sorted(list(run_cmds.keys()))
-
-        if ikcmd!='':
-           if ikcmd in krun_cmds:
-              krun_cmds=[ikcmd]
-           else:
-              krun_cmds=[]
-
-        for kcmd in sorted(krun_cmds):
-            # Explicitly ignore development command lines
-            if kcmd.startswith('dev'): 
-               continue
-
-            if o=='con':
-               ck.out('  '+sep)
-               ck.out('  Analyzing command line: '+kcmd)
-
-            # Meta related to the selected command line
-            vcmd=run_cmds[kcmd]
-
-            # Check MALI HWC
-            mali_hwc=''
-            if xmali_hwc=='yes' and vcmd.get('run_time',{}).get('need_compute_device','')=='opencl':
-               mali_hwc='yes'
-               env['CK_ADD_RAW_MALI_HWC']='yes'
-
-            # Check dvdt prof
-            dvdt_prof=''
-            if xdvdt_prof=='yes' and vcmd.get('run_time',{}).get('need_compute_device','')=='opencl':
-               dvdt_prof='yes'
+        cmd_keys = PROGRAM.get_cmd_keys(OPTIONS)
+        for COMMAND in [ProgramCommand(PROGRAM, k) for k in cmd_keys]:
+            ck_out('  ' + sep)
+            ck_out('  Analyzing command line: ' + COMMAND.key)
 
             # Check if takes datasets from CK and prepare selection
-            dtags=vcmd.get('dataset_tags',[])
-            if len(dtags)>0:
-               dmuoa=cfg['module_deps']['dataset']
-
-               ii={'action':'search',
-                   'module_uoa':dmuoa,
-                   'add_meta':'yes'}
-
-               if idduoa=='':
-                  tags=''
-                  for q in dtags:
-                      if tags!='': tags+=','
-                      tags+=q
-
-                  ii['tags']=tags
-               else:
-                  ii['data_uoa']=idduoa
-
-               rx=ck.access(ii)
-               if rx['return']>0: return rx
-
-               dlst=rx['lst']
-
+            if COMMAND.dataset_tags:
+               
                # Iterate over datasets and check data files
-               for dataset in sorted(dlst, key=lambda x: x.get('data_uoa','')):
-                   dduoa=dataset['data_uoa']
-                   dduid=dataset['data_uid']
-
-                   if o=='con':
-                      ck.out('    '+sep)
-                      ck.out('    Analyzing dataset: '+dduoa)
-
-                   dd=dataset['meta']
-
-                   dfiles=dd.get('dataset_files',[])
-                   if len(ldfile)>0:
-                      dfiles=ldfile
-                   elif idfile!='':
-                      if idfile in dfiles:
-                         dfiles=[idfile]
-                      else:
-                         dfiles=[]
-                   elif len(dfiles)==0:
-                      dfiles=[''] # add empty for 1 iteration without a file
+               datasets = COMMAND.get_datasets(OPTIONS.dataset_uoa)
+               for DATASET in [Dataset(d) for d in datasets]:
+                   ck_out('    ' + sep)
+                   ck_out('    Analyzing dataset: ' + DATASET.uoa)
 
                    # Iterate over data files
-                   for dfile in dfiles:
-                      if dfile!='' and o=='con':
-                         ck.out('      '+sep)
-                         ck.out('      Analyzing dataset file: '+dfile)
-                         ck.out('')
+                   for DATASET_FILE in DATASET.get_files(OPTIONS.dataset_files):
+                      if DATASET_FILE:
+                         ck_out('      ' + sep)
+                         ck_out('      Analyzing dataset file: ' + DATASET_FILE)
+                         ck_out('')
 
-                      if pause=='yes':
+                      # TODO should it be used only for console mode (i.get('out') == 'con')?
+                      if OPTIONS.pause:
                          ck.inp({'text':'Press Enter to continue ...'})
 
-                      # TODO it does not depend on a dataset, so can be done outside of loop through dataset files
-                      species = get_program_species(mm)
-
-                      # TODO it does not depend on a dataset, so can be done outside of loop through dataset files
-                      library_envs = load_library_envs_sorted_by_id(
-                          [lib_uoa] if lib_uoa else get_library_env_uoas(saved_cdeps, PLATFORM)
-                      )
-
-                      cdeps = copy.deepcopy(saved_cdeps)
-
                       for LIBRARY in map(LibraryEnv, library_envs):
-                          if LIBRARY.is_set():
-                             if o=='con':
-                                ck.out('        '+sep)
-                                ck.out('        Analyzing library: ' + LIBRARY.data_uoa)
-                                ck.out('')
-
-                             cdeps['library']['uoa'] = LIBRARY.data_uoa # here still clean deps
-                             cdeps['library']['skip_cache']='yes' # do not cache since we will iterate over it
+                          if LIBRARY.data_uoa:
+                             ck_out('        ' + sep)
+                             ck_out('        Analyzing library: ' + LIBRARY.data_uoa)
+                             ck_out('')
 
                           # Get specific autotuner, 
-                          autotune_id = xautotune_id or LIBRARY.lib_id or '0'
+                          autotune_id = OPTIONS.autotune_id or LIBRARY.lib_id
 
-                          if o=='con':
-                             ck.out('        Autotune ID: '+autotune_id)
-                             ck.out('')
+                          ck_out('        Autotune ID: ' + autotune_id)
+                          ck_out('')
 
-                          if see_tests=='yes':
-                             continue
+                          if OPTIONS.see_tests: continue
 
                           # Prepare pipeline.
-                          PIPELINE = Pipeline(cdeps, deps_cache, reuse_deps, target, test_uoa, 
-                                kcmd, dduoa, dfile, dvdt_prof, mali_hwc, env, flags, PLATFORM)
-                          PIPELINE.pass_vars_from_input(pass_vars_to_autotune, i)
+                          PIPELINE = Pipeline(OPTIONS, PLATFORM, deps_cache, reuse_deps, 
+                                PROGRAM, COMMAND, DATASET, DATASET_FILE, LIBRARY)
+                          PIPELINE.pass_vars_from_input(i)
                           PIPELINE.prepare()
 
                           # TODO: what does it need for? its result is not used, comment needed
                           resolve_all_deps(PIPELINE.deps, PLATFORM)
 
-                          tags = ['nntest', test_uoa, LIBRARY.get_tags_for_test()]
+                          tags = ['nntest', PROGRAM.uoa, LIBRARY.get_tags_for_test()]
 
                           record_uoa=''
                           if OPTIONS.record:
-                             if xrecord_uoa!='':
-                                record_uoa=xrecord_uoa
+                             if OPTIONS.record_uoa:
+                                record_uoa=OPTIONS.record_uoa
                              else:
                                 x= i.get('timestamp','') or stimestamp
                                 record_uoa='-'.join(tags)+'-'+x
 
-                          tags.extend([timestamp, stimestamp, species])
+                          tags.extend([timestamp, stimestamp, PROGRAM.species_uoas_str])
 
                           ck.out('---------------------------------------------------------------------------------------')
-                          ck.out('- Program: %s (%s)' % (test_uoa, test_uid))
+                          ck.out('- Program: %s (%s)' % (PROGRAM.uoa, PROGRAM.uid))
 
-                          if LIBRARY.is_set():
+                          if LIBRARY.data_uoa:
                               ck.out('- Library: %s (%s)'  % (LIBRARY.data_name, LIBRARY.data_uoa))
 
-                          ck.out('- Compiler: %s v%s (%s)' % (cdeps['compiler']['dict']['data_name'],
-                                                              cdeps['compiler']['ver'], 
-                                                              cdeps['compiler']['uoa']))
+                          ck.out('- Compiler: %s' % PIPELINE.get_compiler_str())
                           if OPTIONS.record:
                              ck.out('- Experiment: %s:%s' % (er, record_uoa))
                           ck.out('- Tags: %s' % tags)
                           ck.out('---------------------------------------------------------------------------------------')
+
+                          if OPTIONS.dry_run: continue
 
                           # Prepare experiment entry meta
                           meta={'timestamp':timestamp,
@@ -1373,26 +1348,24 @@ def crowdsource(i):
                                 'plat_uid': PLATFORM.uid,
 
                                 'gpu_name': PLATFORM.gpu_name,
-
                                 'gpgpu_name': PLATFORM.gpgpu_name2,
                                 'gpgpu_vendor': PLATFORM.gpgpu_vendor,
                                 'opencl': PLATFORM.opencl_version,
 
-                                'prog_uoa':test_uoa,
-                                'prog_uid':test_uid,
+                                'prog_uoa': PROGRAM.uoa,
+                                'prog_uid': PROGRAM.uid,
+                                'prog_type': PROGRAM.type,
 
-                                'prog_type':prog_type,
+                                'species': PROGRAM.species_uoas_str,
 
-                                'species':species,
-
-                                'cmd_key':kcmd,
+                                'cmd_key': COMMAND.key,
 
                                 'versions': get_versions_of_all_deps(PIPELINE.deps),
 
-                                'dataset_uoa':dduoa,
-                                'dataset_uid':dduid,
+                                'dataset_uoa': DATASET.uoa,
+                                'dataset_uid': DATASET.uid,
 
-                                'dataset_file':dfile
+                                'dataset_file': DATASET_FILE
                           }
 
                           # Add hostname
@@ -1415,8 +1388,8 @@ def crowdsource(i):
                               'meta':meta,
                               'tags':tags,
 
-                              'iterations':iterations,
-                              'repetitions':num_repetitions,
+                              'iterations': OPTIONS.iterations,
+                              'repetitions': OPTIONS.num_repetitions,
 
                               'record': yes_no(OPTIONS.record),
                               'record_repo':er,
@@ -1427,29 +1400,28 @@ def crowdsource(i):
 
                               "record_dict":{"subview_uoa":cfg['data_deps']['experiment.view.nntest']},
 
-                              'pause':pause,
-                              'pause_if_fail':pause_if_fail,
+                              'pause': yes_no(OPTIONS.pause),
+                              'pause_if_fail': yes_no(OPTIONS.pause_if_fail),
 
                               'pipeline': PIPELINE.prepared_pipeline,
                               'out':'con'}
 
-                          if dvdt_prof=='yes': ii['skip_stat_analysis']='yes' # too much raw statistics
-
-                          if OPTIONS.dry_run: continue
+                          if PIPELINE.dvdt_prof:
+                              ii['skip_stat_analysis']='yes' # too much raw statistics
 
                           # Check if program meta has global autotuning
-                          autotuning=mm.get('autotuning',{})
+                          autotuning=PROGRAM.meta.get('autotuning',{})
                           if len(autotuning)>0:
                              ii.update(copy.deepcopy(autotuning))
 
                           # Check if program meta has autotuning for a given command line
-                          autotuning2=vcmd.get('autotuning',{})
+                          autotuning2 = COMMAND.autotuning
                           if len(autotuning2)>0:
                              ii.update(copy.deepcopy(autotuning2))
 
                           # Check if autotune_id
                           if autotune_id!='':
-                             px=os.path.join(path,'autotune',autotune_id+'.json')
+                             px=os.path.join(PROGRAM.path,'autotune',autotune_id+'.json')
                              if os.path.isfile(px):
                                 r=ck.load_json_file({'json_file':px})
                                 if r['return']>0: return r
