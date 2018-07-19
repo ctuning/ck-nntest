@@ -1119,11 +1119,27 @@ class LibraryEnv:
                 x1=x1[:j1]
 
         return x1+'-'+x2
-        
 
-class Pipeline:
-    def __init__(self, options, config, platform,
-                 program, command, dataset, dataset_file, library):
+
+class Experiment:
+    def __init__(self,
+                 options,        # instance of ActionOptions
+                 config,         # instance of TestConfig
+                 platform,       # instance of PlatformInfo
+                 program,        # instance of Program
+                 command,        # instance of ProgramCommand 
+                 dataset,        # instance of Dataset  
+                 dataset_file,   # string
+                 library         # instance of LibraryEnv
+                ):
+        self.options = options             
+        self.config = config               
+        self.platform = platform           
+        self.program = program             
+        self.command = command             
+        self.dataset = dataset             
+        self.dataset_file = dataset_file   
+        self.library = library             
 
         self.dvdt_prof = options.dvdt_prof and command.is_opencl
         self.mali_hwc = options.mali_hwc and command.is_opencl
@@ -1133,137 +1149,10 @@ class Pipeline:
         else:
             self.env = options.env
 
-        self.compile_deps = copy.deepcopy(program.compile_deps)
-        if library.data_uoa:
-            self.compile_deps['library']['uoa'] = library.data_uoa # here still clean deps
-            self.compile_deps['library']['skip_cache']='yes' # do not cache since we will iterate over it
-
         # These are valid only after call of `prepare`
         self.deps = None
+        self.compile_deps = None
         self.prepared_pipeline = None
-
-        self.params_prepare = {
-            'action': 'pipeline',
-            'prepare': 'yes',
-
-            'dependencies': self.compile_deps,
-            'deps_cache': config.deps_cache,
-            'reuse_deps': yes_no(options.reuse_deps),
-
-            'host_os': platform.host_os,
-            'target': options.target,
-            'target_os': platform.target_os,
-            'device_id': platform.device_id,
-
-            'module_uoa': cfg['module_deps']['program'],
-            'data_uoa': program.uoa,
-
-            'cmd_key': command.key,
-            'dataset_uoa': dataset.uoa,
-            'dataset_file': dataset_file,
-
-            'dvdt_prof': yes_no(self.dvdt_prof),
-            'mali_hwc': yes_no(self.mali_hwc),
-
-            'env': self.env,
-
-            'no_state_check': 'yes',
-            'no_compiler_description': 'yes',
-            'skip_calibration': 'yes',
-
-            'cpu_freq':'max',
-            'gpu_freq':'max',
-
-            'flags': options.flags,
-            'speed': 'no',
-            'energy': 'no',
-
-            'skip_print_timers': 'yes',
-            'out': 'con' # TODO should it be the same as `i.get('out','')` ?
-        }
-
-        # Prepare experiment entry meta
-        self.experiment_meta = {
-            'timestamp': config.timestamp,
-            'stimestamp':  config.stimestamp,
-            'user': config.user,
-            'nntest_ver': cfg['version'],
-
-            'scenario_module_uoa': work['self_module_uid'],
-
-            'host_os_uid': platform.host_os_uid,
-            'target_os_uid': platform.target_os_uid,
-            'target_device_id': platform.device_id,
-
-            'cpu_name': platform.cpu_name,
-            'cpu_abi': platform.cpu_abi,
-            'cpu_uid': platform.cpu_uid,
-
-            'os_name': platform.os_name,
-            'os_uid': platform.os_uid,
-
-            'plat_name': platform.name,
-            'plat_uid': platform.uid,
-
-            'gpu_name': platform.gpu_name,
-            'gpgpu_name': platform.gpgpu_name2,
-            'gpgpu_vendor': platform.gpgpu_vendor,
-            'opencl': platform.opencl_version,
-
-            'prog_uoa': program.uoa,
-            'prog_uid': program.uid,
-            'prog_type': program.type,
-
-            'species': program.species_uoas_str,
-
-            'cmd_key': command.key,
-
-            'dataset_uoa': dataset.uoa,
-            'dataset_uid': dataset.uid,
-            'dataset_file': dataset_file
-        }  
-
-        # Add hostname
-        if ck.cfg.get('record_nntest_hostname','') == 'yes':
-            import platform
-            self.experiment_meta['platform_hostname'] = platform.node() 
-
-        # Parameters of benchmarking or autotuning
-        self.params_autotune = {
-            'action': 'autotune',
-
-            'module_uoa': 'pipeline',
-            'data_uoa': 'program',
-
-            'features_keys_to_process':['##choices#*'],
-
-            'record_params': { 'search_point_by_features': 'yes' },
-
-            'iterations': options.iterations,
-            'repetitions': options.num_repetitions,
-
-            'record': yes_no(options.record),
-            'record_repo': config.exchange_repo,
-            'record_experiment_repo': config.exchange_subrepo,
-            'record_failed': 'yes',
-            'record_dict': { 'subview_uoa': cfg['data_deps']['experiment.view.nntest'] },
-
-            'pause': yes_no(options.pause),
-            'pause_if_fail': yes_no(options.pause_if_fail),
-                              
-            'out': 'con' # TODO should it be the same as `i.get('out','')` ?
-        }
-
-        if self.dvdt_prof:
-            self.params_autotune['skip_stat_analysis'] = 'yes' # too much raw statistics
-
-        # Check if program meta has global autotuning
-        if program.autotuning:
-            self.params_autotune.update(program.autotuning)
-
-        # Check if program meta has autotuning for a given command line
-        if command.autotuning:
-            self.params_autotune.update(command.autotuning)
 
         # Base tags set
         self.tags = ['nntest', program.uoa, library.get_tags_for_test()]
@@ -1280,35 +1169,193 @@ class Pipeline:
         # Full tags set
         self.tags.extend([config.timestamp, config.stimestamp, program.species_uoas_str])
 
-    def pass_vars_from_input(self, action_params_json):
+        # Get specific autotuner
+        self.autotune_id = options.autotune_id or library.lib_id
+
+    def prepare(self, action_params_json):
         '''
-        Pass vars from input to pipeline
+        Prepare pipeline, resolve all dependencies.
         '''
+        # `compile_deps` will be resolved after call of `prepare` 
+        # and this object will be updated, so we need the copy
+        self.compile_deps = copy.deepcopy(self.program.compile_deps)
+        if self.library.data_uoa:
+            self.compile_deps['library']['uoa'] = self.library.data_uoa
+            self.compile_deps['library']['skip_cache']='yes' # do not cache since we will iterate over it
+
+        params_json = {
+            'action': 'pipeline',
+            'prepare': 'yes',
+
+            'dependencies': self.compile_deps,
+            'deps_cache': self.config.deps_cache,
+            'reuse_deps': yes_no(self.options.reuse_deps),
+
+            'host_os': self.platform.host_os,
+            'target': self.options.target,
+            'target_os': self.platform.target_os,
+            'device_id': self.platform.device_id,
+
+            'module_uoa': cfg['module_deps']['program'],
+            'data_uoa': self.program.uoa,
+
+            'cmd_key': self.command.key,
+            'dataset_uoa': self.dataset.uoa,
+            'dataset_file': self.dataset_file,
+
+            'dvdt_prof': yes_no(self.dvdt_prof),
+            'mali_hwc': yes_no(self.mali_hwc),
+
+            'env': self.env,
+
+            'no_state_check': 'yes',
+            'no_compiler_description': 'yes',
+            'skip_calibration': 'yes',
+
+            'cpu_freq':'max',
+            'gpu_freq':'max',
+
+            'flags': self.options.flags,
+            'speed': 'no',
+            'energy': 'no',
+
+            'skip_print_timers': 'yes',
+            'out': 'con' # TODO should it be the same as `i.get('out','')` ?
+        }
+
+        # Pass vars from input to pipeline
         for var in pass_vars_to_autotune:
             if var in action_params_json:
-                self.params_prepare[var] = action_params_json[var]
+                params_json[var] = action_params_json[var]
 
-    def prepare(self):
-        '''
-        Prepare pipeline.
-        '''
-        r = ck_access(self.params_prepare)
-
+        # Prepare pipeline
+        r = ck_access(params_json)
         if r.get('fail') == 'yes':
             reason = r.get('fail_reason') or 'unknown reason'
             CKException.throw('pipeline failed (%s)' % reason, code=10)
-
         if r.get('ready') != 'yes':
             CKException.throw('pipeline not ready', code=11)
-
-        # Remember resolved deps for this benchmarking session.
-        self.deps = r.get('dependencies', {})
 
         # Clean and store pipeline.
         if 'ready' in r: del(r['ready'])
         if 'fail' in r: del(r['fail'])
         if 'return' in r: del(r['return'])
         self.prepared_pipeline = r
+        self.deps = r.get('dependencies', {})
+
+    def run(self):
+        '''
+        Run prepared pipeline.
+        '''
+        assert self.prepared_pipeline
+
+        params_json = {
+            'action': 'autotune',
+
+            'module_uoa': 'pipeline',
+            'data_uoa': 'program',
+
+            'meta': self.__make_experiment_meta(),
+            'tags': self.tags,
+            'pipeline': self.prepared_pipeline,
+                              
+            'features_keys_to_process': ['##choices#*'],
+
+            'iterations': self.options.iterations,
+            'repetitions': self.options.num_repetitions,
+
+            'record': yes_no(self.options.record),
+            'record_repo': self.config.exchange_repo,
+            'record_experiment_repo': self.config.exchange_subrepo,
+            'record_failed': 'yes',
+            'record_dict': { 'subview_uoa': cfg['data_deps']['experiment.view.nntest'] },
+            'record_params': { 'search_point_by_features': 'yes' },
+            'record_uoa': self.record_uoa,
+
+            'pause': yes_no(self.options.pause),
+            'pause_if_fail': yes_no(self.options.pause_if_fail),
+            'skip_stat_analysis': yes_no(self.dvdt_prof), # too much raw statistics
+            'out': 'con' # TODO should it be the same as `i.get('out','')` ?
+        }
+
+        self.__apply_autotuning_params(params_json)
+
+        # Start benchmarking or autotuning
+        r = ck_access(params_json)
+        if r.get('fail') == 'yes':
+            reason = r.get('fail_reason') or 'unknown reason'
+            CKException.throw('autotuning failed (%s)' % reason, code=10)
+
+    def __make_experiment_meta(self):
+        '''
+        Prepare experiment entry meta
+        '''
+        meta = {
+            'timestamp': self.config.timestamp,
+            'stimestamp':  self.config.stimestamp,
+            'user': self.config.user,
+            'nntest_ver': cfg['version'],
+
+            'scenario_module_uoa': work['self_module_uid'],
+
+            'host_os_uid': self.platform.host_os_uid,
+            'target_os_uid': self.platform.target_os_uid,
+            'target_device_id': self.platform.device_id,
+
+            'cpu_name': self.platform.cpu_name,
+            'cpu_abi': self.platform.cpu_abi,
+            'cpu_uid': self.platform.cpu_uid,
+
+            'os_name': self.platform.os_name,
+            'os_uid': self.platform.os_uid,
+
+            'plat_name': self.platform.name,
+            'plat_uid': self.platform.uid,
+
+            'gpu_name': self.platform.gpu_name,
+            'gpgpu_name': self.platform.gpgpu_name2,
+            'gpgpu_vendor': self.platform.gpgpu_vendor,
+            'opencl': self.platform.opencl_version,
+
+            'prog_uoa': self.program.uoa,
+            'prog_uid': self.program.uid,
+            'prog_type': self.program.type,
+
+            'species': self.program.species_uoas_str,
+
+            'cmd_key': self.command.key,
+
+            'dataset_uoa': self.dataset.uoa,
+            'dataset_uid': self.dataset.uid,
+            'dataset_file': self.dataset_file,
+
+            'versions': get_versions_of_all_deps(self.deps)
+        }  
+
+        # Add hostname if required
+        if ck.cfg.get('record_nntest_hostname','') == 'yes':
+            import platform
+            meta['platform_hostname'] = platform.node() 
+
+        return meta
+
+    def __apply_autotuning_params(self, target_json):
+        # Check if program meta has global autotuning
+        if self.program.autotuning:
+            target_json.update(self.program.autotuning)
+
+        # Check if program meta has autotuning for a given command line
+        if self.command.autotuning:
+            target_json.update(self.command.autotuning)
+
+        # Check if autotune_id
+        autotuning = self.program.get_autotuning_from_file(self.autotune_id)
+        if autotuning:
+            target_json.update(autotuning)
+
+        # Check if external autotuning is defined
+        if self.options.custom_autotuning:
+            target_json.update(self.options.custom_autotuning)
 
     def get_compiler_str(self):
         '''
@@ -1320,34 +1367,6 @@ class Pipeline:
         return '{} v{} ({})'.format(self.compile_deps['compiler']['dict']['data_name'],
                                     self.compile_deps['compiler']['ver'],
                                     self.compile_deps['compiler']['uoa']) 
-
-    def autotune(self, options, program, autotune_id):
-        '''
-        Run prepared pipeline.
-        '''
-        assert self.prepared_pipeline
-
-        self.experiment_meta['versions'] = get_versions_of_all_deps(self.deps)
-
-        self.params_autotune['meta'] = self.experiment_meta
-        self.params_autotune['tags'] = self.tags
-        self.params_autotune['record_uoa'] = self.record_uoa
-        self.params_autotune['pipeline'] = self.prepared_pipeline
-
-        # Check if autotune_id
-        autotuning = program.get_autotuning_from_file(autotune_id)
-        if autotuning:
-            self.params_autotune.update(autotuning)
-
-        # Check if external autotuning is defined
-        if options.custom_autotuning:
-            self.params_autotune.update(options.custom_autotuning)
-
-        # Start benchmarking or autotuning
-        r = ck_access(self.params_autotune)
-        if r.get('fail') == 'yes':
-            reason = r.get('fail_reason') or 'unknown reason'
-            CKException.throw('autotuning failed (%s)' % reason, code=10)
 
 
 def crowdsource(i):
@@ -1428,22 +1447,19 @@ def crowdsource(i):
                                 ck_out('        Analyzing library: ' + LIBRARY.data_uoa)
                                 ck_out('')
 
-                            # Get specific autotuner, 
-                            autotune_id = OPTIONS.autotune_id or LIBRARY.lib_id
+                            EXPERIMENT = Experiment(OPTIONS, CONFIG, PLATFORM, 
+                                PROGRAM, COMMAND, DATASET, DATASET_FILE, LIBRARY)
 
-                            ck_out('        Autotune ID: ' + autotune_id)
+                            ck_out('        Autotune ID: ' + EXPERIMENT.autotune_id)
                             ck_out('')
 
                             if OPTIONS.see_tests: continue
 
                             # Prepare pipeline.
-                            PIPELINE = Pipeline(OPTIONS, CONFIG, PLATFORM, 
-                                                PROGRAM, COMMAND, DATASET, DATASET_FILE, LIBRARY)
-                            PIPELINE.pass_vars_from_input(i)
-                            PIPELINE.prepare()
+                            EXPERIMENT.prepare(i)
 
                             # TODO: what does it need for? its result is not used, comment needed
-                            resolve_all_deps(PIPELINE.deps, PLATFORM)
+                            resolve_all_deps(EXPERIMENT.deps, PLATFORM)
 
                             ck.out('---------------------------------------------------------------------------------------')
                             ck.out('- Program: %s (%s)' % (PROGRAM.uoa, PROGRAM.uid))
@@ -1451,17 +1467,17 @@ def crowdsource(i):
                             if LIBRARY.data_uoa:
                                 ck.out('- Library: %s (%s)'  % (LIBRARY.data_name, LIBRARY.data_uoa))
 
-                            ck.out('- Compiler: %s' % PIPELINE.get_compiler_str())
+                            ck.out('- Compiler: %s' % EXPERIMENT.get_compiler_str())
                             
                             if OPTIONS.record:
-                                ck.out('- Experiment: %s:%s' % (CONFIG.exchange_repo, PIPELINE.record_uoa))
+                                ck.out('- Experiment: %s:%s' % (CONFIG.exchange_repo, EXPERIMENT.record_uoa))
 
-                            ck.out('- Tags: %s' % PIPELINE.tags)
+                            ck.out('- Tags: %s' % EXPERIMENT.tags)
                             ck.out('---------------------------------------------------------------------------------------')
 
                             if OPTIONS.dry_run: continue
                             
-                            PIPELINE.autotune(OPTIONS, PROGRAM, autotune_id)
+                            EXPERIMENT.run()
                             # end of for each library
             ck.out('=======================================================================================')
             ck.out('')
