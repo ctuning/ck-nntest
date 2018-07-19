@@ -811,7 +811,7 @@ class ActionOptions:
         self.dataset_uoa = i.get('dataset_uoa','')
 
         self.tags = self.__get_input_tags(i)
-        self.autotune_id = str(i.get('autotune_id')) or '0'
+        self.autotune_id = str(i.get('autotune_id',''))
         self.timestamp = i.get('timestamp','')
 
         self.local = i.get('local') == 'yes'
@@ -1157,7 +1157,7 @@ class Experiment:
         # Base tags set
         self.tags = ['nntest', program.uoa, library.get_tags_for_test()]
 
-        # Make record uoa
+        # Make record uoa from base tags and timestamps
         self.record_uoa = ''
         if options.record:
             if options.record_uoa:
@@ -1357,16 +1357,25 @@ class Experiment:
         if self.options.custom_autotuning:
             target_json.update(self.options.custom_autotuning)
 
-    def get_compiler_str(self):
-        '''
-        Returns description string of a compiler resolved by the pipeline.
-        NB: Result is only valid after call of `prepare` function.
-        '''
+    def print_report(self):
         assert self.prepared_pipeline
 
-        return '{} v{} ({})'.format(self.compile_deps['compiler']['dict']['data_name'],
-                                    self.compile_deps['compiler']['ver'],
-                                    self.compile_deps['compiler']['uoa']) 
+        ck.out('---------------------------------------------------------------------------------------')
+        ck.out('- Program: %s (%s)' % (self.program.uoa, self.program.uid))
+
+        if self.library.data_uoa:
+            ck.out('- Library: %s (%s)'  % (self.library.data_name, self.library.data_uoa))
+
+        ck.out('- Compiler: %s v%s (%s)' % (self.compile_deps['compiler']['dict']['data_name'],
+                                            self.compile_deps['compiler']['ver'],
+                                            self.compile_deps['compiler']['uoa']))
+        
+        if self.record_uoa:
+            ck.out('- Experiment: %s:%s' % (self.config.exchange_repo, self.record_uoa))
+
+        ck.out('- Tags: %s' % self.tags)
+        ck.out('---------------------------------------------------------------------------------------')
+
 
 
 def crowdsource(i):
@@ -1389,9 +1398,12 @@ def crowdsource(i):
         OPTIONS = ActionOptions(i)
         CONFIG = TestConfig(OPTIONS)
 
-        def ck_out(msg):
+        def ck_header(msg, level=0):
             if OPTIONS.console:
-                ck.out(msg)
+                indent = '  ' * level
+                ck.out(indent + sep)
+                ck.out(indent + msg)
+                ck.out('')
 
         if OPTIONS.mali_hwc and OPTIONS.dvdt_prof:
             ck.out('[WARNING] Shouldn\'t use --mali_hwc and --dvdt_prof at the same time ...')
@@ -1404,14 +1416,12 @@ def crowdsource(i):
         
         # Now checking which tests to run
         # Iteration order PROGRAM -> COMMAND -> DATASET -> DATASET_FILE -> LIBRARY
-        ck_out(sep)
-        ck_out('Preparing a list of tests ...')
+        ck_header('Preparing a list of tests ...')
 
         # Start iterating over programs
         programs = get_programs(OPTIONS.data_uoa, OPTIONS.tags, OPTIONS.get_species_uids())
         for program_index, PROGRAM in enumerate(map(Program, programs)):
-            ck_out(sep)
-            ck_out('Analyzing program {} of {}: {} ({})'.format(
+            ck_header('Analyzing program {} of {}: {} ({})'.format(
                 program_index+1, len(programs), PROGRAM.uoa, PROGRAM.uid))
 
             # Get libraries from dependencies
@@ -1419,68 +1429,53 @@ def crowdsource(i):
                 [OPTIONS.lib_uoa] if OPTIONS.lib_uoa else PROGRAM.get_lib_env_uoas(PLATFORM)
             )
             
-            # Check and iterate over all or pruned command lines
+            # Iterate over command lines
             cmd_keys = PROGRAM.get_cmd_keys(OPTIONS)
             for COMMAND in [ProgramCommand(PROGRAM, k) for k in cmd_keys]:
-                ck_out('  ' + sep)
-                ck_out('  Analyzing command line: ' + COMMAND.key)
+                ck_header('Analyzing command line: ' + COMMAND.key, level=1)
 
                 # Iterate over datasets and check data files
                 datasets = COMMAND.get_datasets(OPTIONS.dataset_uoa)
                 for DATASET in [Dataset(d) for d in datasets]:
-                    ck_out('    ' + sep)
-                    ck_out('    Analyzing dataset: ' + DATASET.uoa)
+                    ck_header('Analyzing dataset: ' + DATASET.uoa, level=2)
 
                     # Iterate over data files
                     for DATASET_FILE in DATASET.get_files(OPTIONS.dataset_files):
                         if DATASET_FILE:
-                            ck_out('      ' + sep)
-                            ck_out('      Analyzing dataset file: ' + DATASET_FILE)
-                            ck_out('')
+                            ck_header('Analyzing dataset file: ' + DATASET_FILE, level=3)
 
-                        if OPTIONS.console and OPTIONS.pause:
-                            ck.inp({'text': 'Press Enter to continue ...'})
-
+                        # Iterate over libraries
                         for LIBRARY in map(LibraryEnv, library_envs):
                             if LIBRARY.data_uoa:
-                                ck_out('        ' + sep)
-                                ck_out('        Analyzing library: ' + LIBRARY.data_uoa)
-                                ck_out('')
+                                ck_header('Analyzing library: ' + LIBRARY.data_uoa, level=4)
 
                             EXPERIMENT = Experiment(OPTIONS, CONFIG, PLATFORM, 
                                 PROGRAM, COMMAND, DATASET, DATASET_FILE, LIBRARY)
 
-                            ck_out('        Autotune ID: ' + EXPERIMENT.autotune_id)
-                            ck_out('')
+                            # Show all tests to be performed, but do not run them 
+                            if OPTIONS.console and OPTIONS.see_tests:
+                                ck.out('        Autotune ID: ' + EXPERIMENT.autotune_id)
+                                ck.out('')
+                                continue
 
-                            if OPTIONS.see_tests: continue
-
-                            # Prepare pipeline.
                             EXPERIMENT.prepare(i)
 
-                            # TODO: what does it need for? its result is not used, comment needed
-                            resolve_all_deps(EXPERIMENT.deps, PLATFORM)
+                            EXPERIMENT.print_report()
 
-                            ck.out('---------------------------------------------------------------------------------------')
-                            ck.out('- Program: %s (%s)' % (PROGRAM.uoa, PROGRAM.uid))
+                            # TODO: comment needed, what does it need for? 
+                            # TODO: its result is not used and all seems working without it
+                            #resolve_all_deps(EXPERIMENT.deps, PLATFORM)
 
-                            if LIBRARY.data_uoa:
-                                ck.out('- Library: %s (%s)'  % (LIBRARY.data_name, LIBRARY.data_uoa))
-
-                            ck.out('- Compiler: %s' % EXPERIMENT.get_compiler_str())
-                            
-                            if OPTIONS.record:
-                                ck.out('- Experiment: %s:%s' % (CONFIG.exchange_repo, EXPERIMENT.record_uoa))
-
-                            ck.out('- Tags: %s' % EXPERIMENT.tags)
-                            ck.out('---------------------------------------------------------------------------------------')
-
+                            # Prepare pipeline and resolve dependencies, but do not run it
                             if OPTIONS.dry_run: continue
                             
+                            # Pause before compiling and running test
+                            if OPTIONS.console and OPTIONS.pause:
+                                ck.inp({'text': 'Press Enter to continue ...'})
+
                             EXPERIMENT.run()
                             # end of for each library
-            ck.out('=======================================================================================')
-            ck.out('')
+            ck_header('')
             # end of for each program
 
     except CKException as e:
