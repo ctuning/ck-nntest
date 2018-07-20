@@ -26,10 +26,16 @@ def ck_preprocess(i):
     env=i['env']
 
     # Check allowed data sets ...
-    if 'direct-conv' in meta.get('tags',[]):
-       kn=str(env.get('CK_CONV_KERNEL',''))
-       if kn!='1' and kn!='3' and kn!='5':
-          return {'return':1, 'error':'direct-conv currently supports only kernels 1, 3 and 5 (you selected '+kn+')'}
+    program_tags = meta.get('tags',[])
+    kernel = str(env.get('CK_CONV_KERNEL',''))
+    stride = str(env.get('CK_CONV_STRIDE',''))
+    if 'direct-conv' in program_tags:
+       if kernel != '1' and kernel != '3' and kernel != '5':
+          return {'return':1, 'error':'direct-conv currently supports only kernels 1, 3 and 5 (you selected '+kernel+')'}
+    elif 'winograd-conv' in program_tags:
+       if (kernel != '3' and kernel != '5') or stride != '1':
+          return {'return':1, 'error': 'winograd-conv only supports kernels 1 and 5 and stride=1 ' +
+                                       '(you selected kernel={}, stride={})'.format(kernel, stride)}
 
     new_env = {}
     files_to_push = []
