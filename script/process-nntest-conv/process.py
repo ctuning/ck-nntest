@@ -31,10 +31,10 @@ def ck_preprocess(i):
     stride = str(env.get('CK_CONV_STRIDE',''))
     if 'direct-conv' in program_tags:
        if kernel != '1' and kernel != '3' and kernel != '5':
-          return {'return':1, 'error':'direct-conv currently supports only kernels 1, 3 and 5 (you selected '+kernel+')'}
+          return {'return':1, 'error':'direct-conv only supports kernel=1,3,5 (you selected kernel={})'.format(kernel)}
     elif 'winograd-conv' in program_tags:
        if (kernel != '3' and kernel != '5') or stride != '1':
-          return {'return':1, 'error': 'winograd-conv only supports kernels 1 and 5 and stride=1 ' +
+          return {'return':1, 'error': 'winograd-conv only supports kernel=3,5, and stride=1 ' +
                                        '(you selected kernel={}, stride={})'.format(kernel, stride)}
 
     new_env = {}
