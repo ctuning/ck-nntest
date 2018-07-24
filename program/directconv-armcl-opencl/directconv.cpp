@@ -7,6 +7,9 @@
  */
 
 #include <arm_compute/runtime/CL/functions/CLDirectConvolutionLayer.h>
+#if defined(ARMCL_18_05_PLUS)
+#include <arm_compute/runtime/CL/tuners/BifrostTuner.h>
+#endif
 
 #include "autotune/tuner_direct_convolution.h"
 
@@ -28,7 +31,11 @@ using namespace arm_compute;
 int main() {
   init_test();
 
+#if defined(ARMCL_18_05_PLUS)
+  arm_compute::ICLTuner *tuner = new arm_compute::tuners::BifrostTuner();
+#else  
   arm_compute::ICLTuner *tuner = nullptr;
+#endif
   const bool find_optimal_lws = static_cast<bool>(getenv("CK_FIND_OPTIMAL_LWS"));
   if(find_optimal_lws) tuner = new arm_compute::CLTuner_DirectConvolution();
   init_armcl(tuner);
