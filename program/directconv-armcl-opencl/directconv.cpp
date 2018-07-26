@@ -7,6 +7,7 @@
  */
 
 #include <arm_compute/runtime/CL/functions/CLDirectConvolutionLayer.h>
+#include <arm_compute/runtime/CL/CLTuner.h>
 #if defined(ARMCL_18_05_PLUS)
 #include <arm_compute/runtime/CL/tuners/BifrostTuner.h>
 #endif
@@ -28,17 +29,28 @@ using namespace arm_compute;
 #define DEFAULT_PAD 0
 #define DEFAULT_OUT_C 1
 
+arm_compute::ICLTuner* get_tuner() {
+  if (!static_cast<bool>(getenv("CK_FIND_OPTIMAL_LWS"))
+    return nullptr;
+  auto tuner_type = getenv("CK_TUNER_TYPE");
+  if (strcmp(tuner_type, "DEFAULT") == 0) {
+    return new arm_compute::CLTuner();
+  }
+  if (strcmp(tuner_type, "BIFROST") == 0) {
+#if defined(ARMCL_18_05_PLUS)
+    return new arm_compute::tuners::BifrostTuner();
+#else
+    printf("WARNING: BifrostTuner is only available for ArmCL v18.05 and later. "
+           "Default CLTuner will be used instead.\n");
+    return new arm_compute::CLTuner();
+#endif
+  }
+  return new arm_compute::CLTuner_DirectConvolution();
+}
+
 int main() {
   init_test();
-
-#if defined(ARMCL_18_05_PLUS)
-  arm_compute::ICLTuner *tuner = new arm_compute::tuners::BifrostTuner();
-#else  
-  arm_compute::ICLTuner *tuner = nullptr;
-#endif
-  const bool find_optimal_lws = static_cast<bool>(getenv("CK_FIND_OPTIMAL_LWS"));
-  if(find_optimal_lws) tuner = new arm_compute::CLTuner_DirectConvolution();
-  init_armcl(tuner);
+  init_armcl(get_tuner());
 
   CLTensor input, output, weights, biases;
   CLDirectConvolutionLayer layer;
