@@ -30,22 +30,28 @@ using namespace arm_compute;
 #define DEFAULT_OUT_C 1
 
 arm_compute::ICLTuner* get_tuner() {
-  if (!static_cast<bool>(getenv("CK_FIND_OPTIMAL_LWS"))
-    return nullptr;
-  auto tuner_type = getenv("CK_TUNER_TYPE");
-  if (strcmp(tuner_type, "DEFAULT") == 0) {
-    return new arm_compute::CLTuner();
-  }
-  if (strcmp(tuner_type, "BIFROST") == 0) {
+  auto find_optimal_lws = getenv("CK_FIND_OPTIMAL_LWS");
+  if (find_optimal_lws && (strcmp(find_optimal_lws, "YES") == 0 || strcmp(find_optimal_lws, "1") == 0)) {
+    auto tuner_type = getenv("CK_TUNER_TYPE");
+    if (tuner_type && strcmp(tuner_type, "DEFAULT") == 0) {
+      printf("INFO: Tuner selected: CLTuner\n");
+      return new arm_compute::CLTuner();
+    }
+    if (tuner_type && strcmp(tuner_type, "BIFROST") == 0) {
 #if defined(ARMCL_18_05_PLUS)
-    return new arm_compute::tuners::BifrostTuner();
+      printf("INFO: Tuner selected: BifrostTuner\n");
+      return new arm_compute::tuners::BifrostTuner();
 #else
-    printf("WARNING: BifrostTuner is only available for ArmCL v18.05 and later. "
-           "Default CLTuner will be used instead.\n");
-    return new arm_compute::CLTuner();
+      printf("WARNING: BifrostTuner is only available for ArmCL v18.05 and later. "
+             "Default CLTuner will be used instead.\n");
+      printf("INFO: Tuner selected: CLTuner\n");
+      return new arm_compute::CLTuner();
 #endif
+    }
+    printf("INFO: Tuner selected: CLTuner_DirectConvolution\n");
+    return new arm_compute::CLTuner_DirectConvolution();
   }
-  return new arm_compute::CLTuner_DirectConvolution();
+  return nullptr;
 }
 
 int main() {
