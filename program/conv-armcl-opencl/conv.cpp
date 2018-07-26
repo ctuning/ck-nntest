@@ -32,10 +32,8 @@ using namespace arm_compute;
 int main() {
   init_test();
 
-  arm_compute::ICLTuner *tuner = nullptr;
-  const bool find_optimal_lws = static_cast<bool>(getenv("CK_FIND_OPTIMAL_LWS"));
-  if(find_optimal_lws) tuner = new arm_compute::CLTuner_Convolution();
-  init_armcl(tuner);
+  auto tuner = get_lws_tuner<CLTuner_Convolution>();
+  init_armcl(tuner.get());
 
   CLTensor input, output, weights, biases;
 #if defined(ARMCL_18_05_PLUS)

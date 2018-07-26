@@ -42,21 +42,45 @@ inline void init_armcl(arm_compute::ICLTuner *cl_tuner = nullptr) {
   };
   cl::Context::setDefault(cl::Context(CL_DEVICE_TYPE_DEFAULT, properties));
 
-#if defined(ARMCL_18_05_PLUS)
-  if (!cl_tuner) {
-    auto device = cl::Device::getDefault();
-    auto gpu_target = arm_compute::get_target_from_device(device);
-    auto gpu_arch = arm_compute::get_arch_from_target(gpu_target);
-    if (gpu_arch == arm_compute::GPUTarget::BIFROST) {
-      cl_tuner = new arm_compute::tuners::BifrostTuner();
-    }
-  }
-#endif
-
   arm_compute::CLScheduler::get().default_init(cl_tuner);
 
   // Should be called after initialization
   set_kernel_path();
+}
+
+using TunerPtr = std::unique_ptr<arm_compute::ICLTuner>;
+
+template <typename TCustomTuner>
+TunerPtr get_lws_tuner() {
+  auto tuner_type = getenv("CK_LWS_TUNER_TYPE");
+
+  if (!tuner_type || strcmp(tuner_type, "NONE") == 0)
+    return TunerPtr();
+
+  if (strcmp(tuner_type, "CUSTOM") == 0) {
+    printf("INFO: Custom tuner selected\n");
+    return TunerPtr(new TCustomTuner());
+  }
+
+  if (strcmp(tuner_type, "DEFAULT") == 0) {
+    printf("INFO: Tuner selected: CLTuner\n");
+    return TunerPtr(new arm_compute::CLTuner());
+  }
+    
+  if (strcmp(tuner_type, "BIFROST") == 0) {
+#if defined(ARMCL_18_05_PLUS)
+    printf("INFO: Tuner selected: BifrostTuner\n");
+    return TunerPtr(new arm_compute::tuners::BifrostTuner());
+#else
+    printf("WARNING: BifrostTuner is only available for ArmCL v18.05 and later. "
+           "Default CLTuner will be used instead.\n");
+    printf("INFO: Tuner selected: CLTuner\n");
+    return TunerPtr(new arm_compute::CLTuner());
+#endif
+  }
+
+  printf("WARNING: Unknown tuner type: %s\n", tuner_type);
+  return TunerPtr();
 }
 
 inline int get_flat_index(const Shape &shape, const arm_compute::Coordinates &id) {

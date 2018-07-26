@@ -19,9 +19,8 @@ using namespace arm_compute;
 
 int main() {
   init_test();
-  arm_compute::ICLTuner *tuner = nullptr;
-  const bool find_optimal_lws = static_cast<bool>(getenv("CK_FIND_OPTIMAL_LWS"));
-  if(find_optimal_lws) tuner = new arm_compute::CLTuner_Scale();
+
+  auto tuner = get_lws_tuner<CLTuner_Scale>();
   init_armcl(tuner);
 
   Shape in_shape = get_input_shape_from_env();
