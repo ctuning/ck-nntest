@@ -91,7 +91,7 @@ int main() {
   init_test();
 
   auto tuner = get_lws_tuner<CLTuner_DepthwiseConvolution>();
-  init_armcl(tuner.get);
+  init_armcl(tuner.get());
 
   Shape input_shape = get_input_shape_from_env();
   Shape kernel_shape = Shape::make_chw(input_shape.channels, KERNEL_H, KERNEL_W);
@@ -148,8 +148,6 @@ int main() {
   for (int i = 0; i < TENSOR_COUNT; ++i) {
     tensors[i].allocator()->free();
   }
-
-  if(find_optimal_lws) delete tuner;
 
   finish_test();
   fflush(stdout);

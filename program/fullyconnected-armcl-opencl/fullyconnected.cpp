@@ -20,7 +20,7 @@ int main() {
   init_test();
 
   auto tuner = get_lws_tuner<CLTuner_FullyConnected>();
-  init_armcl(tuner);
+  init_armcl(tuner.get());
 
   Shape in_shape = get_input_shape_from_env();
 
@@ -100,8 +100,6 @@ int main() {
   weights.allocator()->free();
   biases.allocator()->free();
   output.allocator()->free();
-
-  if(find_optimal_lws) delete tuner;
 
   finish_test();
   return 0;

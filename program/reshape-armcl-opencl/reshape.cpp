@@ -73,7 +73,6 @@ int main() {
 
   input.allocator()->free();
   output.allocator()->free();
-  if(find_optimal_lws) delete tuner;
   finish_test();
   return 0;
 }

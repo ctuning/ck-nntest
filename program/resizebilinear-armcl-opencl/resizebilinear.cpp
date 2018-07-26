@@ -21,7 +21,7 @@ int main() {
   init_test();
 
   auto tuner = get_lws_tuner<CLTuner_Scale>();
-  init_armcl(tuner);
+  init_armcl(tuner.get());
 
   Shape in_shape = get_input_shape_from_env();
 
@@ -83,7 +83,6 @@ int main() {
   input.allocator()->free();
   output.allocator()->free();
 
-  if(find_optimal_lws) delete tuner;
   finish_test();
   return 0;
 }

@@ -129,8 +129,6 @@ int main() {
   weights.allocator()->free();
   biases.allocator()->free();
 
-  if(find_optimal_lws) delete tuner;
-
   finish_test();
   return 0;
 }
