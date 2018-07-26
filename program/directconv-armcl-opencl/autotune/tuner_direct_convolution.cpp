@@ -88,6 +88,8 @@ benchmark_lws(cl::CommandQueue &queue, ICLKernel &kernel, double &opt_time,
     opt_time = fp_nano.count();
     opt_lws  = test_lws;
   }
+  printf("test_lws==(%d,%d,%d): %.3f ms\n", test_lws[0], test_lws[1], test_lws[2], fp_nano*1e-6);
+
   // Return the optimal LWS.
   return opt_lws;
 } // benchmark_lws()
@@ -126,6 +128,7 @@ cl::NDRange CLTuner_DirectConvolution::find_optimal_lws(ICLKernel &kernel) {
           opt_lws = benchmark_lws(queue, kernel, opt_time, opt_lws, cl::NDRange(x, y, z));
   } // if(config_id == "direct_convolution_f32_5")
 
+  printf("opt_lws==(%d,%d,%d)\n", opt_lws[0], opt_lws[1], opt_lws[2]);
   return opt_lws;
 }
 
