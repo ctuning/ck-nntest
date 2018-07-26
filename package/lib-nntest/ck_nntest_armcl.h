@@ -70,6 +70,12 @@ TunerPtr get_lws_tuner() {
   if (strcmp(tuner_type, "BIFROST") == 0) {
 #if defined(ARMCL_18_05_PLUS)
     printf("INFO: Tuner selected: BifrostTuner\n");
+    auto device = cl::Device::getDefault();
+    auto gpu_target = arm_compute::get_target_from_device(device);
+    auto gpu_arch = arm_compute::get_arch_from_target(gpu_target);
+    if (gpu_arch != arm_compute::GPUTarget::BIFROST) {
+      printf("WARNING: BifrostTuner selected for non-Bifrost architecture.\n");
+    }
     return TunerPtr(new arm_compute::tuners::BifrostTuner());
 #else
     printf("WARNING: BifrostTuner is only available for ArmCL v18.05 and later. "
