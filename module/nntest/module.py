@@ -649,7 +649,7 @@ def run(i):
               (custom_autotuning)   - dict to customize autotuning (can be added via external file in cmd @some-name.json)
               (autotune_id)         - get autotune/{autotune_id}.json from program entry to start autotuning
 
-              (no_record)           - if "yes", do not record experiments ("no" by default, that is experiments will be recorded)
+              (no_record)           - if "yes", do not record experiments ("no" by default, i.e. experiments will be recorded)
               (record_uoa)          - use this experiment UOA to record all data to 
               (timestamp)           - use this instead of timestamp
               (record_repo)         - if !='', record to this repo (local by default)
@@ -676,7 +676,6 @@ def run(i):
 
 ##############################################################################
 # crowdsource nntest
-
 
 class CKException(Exception):
     def __init__(self, ck_result):
@@ -1375,7 +1374,6 @@ class Experiment:
 
         ck.out('- Tags: %s' % self.tags)
         ck.out('---------------------------------------------------------------------------------------')
-
 
 
 def crowdsource(i):

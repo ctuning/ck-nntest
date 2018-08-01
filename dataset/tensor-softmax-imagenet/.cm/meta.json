@@ -1,10 +1,14 @@
 {
   "dataset_files": [
-    "shape-1000-1-1"
+    "shape-1000-1-1",
+    "shape-1001-1-1"
   ],
   "desc_dataset_files": {
     "shape-1000-1-1": {
       "name": "Imagenet softmax/classifier input 1x1x1000"
+    },
+    "shape-1001-1-1": {
+      "name": "Imagenet softmax/classifier input 1x1x1001"
     }
   },
   "tags": [
