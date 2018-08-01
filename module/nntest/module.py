@@ -12,6 +12,11 @@
 #   - Grigori Fursin, cTuning foundation, 2017
 #
 
+import json
+import copy
+import os
+from time import strftime, gmtime
+
 cfg={}  # Will be updated by CK (meta description of this module)
 work={} # Will be updated by CK (temporal data)
 ck=None # Will be updated by CK (initialized CK kernel) 
@@ -644,7 +649,7 @@ def run(i):
               (custom_autotuning)   - dict to customize autotuning (can be added via external file in cmd @some-name.json)
               (autotune_id)         - get autotune/{autotune_id}.json from program entry to start autotuning
 
-              (no_record)           - if "yes", do not record experiments, "no" by default, experiments will be recorded using UIDs
+              (no_record)           - if "yes", do not record experiments ("no" by default, i.e. experiments will be recorded)
               (record_uoa)          - use this experiment UOA to record all data to 
               (timestamp)           - use this instead of timestamp
               (record_repo)         - if !='', record to this repo (local by default)
@@ -672,13 +677,711 @@ def run(i):
 ##############################################################################
 # crowdsource nntest
 
+class CKException(Exception):
+    def __init__(self, ck_result):
+        self.ck_result = ck_result
+
+    @staticmethod
+    def throw(message, code=1):
+        raise CKException({'return': code, 'error': message})
+
+
+def yes_no(bool_flag):
+    return 'yes' if bool_flag else 'no'
+
+
+def ck_access(params_json, skip_error_codes = []):
+    '''
+    Performs call to ck-kernel and raises an exception when an error.
+    Returns the result of ck-operation.
+    '''
+    r = ck.access(params_json)
+    error_code = r['return']
+    if error_code > 0 and not (error_code in skip_error_codes):
+        raise CKException(r)
+    return r
+
+
+def convert_to_flat_dict(i):
+    '''
+    Check if any key in input dictionary has . and convert to dict (for example deps.xyz or env.xyz) 
+    '''
+    for key in i:
+        if '.' in key:
+            value = i[key]
+            del(i[key])
+            new_key = '##' + key.replace('.', '#')
+            r = ck.set_by_flat_key({'dict': i, 'key': new_key, 'value': value})
+            if r['return'] > 0:
+                raise CKException(r)
+
+
+def get_user_from_module_config():
+    r = ck_access({'action': 'load',
+                   'module_uoa': 'module',
+                   'data_uoa': cfg['module_deps']['program.optimization']})
+    mcfg = r['dict']
+
+    dcfg = {}
+    r = ck_access({'action': 'load',
+                    'module_uoa': mcfg['module_deps']['cfg'],
+                    'data_uoa': mcfg['cfg_uoa']
+                }, skip_error_codes = [16])
+
+    # TODO: code 16 is not an error but we can't get user when it's returned? 
+    # TODO: what does it mean - 16? comment or speaking name is required
+    if r['return'] != 16:
+        dcfg = r['dict']
+
+    return dcfg.get('user_email','')
+
+
+def get_programs(data_uoa, tags_list, species_uids):
+    r = ck_access({'action':'search',
+                   'module_uoa': cfg['module_deps']['program'],
+                   'data_uoa': data_uoa,
+                   'tags': ','.join(tags_list),
+                   'add_meta': 'yes'})
+    programs = r['lst']
+
+    # it's possible to skip some tests
+    programs = [p for p in programs if p['meta'].get('skip_from_tests') != 'yes']
+
+    if species_uids:
+        filtered = []
+        for p in programs:
+            program_species = p['meta'].get('species',[])
+            for s in species_uids:
+                if s in program_species:
+                    filtered.append(p)
+                    break
+        programs = filtered
+    if not programs:
+        CKException.throw('no programs selected')
+    return sorted(programs, key = lambda p: p.get('data_uoa',''))
+
+
+def load_lib_envs_sorted_by_id(library_env_uoas):
+    '''
+    Loads all library envs and returns them as a list sorted by `lib_id`
+    '''
+    lib_envs = []
+    for uoa in library_env_uoas:
+        if not uoa:
+            lib_envs.append({})
+        else:
+            lib_envs.append(ck_access({'action': 'load',
+                                       'module_uoa': 'env',
+                                       'data_uoa': uoa}))
+
+    return sorted(lib_envs, key = lambda x: x.get('dict',{})
+                                             .get('customize',{})
+                                             .get('lib_id',99999))
+
+
+def get_versions_of_all_deps(deps):
+    r = ck_access({'action': 'get_all_versions_in_deps',
+                   'module_uoa': cfg['module_deps']['env'],
+                   'deps': deps})
+    return r['versions']
+
+
+def resolve_all_deps(deps, platform):
+    r = ck_access({'action': 'resolve',
+                   'module_uoa': 'env',
+                   'host_os': platform.host_os,
+                   'target_os': platform.target_os,
+                   'device_id': platform.device_id,
+                   'deps': deps})
+    return r
+
+
+class ActionOptions:
+    def __init__(self, i):
+        self.data_uoa = i.get('data_uoa','')
+        self.lib_uoa = i.get('library_uoa','')
+        self.species = i.get('species','')
+        self.cmd_key = i.get('cmd_key','')
+        self.target = i.get('target','')
+        self.user = i.get('user','')
+
+        files = i.get('dataset_file','')
+        self.dataset_files = files.split(',') if (',' in files) else []
+        self.dataset_uoa = i.get('dataset_uoa','')
+
+        self.tags = self.__get_input_tags(i)
+        self.autotune_id = str(i.get('autotune_id',''))
+        self.timestamp = i.get('timestamp','')
+
+        self.local = i.get('local') == 'yes'
+
+        self.cache_deps = i.get('cache_deps') or 'default'
+        self.reuse_deps = i.get('skip_deps_cache') != 'yes'
+        self.refresh_deps_cache = i.get('refresh_deps_cache') == 'yes'
+
+        self.record = i.get('no_record') != 'yes'
+        self.record_uoa = i.get('record_uoa','')
+        self.record_repo = i.get('record_repo', '')
+        self.exchange_repo = i.get('exchange_repo','')
+        self.exchange_subrepo = i.get('exchange_subrepo','')
+
+        self.dry_run = i.get('dry_run') == 'yes'
+        self.mali_hwc = i.get('mali_hwc') == 'yes'
+        self.dvdt_prof = i.get('dvdt_prof') == 'yes'
+        self.see_tests = i.get('see_tests') == 'yes'
+        self.pause = i.get('pause') == 'yes'
+        self.pause_if_fail = i.get('pause_if_fail') == 'yes'
+        self.console = i.get('out') == 'con'
+
+        self.flags = i.get('flags') or '-O3'
+        self.env = i.get('env',{})
+
+        self.num_repetitions = int(i.get('repetitions') or 3)
+        self.iterations = int(i.get('repetitions') or -1)
+        if i.get('overwrite_reference_output','') == 'yes':
+            self.iterations = 1
+
+        self.custom_autotuning = i.get('custom_autotuning',{})
+        
+    def __get_input_tags(self, i):
+        tags = ['nntest']
+        if 'tags' in i:
+            for tag in i['tags'].split(','):
+                t = tag.strip()
+                # Check opencl, cuda and cpu keywoards and add `v`
+                if t == 'opencl': t = 'vopencl'
+                elif x == 'cuda': t = 'vcuda'
+                elif t == 'cpu': t = 'vcpu'
+                tags.append(t)
+        return tags
+
+    def get_species_uids(self):
+        uids = []
+        for s in self.species.split(','):
+            s = s.strip()
+            if s:
+                r = ck_access({'action':'load',
+                               'module_uoa': cfg['module_deps']['program.species'],
+                               'data_uoa': s})
+                uids.append(r['data_uid'])
+        return uids
+
+
+class TestConfig:
+    def __init__(self, options):
+        self.user = None # to be initialized externally
+        self.__init_timestamps()
+        self.__init_repo_names(options)
+        self.__init_deps_cache(options)
+
+    def __init_timestamps(self):
+        '''
+        Init timestamp and striped timestamp
+        '''
+        r = ck.get_current_date_time({})
+        if r['return'] > 0:
+            raise CKException(r)
+        t = r['iso_datetime']
+        
+        j = t.find('.')
+        if j > 0: t = t[:j]
+
+        self.timestamp = t
+        self.stimestamp = t.replace('-','').replace(':','').replace('T','')
+
+    def __init_repo_names(self, options):
+        '''
+        Check working repository (possibly remote)
+        '''
+        if options.local: 
+            self.exchange_repo = 'local'
+            self.exchange_subrepo = ''
+        else:
+            self.exchange_repo = \
+                options.exchange_repo or \
+                cfg.get('default_exchange_repo_uoa','') or \
+                ck.cfg.get('default_exchange_repo_uoa','')
+            self.exchange_subrepo = \
+                options.exchange_subrepo or \
+                cfg.get('default_exchange_subrepo_uoa','') or \
+                ck.cfg.get('default_exchange_subrepo_uoa','')
+        if options.record_repo:
+            self.exchange_repo = options.record_repo
+
+    def __init_deps_cache(self, options):
+        self.deps_cache = []
+        deps_cache_uoa = 'deps-cache-{}-{}'.format(work['self_module_uoa'], options.cache_deps)
+        if options.refresh_deps_cache:
+            ck_access({'action':'update',
+                       'module_uoa': cfg['module_deps']['tmp'],
+                       'data_uoa': deps_cache_uoa,
+                       'dict': { 'cache': [] },
+                       'substitute': 'yes',
+                       'ignore_update': 'yes'})
+        elif options.reuse_deps:
+            r = ck_access({'action': 'load',
+                           'module_uoa': cfg['module_deps']['tmp'],
+                           'data_uoa': deps_cache_uoa})
+            self.deps_cache = r['dict'].get('cache',[])
+
+
+class PlatformInfo:
+    def __init__(self, action_params_json, config):
+        self.user = None
+
+        info = action_params_json.get('platform_info',{})
+        if not info:
+            params_json = copy.deepcopy(action_params_json)
+            params_json.update({
+                'action': 'initialize',
+                'module_uoa': cfg['module_deps']['program.optimization'],
+                'data_uoa': 'caffe', # TODO why `caffe` here? comment needed
+                'exchange_repo': config.exchange_repo,
+                'exchange_subrepo': config.exchange_subrepo,
+                'skip_welcome': 'yes',
+                'skip_log_wait': 'yes',
+                'crowdtuning_type': 'nntest',
+                'update_platform_init': action_params_json.get('update_platform_init',''),
+                'local_autotuning': action_params_json.get('local','')
+            })
+            r = ck_access(params_json)
+            info = r['platform_info']
+            self.user = r.get('user','')
+
+        self.host_os = info['host_os_uoa']
+        self.host_os_uid = info['host_os_uid']
+        self.target_os = info['os_uoa']
+        self.target_os_uid = info['os_uid']
+        self.device_id = info['device_id']
+        self.features = info.get('features',{})
+        self.name = self.features.get('platform', {}).get('name','')
+        self.uid = self.features.get('platform_uid')
+        self.os_name = self.features.get('os',{}).get('name','')
+        self.os_uid = self.features.get('os_uid','')
+        self.cpu_abi = self.features.get('cpu',{}).get('cpu_abi','')
+        self.cpu_name = self.features.get('cpu',{}).get('name','') or ('unknown-' + self.cpu_abi)
+        self.cpu_uid = self.features.get('cpu_uid','')
+        self.gpu_name = self.features.get('gpu',{}).get('name','')
+        self.gpgpu_name = self.features.get('gpgpu',{}).get('name','')
+        self.gpgpu_vendor = self.features.get('gpgpu',{}).get('vendor','')
+        self.gpgpu_name2 = (self.gpgpu_vendor + ' ' + self.gpgpu_name) if self.gpgpu_vendor else self.gpgpu_name
+        self.opencl_version = self.features.get('gpgpu_misc',{}).get('opencl c version','')
+
+
+class Program:
+    def __init__(self, p):
+        self.uoa = p['data_uoa']
+        self.uid = p['data_uid']
+        self.meta = p['meta']
+        self.path = p['path']
+        self.compile_deps = self.meta.get('compile_deps',{})
+        self.autotuning = self.meta.get('autotuning',{})
+        
+        self.commands = self.meta.get('run_cmds',{})
+        if not self.commands:
+            CKException.throw('no CMD for run in program {} ({})'.format(self.uoa, self.uid))
+
+        # Init program type from tags
+        tags = self.meta.get('tags',[])
+        if 'vopencl' in tags: self.type = 'opencl'
+        elif 'vcuda' in tags: self.type = 'cuda'
+        else: self.type = 'cpu'
+
+        # Comma separated species string the program belongs to (to prepare experiment tags)
+        self.species_uoas_str = self.__make_species_uoas_str()
+
+    def __make_species_uoas_str(self):
+        uoas = []
+        for s in self.meta.get('species', []):
+            r = ck_access({'action': 'load',
+                            'module_uoa': cfg['module_deps']['program.species'],
+                            'data_uoa': s})
+            uoas.append(r['data_uoa'])
+        return ','.join(uoas)
+
+    def get_cmd_keys(self, options):
+        # Do process only key given in the input
+        if options.cmd_key:
+            return [k for k in self.commands if k == options.cmd_key]
+        # Ignore development keys
+        return sorted([k for k in self.commands if not k.startswith('dev')])
+
+    def get_lib_env_uoas(self, platform):
+        '''
+        Resolve library environment UOA(s) (don't use cache to get all choices)
+        '''
+        lib = self.compile_deps.get('library')
+        # Empty for at least one iteration even if library is not used
+        if not lib: return [''] 
+
+        r = ck_access({'action': 'resolve',
+                        'module_uoa': cfg['module_deps']['env'],
+                        'host_os': platform.host_os,
+                        'target_os': platform.target_os,
+                        'device_id': platform.device_id,
+                        'deps': {'library': copy.deepcopy(lib)}
+                    })
+        uoas = r['deps']['library'].get('choices',[])
+        if not uoas:
+            # Check that maybe 1 env was installed during resolving
+            x = r.get('deps',{}).get('library',{}).get('uoa','')
+            if x:
+                uoas.append(x)
+        if not uoas:
+            raise CKException.throw('expected at least one library environment')
+        return uoas
+
+    def get_autotuning_from_file(self, autotune_id):
+        '''
+        Load autotuning parameters from json file in program's directory
+        '''
+        if autotune_id:
+            filename = os.path.join(self.path, 'autotune', autotune_id+'.json')
+            if os.path.isfile(filename):
+                r = ck.load_json_file({'json_file': filename})
+                if r['return'] > 0:
+                    raise CKException(r)
+                return r['dict']
+        return {}
+
+
+class ProgramCommand:
+    '''
+    Meta related to the selected command line
+    '''
+    def __init__(self, program, cmd_key):
+        self.key = cmd_key
+        self.cmd = program.commands[cmd_key]
+        self.is_opencl = self.cmd.get('run_time',{}).get('need_compute_device','') == 'opencl'
+        self.dataset_tags = self.cmd.get('dataset_tags',[])
+        self.autotuning = self.cmd.get('autotuning',{})
+
+    def get_datasets(self, dataset_uoa):
+        '''
+        Find datasets by command's dataset tags or by explicitly specified input uoa
+        '''
+        if not self.dataset_tags:
+            return []
+        params = {'action':'search',
+                  'module_uoa':cfg['module_deps']['dataset'],
+                  'add_meta':'yes'}
+        if dataset_uoa:
+            params['data_uoa'] = dataset_uoa
+        else:
+            params['tags'] = ','.join(self.dataset_tags)
+        r = ck_access(params)
+        return sorted(r['lst'], key = lambda x: x.get('data_uoa',''))
+
+
+class Dataset:
+    def __init__(self, json):
+        self.uoa = json['data_uoa']
+        self.uid = json['data_uid']
+        self.files = json['meta'].get('dataset_files',[])
+
+    def get_files(self, requested_files):
+        if requested_files:
+            files = [f for f in self.files if f in requested_files]
+        else:
+            files = self.files
+        # add empty for 1 iteration without a file
+        return files if files else ['']
+
+
+class LibraryEnv:
+    def __init__(self, library_env):
+        self.env = library_env
+        self.data_uoa = self.env.get('data_uoa','')
+        self.data_name = self.env.get('data_name','')
+        self.version = self.env['dict']['customize']['version']
+        self.tags = self.env['data_name'].lower().replace(', ','-').replace(' ','-').replace(',','-').replace('(','').replace(')','')
+        self.lib_id = str(self.env.get('dict',{}).get('customize',{}).get('lib_id', 0))
+
+    def get_tags_for_test(self):
+        if not self.data_uoa:
+            return 'no-library'
+
+        # Remove duplicates at the end of `tags` and beginning of `version` (e.g. avgpool-avgpool)
+        x1 = self.tags
+        x2 = self.version
+
+        j1=x1.rfind('-')
+        if j1>0:
+            xx=x1[j1+1:]
+
+            yy=x2
+            j2 = x2.find('-')
+            if j2>0:
+                yy=x2[:j2]
+
+            if xx==yy:
+                x1=x1[:j1]
+
+        return x1+'-'+x2
+
+
+class Experiment:
+    def __init__(self,
+                 options,        # instance of ActionOptions
+                 config,         # instance of TestConfig
+                 platform,       # instance of PlatformInfo
+                 program,        # instance of Program
+                 command,        # instance of ProgramCommand 
+                 dataset,        # instance of Dataset  
+                 dataset_file,   # string
+                 library         # instance of LibraryEnv
+                ):
+        self.options = options             
+        self.config = config               
+        self.platform = platform           
+        self.program = program             
+        self.command = command             
+        self.dataset = dataset             
+        self.dataset_file = dataset_file   
+        self.library = library             
+
+        self.dvdt_prof = options.dvdt_prof and command.is_opencl
+        self.mali_hwc = options.mali_hwc and command.is_opencl
+        if self.mali_hwc:
+            self.env = copy.deepcopy(options.env)
+            self.env['CK_ADD_RAW_MALI_HWC'] = 'yes'
+        else:
+            self.env = options.env
+
+        # These are valid only after call of `prepare`
+        self.deps = None
+        self.compile_deps = None
+        self.prepared_pipeline = None
+
+        # Base tags set
+        self.tags = ['nntest', program.uoa, library.get_tags_for_test()]
+
+        # Make record uoa from base tags and timestamps
+        self.record_uoa = ''
+        if options.record:
+            if options.record_uoa:
+                self.record_uoa = options.record_uoa
+            else:
+                ts = options.timestamp or config.stimestamp
+                self.record_uoa = '-'.join(self.tags) + '-' + ts
+
+        # Full tags set
+        self.tags.extend([config.timestamp, config.stimestamp, program.species_uoas_str])
+
+        # Get specific autotuner
+        self.autotune_id = options.autotune_id or library.lib_id
+
+    def prepare(self, action_params_json):
+        '''
+        Prepare pipeline, resolve all dependencies.
+        '''
+        # `compile_deps` will be resolved after call of `prepare` 
+        # and this object will be updated, so we need the copy
+        self.compile_deps = copy.deepcopy(self.program.compile_deps)
+        if self.library.data_uoa:
+            self.compile_deps['library']['uoa'] = self.library.data_uoa
+            self.compile_deps['library']['skip_cache']='yes' # do not cache since we will iterate over it
+
+        params_json = {
+            'action': 'pipeline',
+            'prepare': 'yes',
+
+            'dependencies': self.compile_deps,
+            'deps_cache': self.config.deps_cache,
+            'reuse_deps': yes_no(self.options.reuse_deps),
+
+            'host_os': self.platform.host_os,
+            'target': self.options.target,
+            'target_os': self.platform.target_os,
+            'device_id': self.platform.device_id,
+
+            'module_uoa': cfg['module_deps']['program'],
+            'data_uoa': self.program.uoa,
+
+            'cmd_key': self.command.key,
+            'dataset_uoa': self.dataset.uoa,
+            'dataset_file': self.dataset_file,
+
+            'dvdt_prof': yes_no(self.dvdt_prof),
+            'mali_hwc': yes_no(self.mali_hwc),
+
+            'env': self.env,
+
+            'no_state_check': 'yes',
+            'no_compiler_description': 'yes',
+            'skip_calibration': 'yes',
+
+            'cpu_freq':'max',
+            'gpu_freq':'max',
+
+            'flags': self.options.flags,
+            'speed': 'no',
+            'energy': 'no',
+
+            'skip_print_timers': 'yes',
+            'out': 'con' # TODO should it be the same as `i.get('out','')` ?
+        }
+
+        # Pass vars from input to pipeline
+        for var in pass_vars_to_autotune:
+            if var in action_params_json:
+                params_json[var] = action_params_json[var]
+
+        # Prepare pipeline
+        r = ck_access(params_json)
+        if r.get('fail') == 'yes':
+            reason = r.get('fail_reason') or 'unknown reason'
+            CKException.throw('pipeline failed (%s)' % reason, code=10)
+        if r.get('ready') != 'yes':
+            CKException.throw('pipeline not ready', code=11)
+
+        # Clean and store pipeline.
+        if 'ready' in r: del(r['ready'])
+        if 'fail' in r: del(r['fail'])
+        if 'return' in r: del(r['return'])
+        self.prepared_pipeline = r
+        self.deps = r.get('dependencies', {})
+
+    def run(self):
+        '''
+        Run prepared pipeline.
+        '''
+        assert self.prepared_pipeline
+
+        params_json = {
+            'action': 'autotune',
+
+            'module_uoa': 'pipeline',
+            'data_uoa': 'program',
+
+            'meta': self.__make_experiment_meta(),
+            'tags': self.tags,
+            'pipeline': self.prepared_pipeline,
+                              
+            'features_keys_to_process': ['##choices#*'],
+
+            'iterations': self.options.iterations,
+            'repetitions': self.options.num_repetitions,
+
+            'record': yes_no(self.options.record),
+            'record_repo': self.config.exchange_repo,
+            'record_experiment_repo': self.config.exchange_subrepo,
+            'record_failed': 'yes',
+            'record_dict': { 'subview_uoa': cfg['data_deps']['experiment.view.nntest'] },
+            'record_params': { 'search_point_by_features': 'yes' },
+            'record_uoa': self.record_uoa,
+
+            'pause': yes_no(self.options.pause),
+            'pause_if_fail': yes_no(self.options.pause_if_fail),
+            'skip_stat_analysis': yes_no(self.dvdt_prof), # too much raw statistics
+            'out': 'con' # TODO should it be the same as `i.get('out','')` ?
+        }
+
+        self.__apply_autotuning_params(params_json)
+
+        # Start benchmarking or autotuning
+        r = ck_access(params_json)
+        if r.get('fail') == 'yes':
+            reason = r.get('fail_reason') or 'unknown reason'
+            CKException.throw('autotuning failed (%s)' % reason, code=10)
+
+    def __make_experiment_meta(self):
+        '''
+        Prepare experiment entry meta
+        '''
+        meta = {
+            'timestamp': self.config.timestamp,
+            'stimestamp':  self.config.stimestamp,
+            'user': self.config.user,
+            'nntest_ver': cfg['version'],
+
+            'scenario_module_uoa': work['self_module_uid'],
+
+            'host_os_uid': self.platform.host_os_uid,
+            'target_os_uid': self.platform.target_os_uid,
+            'target_device_id': self.platform.device_id,
+
+            'cpu_name': self.platform.cpu_name,
+            'cpu_abi': self.platform.cpu_abi,
+            'cpu_uid': self.platform.cpu_uid,
+
+            'os_name': self.platform.os_name,
+            'os_uid': self.platform.os_uid,
+
+            'plat_name': self.platform.name,
+            'plat_uid': self.platform.uid,
+
+            'gpu_name': self.platform.gpu_name,
+            'gpgpu_name': self.platform.gpgpu_name2,
+            'gpgpu_vendor': self.platform.gpgpu_vendor,
+            'opencl': self.platform.opencl_version,
+
+            'prog_uoa': self.program.uoa,
+            'prog_uid': self.program.uid,
+            'prog_type': self.program.type,
+
+            'species': self.program.species_uoas_str,
+
+            'cmd_key': self.command.key,
+
+            'dataset_uoa': self.dataset.uoa,
+            'dataset_uid': self.dataset.uid,
+            'dataset_file': self.dataset_file,
+
+            'versions': get_versions_of_all_deps(self.deps)
+        }  
+
+        # Add hostname if required
+        if ck.cfg.get('record_nntest_hostname','') == 'yes':
+            import platform
+            meta['platform_hostname'] = platform.node() 
+
+        return meta
+
+    def __apply_autotuning_params(self, target_json):
+        # Check if program meta has global autotuning
+        if self.program.autotuning:
+            target_json.update(self.program.autotuning)
+
+        # Check if program meta has autotuning for a given command line
+        if self.command.autotuning:
+            target_json.update(self.command.autotuning)
+
+        # Check if autotune_id
+        autotuning = self.program.get_autotuning_from_file(self.autotune_id)
+        if autotuning:
+            target_json.update(autotuning)
+
+        # Check if external autotuning is defined
+        if self.options.custom_autotuning:
+            target_json.update(self.options.custom_autotuning)
+
+    def print_report(self):
+        assert self.prepared_pipeline
+
+        ck.out('---------------------------------------------------------------------------------------')
+        ck.out('- Program: %s (%s)' % (self.program.uoa, self.program.uid))
+
+        if self.library.data_uoa:
+            ck.out('- Library: %s (%s)'  % (self.library.data_name, self.library.data_uoa))
+
+        ck.out('- Compiler: %s v%s (%s)' % (self.compile_deps['compiler']['dict']['data_name'],
+                                            self.compile_deps['compiler']['ver'],
+                                            self.compile_deps['compiler']['uoa']))
+        
+        if self.record_uoa:
+            ck.out('- Experiment: %s:%s' % (self.config.exchange_repo, self.record_uoa))
+
+        ck.out('- Tags: %s' % self.tags)
+        ck.out('---------------------------------------------------------------------------------------')
+
+
 def crowdsource(i):
     """
     Input:  {
               See ck run nntest --help
 
               (local)               - if 'yes', local crowd-benchmarking, instead of public
-              (no_record)           - if "yes", do not record experiments, "no" by default, experiments will be recorded using UIDs
             }
 
     Output: {
@@ -686,749 +1389,97 @@ def crowdsource(i):
                                          >  0, if error
               (error)      - error text if return > 0
             }
-
     """
-
-    def yes_no(bool_flag): return 'yes' if bool_flag else 'no'
-
-    # Initializing various workflow parameters
-    import copy
-    import os
-    from time import strftime, gmtime
-
-    # Get current timestamp
-    r=ck.get_current_date_time({})
-    if r['return']>0: return r
-    timestamp=r['iso_datetime']
-
-    #striped timestamp
-    j=timestamp.find('.')
-    if j>0: timestamp=timestamp[:j]
-
-    stimestamp=timestamp.replace('-','').replace(':','').replace('T','')
-
-    # Setting output and checking misc vars
-    o=i.get('out','')
-    oo=''
-    if o=='con': oo='con'
-
-    quiet=i.get('quiet','')
-
-    xautotune_id=i.get('autotune_id','')
-
-    target=i.get('target','')
-
-     # Check working repository (possibly remote)
-    OPTIONS_record = True
-    if i.get('no_record') == 'yes':
-        OPTIONS_record = False
-
-    local=i.get('local','')
-    if local=='yes': 
-       er='local'
-       esr=''
-    else:
-       er=i.get('exchange_repo','')
-       if er=='': er=cfg.get('default_exchange_repo_uoa','')
-       if er=='': er=ck.cfg.get('default_exchange_repo_uoa','')
-
-       esr=i.get('exchange_subrepo','')
-       if esr=='': esr=cfg.get('default_exchange_subrepo_uoa','')
-       if esr=='': esr=ck.cfg.get('default_exchange_subrepo_uoa','')
-
-    if i.get('record_repo','')!='': er=i['record_repo']
-    xrecord_uoa=i.get('record_uoa','')
-
-    # Misc params
-    num_repetitions=i.get('repetitions','')
-    if num_repetitions=='': num_repetitions=3
-    num_repetitions=int(num_repetitions)
-
-    iterations=i.get('iterations','')
-    if iterations=='': iterations=-1
-    iterations=int(iterations)
-
-    if i.get('overwrite_reference_output','')=='yes':
-       iterations=1
-
-    pause=i.get('pause','')
-    pause_if_fail=i.get('pause_if_fail','')
-
-    lib_uoa=i.get('library_uoa','')
-
-    see_tests=i.get('see_tests','')
-    dry_run=i.get('dry_run','')
-
-    xmali_hwc=i.get('mali_hwc','')
-
-    xdvdt_prof=i.get('dvdt_prof','')
-    flags=i.get('flags','')
-    if flags=='': flags='-O3'
-
-    if xmali_hwc=='yes' and xdvdt_prof=='yes':
-       ck.out('[WARNING] Shouldn\'t use --mali_hwc and --dvdt_prof at the same time ...')
-
-    ikcmd=i.get('cmd_key','')
-    idduoa=i.get('dataset_uoa','')
-    idfile=i.get('dataset_file','')
-
-    ldfile=[]
-    if idfile.find(',')>0:
-       ldfile=idfile.split(',')
-
-    custom_autotuning=i.get('custom_autotuning',{})
-
-    # Check deps caching
-    deps_cache=[]
-
-    cd=i.get('cache_deps','')
-    if cd=='': cd='default'
-    deps_cache_uoa='deps-cache-'+work['self_module_uoa']+'-'+cd
-
-    reuse_deps=''
-    skip_deps_cache=i.get('skip_deps_cache','')
-    if skip_deps_cache!='yes':
-       reuse_deps='yes'
-
-    refresh_deps_cache=i.get('refresh_deps_cache','')
-
-    if refresh_deps_cache=='yes':
-       r=ck.access({'action':'update',
-                    'module_uoa':cfg['module_deps']['tmp'],
-                    'data_uoa':deps_cache_uoa,
-                    'dict':{'cache':[]}, 'substitute':'yes', 'ignore_update':'yes'})
-       if r['return']>0: return r
-    elif reuse_deps=='yes':
-       r=ck.access({'action':'load',
-                    'module_uoa':cfg['module_deps']['tmp'],
-                    'data_uoa':deps_cache_uoa})
-       if r['return']==0:
-          deps_cache=r['dict'].get('cache',[])
-
-    # Check if any key in input dictionary has . and convert to dict (for example deps.xyz or env.xyz) 
-    for k in list(i.keys()):
-        if k.find('.')>0:
-            v=i[k]
-
-            kk='##'+k.replace('.','#')
-
-            del(i[k])
-
-            r=ck.set_by_flat_key({'dict':i, 'key':kk, 'value':v})
-            if r['return']>0: return r
-
-    env=i.get('env',{})
-
-    # Check user
-    user=''
-
-    mcfg={}
-    ii={'action':'load',
-        'module_uoa':'module',
-        'data_uoa':cfg['module_deps']['program.optimization']}
-    r=ck.access(ii)
-    if r['return']==0:
-       mcfg=r['dict']
-
-       dcfg={}
-       ii={'action':'load',
-           'module_uoa':mcfg['module_deps']['cfg'],
-           'data_uoa':mcfg['cfg_uoa']}
-       r=ck.access(ii)
-       if r['return']>0 and r['return']!=16: return r
-       if r['return']!=16:
-          dcfg=r['dict']
-
-       user=dcfg.get('user_email','')
-
-    # Initialize local environment for program optimization ***********************************************************
-    pi=i.get('platform_info',{})
-    if len(pi)==0:
-       ii=copy.deepcopy(i)
-       ii['action']='initialize'
-       ii['module_uoa']=cfg['module_deps']['program.optimization']
-       ii['data_uoa']='caffe'
-       ii['exchange_repo']=er
-       ii['exchange_subrepo']=esr
-       ii['skip_welcome']='yes'
-       ii['skip_log_wait']='yes'
-       ii['crowdtuning_type']='nntest'
-       ii['update_platform_init']=i.get('update_platform_init','')
-       if local=='yes': ii['local_autotuning']='yes'
-       r=ck.access(ii)
-       if r['return']>0: return r
-
-       pi=r['platform_info']
-       user=r.get('user','')
-
-    hos=pi['host_os_uoa']
-    hos_uid=pi['host_os_uid']
-    hosd=pi['host_os_dict']
-
-    tos=pi['os_uoa']
-    tos_uid=pi['os_uid']
-    tosd=pi['os_dict']
-    tbits=tosd.get('bits','')
-
-    remote=tosd.get('remote','')
-
-    tdid=pi['device_id']
-
-    features=pi.get('features',{})
-
-    fplat=features.get('platform',{})
-    fos=features.get('os',{})
-    fcpu=features.get('cpu',{})
-
-    plat_name=fplat.get('name','')
-    plat_uid=features.get('platform_uid','')
-    os_name=fos.get('name','')
-    os_uid=features.get('os_uid','')
-    cpu_name=fcpu.get('name','')
-    cpu_abi=fcpu.get('cpu_abi','')
-    if cpu_name=='': cpu_name='unknown-'+cpu_abi
-    cpu_uid=features.get('cpu_uid','')
-    sn=fos.get('serial_number','')
-
-    # Now checking which tests to run
-    if o=='con':
-       ck.out(sep)
-       ck.out('Preparing a list of tests ...')
-
-    tags=['nntest']
-
-    if i.get('tags','')!='':
-       tags+=i['tags'].split(',')
-
-    # Check species
-    species_uid=[]
-    species=i.get('species','').split(',')
-    for q in species:
-        q=q.strip()
-        if q!='':
-           r=ck.access({'action':'load',
-                        'module_uoa':cfg['module_deps']['program.species'],
-                        'data_uoa':q})
-           if r['return']>0: return r
-           species_uid.append(r['data_uid'])
-
-    # Check opencl, cuda and cpu keywoards and add v
-    stags=''
-    for q in range(0, len(tags)):
-        x=tags[q].strip()
-
-        if x=='opencl': 
-           x='vopencl'
-        elif x=='cpu': 
-           x='vcpu'
-        elif x=='cuda':
-           x='vcuda'
-
-        if stags!='': stags+=','
-        stags+=x
-
-    duoa=i.get('data_uoa','')
-
-    ii={'action':'search',
-        'module_uoa':cfg['module_deps']['program'],
-        'data_uoa':duoa,
-        'tags':stags,
-        'add_meta':'yes'}
-    r=ck.access(ii)
-    if r['return']>0: return r
-
-    lst=r['lst']
-
-    if len(species_uid)>0:
-       xlst=[]
-       for q in lst:
-           if q['meta'].get('skip_from_tests','')!='yes': # it's possible to skip some tests
-              for s in species_uid:
-                  if s in q['meta'].get('species',[]):
-                     xlst.append(q)
-                     break
-       lst=xlst
-
-    nlst=len(lst)
-
-    if nlst==0:
-       return {'return':1, 'error':'no programs selected'}
-
-    # Start iterating over programs
-    ip=-1
-    for p in sorted(lst, key=lambda x: x.get('data_uoa','')):
-        ip+=1
-
-        test_uoa=p['data_uoa']
-        test_uid=p['data_uid']
-        mm=copy.deepcopy(p['meta']) # program meta
-
-        # Get and save dependencies
-        saved_cdeps=copy.deepcopy(mm.get('compile_deps',{}))
-
-        path=p['path']
-
-        prog_tags=mm.get('tags',[])
-        prog_type=''
-        if 'vopencl' in prog_tags: prog_type='opencl'
-        elif 'vcuda' in prog_tags: prog_type='cuda'
-        else: prog_type='cpu'
-
-        if o=='con':
-           ck.out(sep)
-           ck.out('Analyzing program '+str(ip+1)+' of '+str(nlst)+': '+test_uoa+' ('+test_uid+')')
-
-        # Check and iterate over all or pruned command lines
-        run_cmds=mm.get('run_cmds',{})
-        if len(run_cmds)==0:
-           return {'return':1, 'error':'no CMD for run'}
-
-        krun_cmds=sorted(list(run_cmds.keys()))
-
-        if ikcmd!='':
-           if ikcmd in krun_cmds:
-              krun_cmds=[ikcmd]
-           else:
-              krun_cmds=[]
-
-        for kcmd in sorted(krun_cmds):
-            # Explicitly ignore development command lines
-            if kcmd.startswith('dev'): 
-               continue
-
-            if o=='con':
-               ck.out('  '+sep)
-               ck.out('  Analyzing command line: '+kcmd)
-
-            # Meta related to the selected command line
-            vcmd=run_cmds[kcmd]
-
-            # Check MALI HWC
-            mali_hwc=''
-            if xmali_hwc=='yes' and vcmd.get('run_time',{}).get('need_compute_device','')=='opencl':
-               mali_hwc='yes'
-               env['CK_ADD_RAW_MALI_HWC']='yes'
-
-            # Check dvdt prof
-            dvdt_prof=''
-            if xdvdt_prof=='yes' and vcmd.get('run_time',{}).get('need_compute_device','')=='opencl':
-               dvdt_prof='yes'
-
-            # Check if takes datasets from CK and prepare selection
-            dtags=vcmd.get('dataset_tags',[])
-            if len(dtags)>0:
-               dmuoa=cfg['module_deps']['dataset']
-
-               ii={'action':'search',
-                   'module_uoa':dmuoa,
-                   'add_meta':'yes'}
-
-               if idduoa=='':
-                  tags=''
-                  for q in dtags:
-                      if tags!='': tags+=','
-                      tags+=q
-
-                  ii['tags']=tags
-               else:
-                  ii['data_uoa']=idduoa
-
-               rx=ck.access(ii)
-               if rx['return']>0: return rx
-
-               dlst=rx['lst']
-
-               # Iterate over datasets and check data files
-               for dataset in sorted(dlst, key=lambda x: x.get('data_uoa','')):
-                   dduoa=dataset['data_uoa']
-                   dduid=dataset['data_uid']
-
-                   if o=='con':
-                      ck.out('    '+sep)
-                      ck.out('    Analyzing dataset: '+dduoa)
-
-                   dd=dataset['meta']
-
-                   dfiles=dd.get('dataset_files',[])
-                   if len(ldfile)>0:
-                      dfiles=ldfile
-                   elif idfile!='':
-                      if idfile in dfiles:
-                         dfiles=[idfile]
-                      else:
-                         dfiles=[]
-                   elif len(dfiles)==0:
-                      dfiles=[''] # add empty for 1 iteration without a file
-
-                   # Iterate over data files
-                   for dfile in dfiles:
-                      if dfile!='' and o=='con':
-                         ck.out('      '+sep)
-                         ck.out('      Analyzing dataset file: '+dfile)
-                         ck.out('')
-
-                      if pause=='yes':
-                         ck.inp({'text':'Press Enter to continue ...'})
-
-                      # Check which species program belongs to (to prepare experiment tags)
-                      species=''
-                      for q in mm.get('species',[]):
-                          r=ck.access({'action':'load',
-                                       'module_uoa':cfg['module_deps']['program.species'],
-                                       'data_uoa':q})
-                          if r['return']>0: return r
-
-                          if species!='': species+=','
-                          species+=r['data_uoa']
-
-                      # Resolve library environment UOA(s) (don't use cache to get all choices)
-                      cdeps=copy.deepcopy(saved_cdeps) # here unresolved cdeps 
-                      if cdeps.get('library', None):
-                          if lib_uoa!='':
-                              library_env_uoas=[lib_uoa]
-                          else:
-                             ii={'action':'resolve',
-                                 'module_uoa':cfg['module_deps']['env'],
-                                 'host_os':hos,
-                                 'target_os':tos,
-                                 'device_id':tdid,
-                                 'deps':{'library':copy.deepcopy(cdeps['library'])}
-                             }
-                             r=ck.access(ii)
-                             if r['return']>0: return r
-
-                             library_env_uoas=r['deps']['library'].get('choices',[])
-                             if len(library_env_uoas)==0:
-                                 # Check that maybe 1 env was installed during resolving
-                                 x=r.get('deps',{}).get('library',{}).get('uoa','')
-                                 if x!='':
-                                    library_env_uoas.append(x)
-
-                             if len(library_env_uoas)==0:
-                                 return {'return':1, 'error':'expected at least one library environment'}
-
-                      else:
-                          library_env_uoas=[''] # Empty for at least one iteration even if library is not used
-
-                      # Need to sort by lib_id (if exist to put reference first)
-                      libs=[]
-                      for library_env_uoa in library_env_uoas:
-                          if library_env_uoa=='':
-                             libs.append({})
-                          else:
-                              ii={'action':'load',
-                                  'module_uoa':'env',
-                                  'data_uoa':library_env_uoa}
-                              r=ck.access(ii)
-                              if r['return']>0: return r
-                              libs.append(r)
-
-                      library_env_uoas2=sorted(libs, key=lambda x: x.get('dict',{}).get('customize',{}).get('lib_id',99999))
-
-                      for library_env in library_env_uoas2:
-                          library_env_uoa=library_env.get('data_uoa','')
-
-                          autotune_id=xautotune_id
-
-                          if len(library_env)==0:
-                             library_env=None
-                             library_id='no-library'
-                          else:
-                             if o=='con':
-                                ck.out('        '+sep)
-                                ck.out('        Analyzing library: '+library_env_uoa)
+    try:
+        # Initializing various workflow parameters
+        convert_to_flat_dict(i)
+        OPTIONS = ActionOptions(i)
+        CONFIG = TestConfig(OPTIONS)
+
+        def ck_header(msg, level=0):
+            if OPTIONS.console:
+                indent = '  ' * level
+                ck.out(indent + sep)
+                ck.out(indent + msg)
+                ck.out('')
+
+        if OPTIONS.mali_hwc and OPTIONS.dvdt_prof:
+            ck.out('[WARNING] Shouldn\'t use --mali_hwc and --dvdt_prof at the same time ...')
+
+        # Initialize local environment for program optimization
+        PLATFORM = PlatformInfo(i, CONFIG)
+        
+        # Check user
+        CONFIG.user = OPTIONS.user or PLATFORM.user or get_user_from_module_config()
+        
+        # Now checking which tests to run
+        # Iteration order PROGRAM -> COMMAND -> DATASET -> DATASET_FILE -> LIBRARY
+        ck_header('Preparing a list of tests ...')
+
+        # Start iterating over programs
+        programs = get_programs(OPTIONS.data_uoa, OPTIONS.tags, OPTIONS.get_species_uids())
+        for program_index, PROGRAM in enumerate(map(Program, programs)):
+            ck_header('Analyzing program {} of {}: {} ({})'.format(
+                program_index+1, len(programs), PROGRAM.uoa, PROGRAM.uid))
+
+            # Get libraries from dependencies
+            library_envs = load_lib_envs_sorted_by_id(
+                [OPTIONS.lib_uoa] if OPTIONS.lib_uoa else PROGRAM.get_lib_env_uoas(PLATFORM)
+            )
+            
+            # Iterate over command lines
+            cmd_keys = PROGRAM.get_cmd_keys(OPTIONS)
+            for COMMAND in [ProgramCommand(PROGRAM, k) for k in cmd_keys]:
+                ck_header('Analyzing command line: ' + COMMAND.key, level=1)
+
+                # Iterate over datasets and check data files
+                datasets = COMMAND.get_datasets(OPTIONS.dataset_uoa)
+                for DATASET in [Dataset(d) for d in datasets]:
+                    ck_header('Analyzing dataset: ' + DATASET.uoa, level=2)
+
+                    # Iterate over data files
+                    for DATASET_FILE in DATASET.get_files(OPTIONS.dataset_files):
+                        if DATASET_FILE:
+                            ck_header('Analyzing dataset file: ' + DATASET_FILE, level=3)
+
+                        # Iterate over libraries
+                        for LIBRARY in map(LibraryEnv, library_envs):
+                            if LIBRARY.data_uoa:
+                                ck_header('Analyzing library: ' + LIBRARY.data_uoa, level=4)
+
+                            EXPERIMENT = Experiment(OPTIONS, CONFIG, PLATFORM, 
+                                PROGRAM, COMMAND, DATASET, DATASET_FILE, LIBRARY)
+
+                            # Show all tests to be performed, but do not run them 
+                            if OPTIONS.console and OPTIONS.see_tests:
+                                ck.out('        Autotune ID: ' + EXPERIMENT.autotune_id)
                                 ck.out('')
+                                continue
 
-                             cdeps['library']['uoa']=library_env_uoa # here still clean deps
-                             cdeps['library']['skip_cache']='yes' # do not cache since we will iterate over it
+                            EXPERIMENT.prepare(i)
 
-                             library_tags=library_env['data_name'].lower().replace(', ','-').replace(' ','-').replace(',','-').replace('(','').replace(')','')
+                            EXPERIMENT.print_report()
 
-                             x1=library_tags
-                             x2=library_env['dict']['customize']['version']
+                            # TODO: comment needed, what does it need for? 
+                            # TODO: its result is not used and all seems working without it
+                            #resolve_all_deps(EXPERIMENT.deps, PLATFORM)
 
-                             # Anton asked to remove duplicates at the end of x1 and beginning of x2 (e.g. avgpool-avgpool)
-                             j1=x1.rfind('-')
-                             if j1>0:
-                                xx=x1[j1+1:]
+                            # Prepare pipeline and resolve dependencies, but do not run it
+                            if OPTIONS.dry_run: continue
+                            
+                            # Pause before compiling and running test
+                            if OPTIONS.console and OPTIONS.pause:
+                                ck.inp({'text': 'Press Enter to continue ...'})
 
-                                yy=x2
-                                j2=x2.find('-')
-                                if j2>0:
-                                   yy=x2[:j2]
+                            EXPERIMENT.run()
+                            # end of for each library
+            ck_header('')
+            # end of for each program
 
-                                if xx==yy:
-                                   x1=x1[:j1]
+    except CKException as e:
+        return e.ck_result
 
-                             library_id=x1+'-'+x2
-
-                             # Get specific autotuner
-                             lib_id=str(library_env.get('dict',{}).get('customize',{}).get('lib_id',0))
-
-                             if autotune_id=='':
-                                autotune_id=str(lib_id)
-
-                          if autotune_id=='':
-                             autotune_id='0'
-
-                          if o=='con':
-                             ck.out('        Autotune ID: '+autotune_id)
-                             ck.out('')
-
-                          if see_tests=='yes':
-                             continue
-
-                          # Prepare pipeline.
-                          ii={'action':'pipeline',
-
-                              'prepare':'yes',
-
-                              'dependencies':cdeps,
-                              'deps_cache':deps_cache,
-                              'reuse_deps':reuse_deps,
-
-                              'host_os':hos,
-                              'target':target,
-                              'target_os':tos,
-                              'device_id':tdid,
-
-                              'module_uoa':cfg['module_deps']['program'],
-                              'data_uoa':test_uoa,
-
-                              'cmd_key':kcmd,
-                              'dataset_uoa':dduoa,
-                              'dataset_file':dfile,
-
-                              'dvdt_prof':dvdt_prof,
-                              'mali_hwc':mali_hwc,
-
-                              'env':env,
-
-                              'no_state_check':'yes',
-                              'no_compiler_description':'yes',
-                              'skip_calibration':'yes',
-
-                              'cpu_freq':'max',
-                              'gpu_freq':'max',
-
-                              'flags':flags,
-                              'speed':'no',
-                              'energy':'no',
-
-                              'skip_print_timers':'yes',
-                              'out':'con'
-                          }
-
-                          # Pass vars from input to pipeline
-                          for x in pass_vars_to_autotune:
-                              if x in i:
-                                 ii[x]=i[x]
-
-                          r=ck.access(ii)
-                          if r['return']>0: return r
-
-                          fail=r.get('fail','')
-                          if fail=='yes':
-                              return {'return':10, 'error':'pipeline failed ('+r.get('fail_reason','')+')'}
-
-                          ready=r.get('ready','')
-                          if ready!='yes':
-                              return {'return':11, 'error':'pipeline not ready'}
-
-                          # Remember resolved deps for this benchmarking session.
-                          xcdeps=r.get('dependencies',{})
-
-                          # Get extra features (resolved GPGPU if needed)
-                          pfeatures=pi.get('features',{})
-
-                          fgpu=pfeatures.get('gpu',{})
-                          gpu_name=fgpu.get('name','')
-
-                          fgpgpu=pfeatures.get('gpgpu',{})
-                          gpgpu_name=fgpgpu.get('name','')
-                          gpgpu_vendor=fgpgpu.get('vendor','')
-                          gpgpu_type=fgpgpu.get('type','')
-
-                          gpgpu_name2=gpgpu_name
-                          if gpgpu_vendor!='': gpgpu_name2=gpgpu_vendor+' '+gpgpu_name
-
-                          fgpgpu_misc=pfeatures.get('gpgpu_misc',{})
-                          opencl=fgpgpu_misc.get('opencl c version','')
-
-                          # Clean pipeline.
-                          if 'ready' in r: del(r['ready'])
-                          if 'fail' in r: del(r['fail'])
-                          if 'return' in r: del(r['return'])
-
-                          pipeline=copy.deepcopy(r)
-                          jj={'action':'resolve',
-                              'module_uoa':'env',
-                              'host_os':hos,
-                              'target_os':tos,
-                              'device_id':tdid,
-                              'deps':xcdeps}
-                          r=ck.access(jj)
-                          if r['return']>0: return r
-
-                          # Get versions of all deps
-                          r=ck.access({'action':'get_all_versions_in_deps',
-                                       'module_uoa':cfg['module_deps']['env'],
-#                                       'only_root':'yes',
-                                       'deps':xcdeps})
-                          if r['return']>0: return r
-                          versions=r['versions']
-
-                          tags=[ 'nntest', test_uoa, library_id ]
-
-                          record_uoa=''
-                          if OPTIONS_record:
-                             if xrecord_uoa!='':
-                                record_uoa=xrecord_uoa
-                             else:
-                                x=stimestamp
-                                if i.get('timestamp','')!='': x=i['timestamp']
-                                record_uoa='-'.join(tags)+'-'+x
-
-                          tags.append(timestamp)
-                          tags.append(stimestamp)
-                          tags.append(species)
-
-                          ck.out('---------------------------------------------------------------------------------------')
-                          ck.out('- Program: %s (%s)' % (test_uoa, test_uid))
-
-                          if library_env:
-                              ck.out('- Library: %s (%s)'  % (library_env['data_name'], library_env['data_uoa']))
-
-                          ck.out('- Compiler: %s v%s (%s)' % (cdeps['compiler']['dict']['data_name'],
-                                                              cdeps['compiler']['ver'], 
-                                                              cdeps['compiler']['uoa']))
-                          if OPTIONS_record:
-                             ck.out('- Experiment: %s:%s' % (er, record_uoa))
-                          ck.out('- Tags: %s' % tags)
-                          ck.out('---------------------------------------------------------------------------------------')
-
-                          # Prepare experiment entry meta
-                          meta={'timestamp':timestamp,
-                                'stimestamp':stimestamp,
-                                'user':user,
-                                'nntest_ver':cfg['version'],
-
-                                'scenario_module_uoa':work['self_module_uid'],
-
-                                'host_os_uid':hos_uid,
-                                'target_os_uid':tos_uid,
-                                'target_device_id':tdid,
-
-                                'cpu_name':cpu_name,
-                                'cpu_abi':cpu_abi,
-                                'cpu_uid':cpu_uid,
-
-                                'os_name':os_name,
-                                'os_uid':os_uid,
-
-                                'plat_name':plat_name,
-                                'plat_uid':plat_uid,
-
-                                'gpu_name':gpu_name,
-
-                                'gpgpu_name':gpgpu_name2,
-                                'gpgpu_vendor':gpgpu_vendor,
-                                'opencl':opencl,
-
-                                'prog_uoa':test_uoa,
-                                'prog_uid':test_uid,
-
-                                'prog_type':prog_type,
-
-                                'species':species,
-
-                                'cmd_key':kcmd,
-
-                                'versions':versions,
-
-                                'dataset_uoa':dduoa,
-                                'dataset_uid':dduid,
-
-                                'dataset_file':dfile
-                          }
-
-                          # Add hostname
-                          if ck.cfg.get('record_nntest_hostname','')=='yes':
-                             import platform
-                             meta['platform_hostname']=platform.node() 
-
-                          # Start benchmarking or autotuning
-                          ii={'action':'autotune',
-
-                              'module_uoa':'pipeline',
-                              'data_uoa':'program',
-
-                              'features_keys_to_process':['##choices#*'],
-
-                              'record_params':{
-                                  'search_point_by_features':'yes'
-                              },
-
-                              'meta':meta,
-                              'tags':tags,
-
-                              'iterations':iterations,
-                              'repetitions':num_repetitions,
-
-                              'record': yes_no(OPTIONS_record),
-                              'record_repo':er,
-                              'record_experiment_repo':esr,
-                              'record_uoa':record_uoa,
-
-                              'record_failed':'yes',
-
-                              "record_dict":{"subview_uoa":cfg['data_deps']['experiment.view.nntest']},
-
-                              'pause':pause,
-                              'pause_if_fail':pause_if_fail,
-
-                              'pipeline':pipeline,
-                              'out':'con'}
-
-                          if dvdt_prof=='yes': ii['skip_stat_analysis']='yes' # too much raw statistics
-
-                          if dry_run=='yes': continue
-
-                          # Check if program meta has global autotuning
-                          autotuning=mm.get('autotuning',{})
-                          if len(autotuning)>0:
-                             ii.update(copy.deepcopy(autotuning))
-
-                          # Check if program meta has autotuning for a given command line
-                          autotuning2=vcmd.get('autotuning',{})
-                          if len(autotuning2)>0:
-                             ii.update(copy.deepcopy(autotuning2))
-
-                          # Check if autotune_id
-                          if autotune_id!='':
-                             px=os.path.join(path,'autotune',autotune_id+'.json')
-                             if os.path.isfile(px):
-                                r=ck.load_json_file({'json_file':px})
-                                if r['return']>0: return r
-                                ii.update(copy.deepcopy(r['dict']))
-
-                          # Check if external autotuning is defined
-                          if len(custom_autotuning)>0:
-                             ii.update(copy.deepcopy(custom_autotuning))
- 
-                          r=ck.access(ii)
-                          if r['return']>0: return r
-
-                          fail=r.get('fail','')
-                          if fail=='yes':
-                              return {'return':10, 'error':'autotuning failed ('+r.get('fail_reason','')+')'}
-                          # end of for each library
-
-                      ck.out('=======================================================================================')
-                      ck.out('')
-                      # end of for each program
-
-    return {'return':0}
+    return {'return': 0}
 
 ##############################################################################
 # start NN/SW/HW co-design dashboard
