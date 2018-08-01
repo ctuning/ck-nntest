@@ -40,7 +40,7 @@ int main() {
   TensorShape native_in_shape = to_tensor_shape_whcn(in_shape);
 
   // Prepare operation params
-  bool enable_fast_math = static_cast<bool>(getenv_i("CK_ENABLE_FAST_MATH", 0));
+  bool enable_fast_math = static_cast<bool>(getenv_i("CK_ENABLE_FAST_MATH", 1));
   size_t in_feature_maps = static_cast<size_t>(in_shape.channels);
   size_t out_feature_maps = static_cast<size_t>(getenv_i("CK_OUT_SHAPE_C", DEFAULT_OUT_C));
   printf("in_feature_maps=%d, out_feature_maps=%d\n",

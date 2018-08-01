@@ -103,114 +103,114 @@ CK-NNTest supports the following operators for the Arm Compute Library:
 #### average pool fp32
 * Kernel profiling:
 ```
-$ ck run nntest:avgpool-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:avgpool-armcl-opencl --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:avgpool-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:avgpool-armcl-opencl --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### average pool uint8
 * Kernel profiling:
 ```
-$ ck run nntest:avgpool-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:avgpool-armcl-opencl-uint8 --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:avgpool-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:avgpool-armcl-opencl-uint8 --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### convolution fp32
 * Kernel profiling:
 ```
-$ ck run nntest:conv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:conv-armcl-opencl --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:conv-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:conv-armcl-opencl --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### convolution uint8
 * Kernel profiling:
 ```
-$ ck run nntest:conv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:conv-armcl-opencl-uint8 --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:conv-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:conv-armcl-opencl-uint8 --repetitions=10 --timestamp=<platform>-validation
 ```
 
 
 #### depthwise convolution fp32
 * Kernel profiling:
 ```
-$ ck run nntest:depthwiseconv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:depthwiseconv-armcl-opencl --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:depthwiseconv-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:depthwiseconv-armcl-opencl --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### depthwise convolution uint8
 * Kernel profiling:
 ```
-$ ck run nntest:depthwiseconv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:depthwiseconv-armcl-opencl-uint8 --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:depthwiseconv-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:depthwiseconv-armcl-opencl-uint8 --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### direct convolution fp32
 * Kernel profiling:
 ```
-$ ck run nntest:directconv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:directconv-armcl-opencl --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:directconv-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:directconv-armcl-opencl --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### direct convolution uint8
 * Kernel profiling:
 ```
-$ ck run nntest:directconv-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:directconv-armcl-opencl-uint8 --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:directconv-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:directconv-armcl-opencl-uint8 --repetitions=10 --timestamp=<platform>-validation
 ```
 
 
 #### fully connected fp32
 * Kernel profiling:
 ```
-$ ck run nntest:fullyconnected-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:fullyconnected-armcl-opencl --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:fullyconnected-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:fullyconnected-armcl-opencl --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### fully connected uint8
 * Kernel profiling:
 ```
-$ ck run nntest:fullyconnected-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:fullyconnected-armcl-opencl-uint8 --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:fullyconnected-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:fullyconnected-armcl-opencl-uint8 --repetitions=10 --timestamp=<platform>-validation
 ```
 
 
 #### gemm [TO FIX]
 * Kernel profiling:
 ```
-$ ck run nntest:gemm-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:gemm-armcl-opencl --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:gemm-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:gemm-armcl-opencl --repetitions=10 --timestamp=<platform>-validation
 ```
 
 
@@ -219,71 +219,71 @@ $ ck run nntest:gemm-armcl-opencl --repetitions=10 --record --timestamp=<platfor
 #### reshape fp32
 * Kernel profiling:
 ```
-$ ck run nntest:reshape-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:reshape-armcl-opencl --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:reshape-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:reshape-armcl-opencl --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### reshape uint8
 * Kernel profiling:
 ```
-$ ck run nntest:reshape-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:reshape-armcl-opencl-uint8 --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:reshape-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:reshape-armcl-opencl-uint8 --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### resize bilinear fp32
 * Kernel profiling:
 ```
-$ ck run nntest:resizebilinear-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:resizebilinear-armcl-opencl --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:resizebilinear-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:resizebilinear-armcl-opencl --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### resize bilinear uint8
 * Kernel profiling:
 ```
-$ ck run nntest:resizebilinear-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:resizebilinear-armcl-opencl-uint8 --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:resizebilinear-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:resizebilinear-armcl-opencl-uint8 --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### softmax fp32
 * Kernel profiling:
 ```
-$ ck run nntest:softmax-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:softmax-armcl-opencl --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:softmax-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:softmax-armcl-opencl --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### softmax uint8
 * Kernel profiling:
 ```
-$ ck run nntest:softmax-armcl-opencl-uint8 --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:softmax-armcl-opencl-uint8 --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:softmax-armcl-opencl-uint8 --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:softmax-armcl-opencl-uint8 --repetitions=10 --timestamp=<platform>-validation
 ```
 
 #### winograd convolution fp32
 * Kernel profiling:
 ```
-$ ck run nntest:winogradconv-armcl-opencl --dvdt_prof --record --timestamp=<platform>-profiling
+$ ck run nntest:winogradconv-armcl-opencl --dvdt_prof --timestamp=<platform>-profiling
 ```
 * Validation:
 ```
-$ ck run nntest:winogradconv-armcl-opencl --repetitions=10 --record --timestamp=<platform>-validation
+$ ck run nntest:winogradconv-armcl-opencl --repetitions=10 --timestamp=<platform>-validation
 ```
 
 
@@ -315,11 +315,11 @@ $ ck run program:softmax-armcl-opencl --env.CK_IN_SHAPE_C=256
 
 ### Record test results locally
 
-By default, test results are printed to the standard output. To save test
-results in a local repository, use e.g.:
+By default, test results are recorded in a local repository. To just print test
+results to the standard output, use `no_record` option e.g.:
 
 ```
-$ ck run nntest:softmax-armcl-opencl --iterations=1 --record
+$ ck run nntest:softmax-armcl-opencl --iterations=1 --no_record
 ```
 
 To list the results saved locally, use e.g.:
