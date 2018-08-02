@@ -1376,10 +1376,24 @@ class Experiment:
         if self.options.custom_autotuning:
             target_json.update(self.options.custom_autotuning)
 
+    def __format_batch_sizes(self):
+        autotuning = self.program.get_autotuning_from_file(self.autotune_id)
+        batch_size_choise_order = -1
+        for order, param in enumerate(autotuning.get('choices_order', [])):
+            if param and 'CK_IN_SHAPE_N' in param[0]:
+                batch_size_choise_order = order
+                break
+        if batch_size_choise_order >= 0:
+            choices_selection = autotuning.get('choices_selection', [])
+            if batch_size_choise_order < len(choices_selection):
+                choise = choices_selection[batch_size_choise_order]
+                batch_sizes = range(choise['start'], choise['stop']+1, choise['step'])
+                return ','.join([str(bs) for bs in batch_sizes])
+        return ''
+
     def print_report(self):
         assert self.prepared_pipeline
 
-        ck.out('---------------------------------------------------------------------------------------')
         ck.out('- Program: %s (%s)' % (self.program.uoa, self.program.uid))
 
         if self.library.data_uoa:
@@ -1389,11 +1403,13 @@ class Experiment:
                                             self.compile_deps['compiler']['ver'],
                                             self.compile_deps['compiler']['uoa']))
         
+        ck.out('- Shape: dataset:%s:%s' % (self.dataset.uoa, self.dataset_file))
+        ck.out('- Batch sizes: %s' % self.__format_batch_sizes())
+
         if self.record_uoa:
-            ck.out('- Experiment: %s:%s' % (self.config.exchange_repo, self.record_uoa))
+            ck.out('- Repo: %s:experiment:%s' % (self.config.exchange_repo, self.record_uoa))
 
         ck.out('- Tags: %s' % self.tags)
-        ck.out('---------------------------------------------------------------------------------------')
 
 
 def crowdsource(i):
@@ -1419,9 +1435,9 @@ def crowdsource(i):
         def ck_header(msg, level=0):
             if OPTIONS.console:
                 indent = '  ' * level
+                ck.out('')
                 ck.out(indent + sep)
                 ck.out(indent + msg)
-                ck.out('')
 
         if OPTIONS.mali_hwc and OPTIONS.dvdt_prof:
             ck.out('[WARNING] Shouldn\'t use --mali_hwc and --dvdt_prof at the same time ...')
@@ -1435,6 +1451,7 @@ def crowdsource(i):
         # Now checking which tests to run
         # Iteration order PROGRAM -> COMMAND -> DATASET -> DATASET_FILE -> LIBRARY
         ck_header('Preparing a list of tests ...')
+        EXPERIMENTS = []
 
         # Start iterating over programs
         programs = get_programs(OPTIONS.data_uoa, OPTIONS.tags, OPTIONS.get_species_uids())
@@ -1477,24 +1494,33 @@ def crowdsource(i):
                                 continue
 
                             EXPERIMENT.prepare(i)
-
-                            EXPERIMENT.print_report()
-
-                            # TODO: comment needed, what does it need for? 
-                            # TODO: its result is not used and all seems working without it
-                            #resolve_all_deps(EXPERIMENT.deps, PLATFORM)
-
-                            # Prepare pipeline and resolve dependencies, but do not run it
-                            if OPTIONS.dry_run: continue
-                            
-                            # Pause before compiling and running test
-                            if OPTIONS.console and OPTIONS.pause:
-                                ck.inp({'text': 'Press Enter to continue ...'})
-
-                            EXPERIMENT.run()
+                            EXPERIMENTS.append(EXPERIMENT)
                             # end of for each library
             ck_header('')
             # end of for each program
+
+        # Run all prepared experiments
+        if OPTIONS.console:
+            ck.out('Experiments prepared: {}'.format(len(EXPERIMENTS)))
+
+        for index, EXPERIMENT in enumerate(EXPERIMENTS):
+            if OPTIONS.console:
+                ck.out('')
+                ck.out('---------------------------------------------------------------------------------------')
+                ck.out('Experiment {} of {}:'.format(index+1, len(EXPERIMENTS)))
+                EXPERIMENT.print_report()
+
+            # TODO: comment needed, what does it need for? 
+            # TODO: its result is not used and all seems working without it
+            #resolve_all_deps(EXPERIMENT.deps, PLATFORM)
+
+            if OPTIONS.dry_run: continue
+            
+            # Pause before compiling and running test
+            if OPTIONS.console and OPTIONS.pause:
+                ck.inp({'text': 'Press Enter to run experiment ...'})
+
+            EXPERIMENT.run()
 
     except CKException as e:
         return e.ck_result
