@@ -677,6 +677,8 @@ def run(i):
 ##############################################################################
 # crowdsource nntest
 
+NOT_FOUND_ERROR = 16
+
 class CKException(Exception):
     def __init__(self, ck_result):
         self.ck_result = ck_result
@@ -698,6 +700,19 @@ def ck_access(params_json, skip_error_codes = []):
     r = ck.access(params_json)
     error_code = r['return']
     if error_code > 0 and not (error_code in skip_error_codes):
+        ck.out('CK error details:')
+        ck.out('    action: ' + params_json.get('action'))
+        ck.out('    param: module_uoa=' + params_json.get('module_uoa'))
+        ck.out('    param: data_uoa=' + params_json.get('data_uoa'))
+        import traceback
+        stack_lines = traceback.format_stack()
+        if len(stack_lines) >= 2:
+            # The last line of the stack is the current line (`traceback.format_stack`),
+            # so we need a line before the last - location of call of `ck_access` function.
+            location_and_code = stack_lines[-2].strip().split('\n')
+            ck.out('    location: ' + location_and_code[0].strip())
+            if len(location_and_code) > 1:
+                ck.out('    code: ' + location_and_code[1].strip())
         raise CKException(r)
     return r
 
@@ -722,18 +737,15 @@ def get_user_from_module_config():
                    'data_uoa': cfg['module_deps']['program.optimization']})
     mcfg = r['dict']
 
-    dcfg = {}
     r = ck_access({'action': 'load',
                     'module_uoa': mcfg['module_deps']['cfg'],
                     'data_uoa': mcfg['cfg_uoa']
-                }, skip_error_codes = [16])
+                }, skip_error_codes = [NOT_FOUND_ERROR])
 
-    # TODO: code 16 is not an error but we can't get user when it's returned? 
-    # TODO: what does it mean - 16? comment or speaking name is required
-    if r['return'] != 16:
-        dcfg = r['dict']
+    if r['return'] != NOT_FOUND_ERROR:
+        return r['dict'].get('user_email','')
 
-    return dcfg.get('user_email','')
+    return ''
 
 
 def get_programs(data_uoa, tags_list, species_uids):
@@ -911,18 +923,26 @@ class TestConfig:
     def __init_deps_cache(self, options):
         self.deps_cache = []
         deps_cache_uoa = 'deps-cache-{}-{}'.format(work['self_module_uoa'], options.cache_deps)
-        if options.refresh_deps_cache:
+
+        def refresh_deps_cache():
             ck_access({'action':'update',
                        'module_uoa': cfg['module_deps']['tmp'],
                        'data_uoa': deps_cache_uoa,
                        'dict': { 'cache': [] },
                        'substitute': 'yes',
                        'ignore_update': 'yes'})
+
+        if options.refresh_deps_cache:
+            refresh_deps_cache()
         elif options.reuse_deps:
             r = ck_access({'action': 'load',
                            'module_uoa': cfg['module_deps']['tmp'],
-                           'data_uoa': deps_cache_uoa})
-            self.deps_cache = r['dict'].get('cache',[])
+                           'data_uoa': deps_cache_uoa},
+                           skip_error_codes = [NOT_FOUND_ERROR])
+            if r['return'] != NOT_FOUND_ERROR:
+                self.deps_cache = r['dict'].get('cache',[])
+            else:
+                refresh_deps_cache()
 
 
 class PlatformInfo:
