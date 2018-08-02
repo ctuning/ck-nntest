@@ -98,8 +98,9 @@ cl::NDRange CLTuner_Convolution::find_optimal_lws(ICLKernel &kernel) {
 
   double opt_time = std::numeric_limits<double>::max();
 
-  const char *ck_find_optimal_lws = getenv("CK_FIND_OPTIMAL_LWS");
-  const int kernel_id = ck_find_optimal_lws ? atoi(ck_find_optimal_lws) : 0;
+  const char *ck_lws_tuner_kernel = getenv("CK_LWS_TUNER_KERNEL");
+  const int kernel_id = ck_lws_tuner_kernel ? atoi(ck_lws_tuner_kernel) : 1; // tune "gemm"
+  printf("kernel_id==%d\n", kernel_id);
 
   // Run the kernel once with the default configuration.
   const int bifrost_maximum_lws = 384;
@@ -118,18 +119,21 @@ cl::NDRange CLTuner_Convolution::find_optimal_lws(ICLKernel &kernel) {
   const std::string kernel_id_col2im = config_id.substr(0, std::strlen("col2im"));
   printf("kernel_id_col2im==%s\n", kernel_id_col2im.c_str());
   if(kernel_id_im2col == "im2col" && kernel_id == 0) {
+    printf("Tuning %s (%s) ...\n", config_id.c_str(), kernel_id_im2col.c_str());
     for(int x = 1; x <= 4; x += 1)
       for(int y = 1; y <= 4; y += 1)
         for(int z = 1; z <= 4; z += 1)
           opt_lws = benchmark_lws(queue, kernel, opt_time, opt_lws, cl::NDRange(x, y, z));
   } // if(config_id == "im2col")
   else if(kernel_id_gemm == "gemm" && kernel_id == 1) {
+    printf("Tuning %s (%s) ...\n", config_id.c_str(), kernel_id_gemm.c_str());
     for(int x = 1; x <= 4; x += 1)
       for(int y = 1; y <= 4; y += 1)
         for(int z = 1; z <= 1; z += 1)
           opt_lws = benchmark_lws(queue, kernel, opt_time, opt_lws, cl::NDRange(x, y, z));
   } // if(config_id == "gemm")
   else if(kernel_id_col2im == "col2im" && kernel_id == 2) {
+    printf("Tuning %s (%s) ...\n", config_id.c_str(), kernel_id_col2im.c_str());
     for(int x = 1; x <= 4; x += 1)
       for(int y = 1; y <= 4; y += 1)
         for(int z = 1; z <= 4; z += 1)
