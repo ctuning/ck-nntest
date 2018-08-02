@@ -27,8 +27,7 @@ int main() {
   init_test();
 
   arm_compute::ICLTuner *tuner = nullptr;
-  //const bool find_optimal_lws = static_cast<bool>(getenv("CK_FIND_OPTIMAL_LWS"));
-  //if(find_optimal_lws) tuner = new arm_compute::CLTuner_WinogradConvolution();
+  // TODO: Provide a custom winogradconv tuner.
   init_armcl(tuner);
 
   CLTensor input, output, weights, biases;
