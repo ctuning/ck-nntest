@@ -122,19 +122,19 @@ cl::NDRange CLTuner_Convolution::find_optimal_lws(ICLKernel &kernel) {
       for(int y = 1; y <= 4; y += 1)
         for(int z = 1; z <= 4; z += 1)
           opt_lws = benchmark_lws(queue, kernel, opt_time, opt_lws, cl::NDRange(x, y, z));
-  } // if(config_id == "direct_convolution_f32_1")
-  else if(kernel_id_gemm == "gemm" &&  kernel_id == 1) {
+  } // if(config_id == "im2col")
+  else if(kernel_id_gemm == "gemm" && kernel_id == 1) {
     for(int x = 1; x <= 4; x += 1)
       for(int y = 1; y <= 4; y += 1)
         for(int z = 1; z <= 1; z += 1)
           opt_lws = benchmark_lws(queue, kernel, opt_time, opt_lws, cl::NDRange(x, y, z));
-  } // if(config_id == "direct_convolution_f32_3")
+  } // if(config_id == "gemm")
   else if(kernel_id_col2im == "col2im" && kernel_id == 2) {
     for(int x = 1; x <= 4; x += 1)
       for(int y = 1; y <= 4; y += 1)
         for(int z = 1; z <= 4; z += 1)
           opt_lws = benchmark_lws(queue, kernel, opt_time, opt_lws, cl::NDRange(x, y, z));
-  } // if(config_id == "direct_convolution_f32_5")
+  } // if(config_id == "col2im")
 
   return opt_lws;
 }
