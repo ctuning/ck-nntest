@@ -98,9 +98,6 @@ cl::NDRange CLTuner_Scale::find_optimal_lws(ICLKernel &kernel) {
 
   double opt_time = std::numeric_limits<double>::max();
 
-  const char *ck_find_optimal_lws = getenv("CK_FIND_OPTIMAL_LWS");
-  const int kernel_id = ck_find_optimal_lws ? atoi(ck_find_optimal_lws) : 0;
-
   // Run the kernel once with the default configuration.
   const int bifrost_maximum_lws = 384;
   cl::NDRange opt_lws = cl::NDRange(bifrost_maximum_lws + 1, 1, 1);
