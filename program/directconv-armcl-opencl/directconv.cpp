@@ -102,12 +102,18 @@ int main() {
     float *biases_data = get_const_raw_data(native_biases_shape.total_size(), biases_value);
     copy_raw_data_to_tensor(&biases, biases_data, native_biases_shape.total_size());
     delete[] biases_data;
+
+    // Do a warm up run for dynamic tuners (i.e. first tune here, then measure the best configuration later).
+    auto tuner_type = getenv("CK_LWS_TUNER_TYPE");
+    if (tuner_type && (strcmp(tuner_type, "CUSTOM") == 0 || strcmp(tuner_type, "DEFAULT") == 0)) {
+      layer.run();
+      CLScheduler::get().sync(); // Ensure that all OpenCL jobs have completed.
+    }
   });
 
   measure_test([&]() {
     layer.run();
-    // Ensure that all OpenCL jobs have completed.
-    CLScheduler::get().sync();
+    CLScheduler::get().sync(); // Ensure that all OpenCL jobs have completed.
   });
 
   // Process output data
