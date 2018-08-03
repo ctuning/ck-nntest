@@ -817,8 +817,7 @@ class ActionOptions:
         self.target = i.get('target','')
         self.user = i.get('user','')
 
-        files = i.get('dataset_file','')
-        self.dataset_files = files.split(',') if (',' in files) else []
+        self.dataset_files = i.get('dataset_file','').split(',')
         self.dataset_uoa = i.get('dataset_uoa','')
 
         self.tags = self.__get_input_tags(i)
@@ -854,7 +853,7 @@ class ActionOptions:
             self.iterations = 1
 
         self.custom_autotuning = i.get('custom_autotuning',{})
-        
+
     def __get_input_tags(self, i):
         tags = ['nntest']
         if 'tags' in i:
@@ -894,7 +893,7 @@ class TestConfig:
         if r['return'] > 0:
             raise CKException(r)
         t = r['iso_datetime']
-        
+
         j = t.find('.')
         if j > 0: t = t[:j]
 
@@ -996,7 +995,7 @@ class Program:
         self.path = p['path']
         self.compile_deps = self.meta.get('compile_deps',{})
         self.autotuning = self.meta.get('autotuning',{})
-        
+
         self.commands = self.meta.get('run_cmds',{})
         if not self.commands:
             CKException.throw('no CMD for run in program {} ({})'.format(self.uoa, self.uid))
@@ -1101,11 +1100,9 @@ class Dataset:
 
     def get_files(self, requested_files):
         if requested_files:
-            files = [f for f in self.files if f in requested_files]
+            return [f for f in self.files if f in requested_files]
         else:
-            files = self.files
-        # add empty for 1 iteration without a file
-        return files if files else ['']
+            return self.files
 
 
 class LibraryEnv:
@@ -1151,14 +1148,14 @@ class Experiment:
                  dataset_file,   # string
                  library         # instance of LibraryEnv
                 ):
-        self.options = options             
-        self.config = config               
-        self.platform = platform           
-        self.program = program             
-        self.command = command             
-        self.dataset = dataset             
-        self.dataset_file = dataset_file   
-        self.library = library             
+        self.options = options
+        self.config = config
+        self.platform = platform
+        self.program = program
+        self.command = command
+        self.dataset = dataset
+        self.dataset_file = dataset_file
+        self.library = library
 
         self.dvdt_prof = options.dvdt_prof and command.is_opencl
         self.mali_hwc = options.mali_hwc and command.is_opencl
@@ -1278,7 +1275,7 @@ class Experiment:
             'meta': self.__make_experiment_meta(),
             'tags': self.tags,
             'pipeline': self.prepared_pipeline,
-                              
+
             'features_keys_to_process': ['##choices#*'],
 
             'iterations': self.options.iterations,
@@ -1396,27 +1393,24 @@ class Experiment:
         return ''
 
     def print_report(self):
-        ck.out('- Program: %s (%s)' % (self.program.uoa, self.program.uid))
+        ck.out('- Program: {} ({})'.format(self.program.uoa, self.program.uid))
 
         if self.library.data_uoa:
-            ck.out('- Library: %s (%s)'  % (self.library.data_name, self.library.data_uoa))
+            ck.out('- Library: {} ({})'.format(self.library.data_name, self.library.data_uoa))
 
         if self.compile_deps:
-            ck.out('- Compiler: %s v%s (%s)' % (self.compile_deps['compiler']['dict']['data_name'],
-                                                self.compile_deps['compiler']['ver'],
-                                                self.compile_deps['compiler']['uoa']))
-        
-        if self.dataset_file:
-            ck.out('- Shape: dataset:%s:%s' % (self.dataset.uoa, self.dataset_file))
+            ck.out('- Compiler: {} v{} ({})'.format(self.compile_deps['compiler']['dict']['data_name'],
+                                                    self.compile_deps['compiler']['ver'],
+                                                    self.compile_deps['compiler']['uoa']))
 
-        if self.autotune_id:
-            ck.out('- Autotune ID: ' + self.autotune_id)
-            ck.out('- Batch sizes: %s' % self.__format_batch_sizes())
+        ck.out('- Shape: dataset:{}:{}'.format(self.dataset.uoa, self.dataset_file))
+        ck.out('- Autotune ID: {}'.format(self.autotune_id))
+        ck.out('- Batch sizes: {}'.format(self.__format_batch_sizes()))
 
         if self.record_uoa:
-            ck.out('- Repo: %s:experiment:%s' % (self.config.exchange_repo, self.record_uoa))
+            ck.out('- Repo: {}:experiment:{}'.format(self.config.exchange_repo, self.record_uoa))
 
-        ck.out('- Tags: %s' % self.tags)
+        ck.out('- Tags: {}'.format(self.tags))
 
 
 def crowdsource(i):
@@ -1483,8 +1477,7 @@ def crowdsource(i):
 
                     # Iterate over data files
                     for DATASET_FILE in DATASET.get_files(OPTIONS.dataset_files):
-                        if DATASET_FILE:
-                            ck_header('Analyzing dataset file: ' + DATASET_FILE, level=4)
+                        ck_header('Analyzing dataset file: ' + DATASET_FILE, level=4)
 
                         # Iterate over libraries
                         for LIBRARY in map(LibraryEnv, library_envs):
