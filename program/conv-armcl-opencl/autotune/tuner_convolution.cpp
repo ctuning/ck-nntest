@@ -100,7 +100,7 @@ cl::NDRange CLTuner_Convolution::find_optimal_lws(ICLKernel &kernel) {
 
   const char *ck_lws_tuner_kernel = getenv("CK_LWS_TUNER_KERNEL");
   const int kernel_id = ck_lws_tuner_kernel ? atoi(ck_lws_tuner_kernel) : 1; // tune "gemm"
-  printf("kernel_id==%d\n", kernel_id);
+  printf("\nkernel_id==%d (0 - im2col, 1 - gemm, 2 - col2im)\n", kernel_id);
 
   // Run the kernel once with the default configuration.
   const int bifrost_maximum_lws = 384;
