@@ -1172,6 +1172,7 @@ class Experiment:
         self.deps = None
         self.compile_deps = None
         self.prepared_pipeline = None
+        self.batches_info = None
 
         # Base tags set
         self.tags = ['nntest', program.uoa, library.get_tags_for_test()]
@@ -1377,6 +1378,8 @@ class Experiment:
             target_json.update(self.options.custom_autotuning)
 
     def __format_batch_sizes(self):
+        if self.batches_info:
+            return self.batches_info
         autotuning = self.program.get_autotuning_from_file(self.autotune_id)
         batch_size_choise_order = -1
         for order, param in enumerate(autotuning.get('choices_order', [])):
@@ -1388,23 +1391,27 @@ class Experiment:
             if batch_size_choise_order < len(choices_selection):
                 choise = choices_selection[batch_size_choise_order]
                 batch_sizes = range(choise['start'], choise['stop']+1, choise['step'])
-                return ','.join([str(bs) for bs in batch_sizes])
+                self.batches_info = ','.join([str(bs) for bs in batch_sizes])
+                return self.batches_info
         return ''
 
     def print_report(self):
-        assert self.prepared_pipeline
-
         ck.out('- Program: %s (%s)' % (self.program.uoa, self.program.uid))
 
         if self.library.data_uoa:
             ck.out('- Library: %s (%s)'  % (self.library.data_name, self.library.data_uoa))
 
-        ck.out('- Compiler: %s v%s (%s)' % (self.compile_deps['compiler']['dict']['data_name'],
-                                            self.compile_deps['compiler']['ver'],
-                                            self.compile_deps['compiler']['uoa']))
+        if self.compile_deps:
+            ck.out('- Compiler: %s v%s (%s)' % (self.compile_deps['compiler']['dict']['data_name'],
+                                                self.compile_deps['compiler']['ver'],
+                                                self.compile_deps['compiler']['uoa']))
         
-        ck.out('- Shape: dataset:%s:%s' % (self.dataset.uoa, self.dataset_file))
-        ck.out('- Batch sizes: %s' % self.__format_batch_sizes())
+        if self.dataset_file:
+            ck.out('- Shape: dataset:%s:%s' % (self.dataset.uoa, self.dataset_file))
+
+        if self.autotune_id:
+            ck.out('- Autotune ID: ' + self.autotune_id)
+            ck.out('- Batch sizes: %s' % self.__format_batch_sizes())
 
         if self.record_uoa:
             ck.out('- Repo: %s:experiment:%s' % (self.config.exchange_repo, self.record_uoa))
@@ -1435,8 +1442,9 @@ def crowdsource(i):
         def ck_header(msg, level=0):
             if OPTIONS.console:
                 indent = '  ' * level
-                ck.out('')
-                ck.out(indent + sep)
+                if level == 0:
+                    ck.out('')
+                    ck.out(indent + sep)
                 ck.out(indent + msg)
 
         if OPTIONS.mali_hwc and OPTIONS.dvdt_prof:
@@ -1448,16 +1456,15 @@ def crowdsource(i):
         # Check user
         CONFIG.user = OPTIONS.user or PLATFORM.user or get_user_from_module_config()
         
-        # Now checking which tests to run
+        # Now checking which experiments to run
         # Iteration order PROGRAM -> COMMAND -> DATASET -> DATASET_FILE -> LIBRARY
-        ck_header('Preparing a list of tests ...')
+        ck_header('Preparing a list of experiments ...')
         EXPERIMENTS = []
 
         # Start iterating over programs
         programs = get_programs(OPTIONS.data_uoa, OPTIONS.tags, OPTIONS.get_species_uids())
-        for program_index, PROGRAM in enumerate(map(Program, programs)):
-            ck_header('Analyzing program {} of {}: {} ({})'.format(
-                program_index+1, len(programs), PROGRAM.uoa, PROGRAM.uid))
+        for PROGRAM in map(Program, programs):
+            ck_header('Analyzing program: {} ({})'.format(PROGRAM.uoa, PROGRAM.uid), level=1)
 
             # Get libraries from dependencies
             library_envs = load_lib_envs_sorted_by_id(
@@ -1467,55 +1474,69 @@ def crowdsource(i):
             # Iterate over command lines
             cmd_keys = PROGRAM.get_cmd_keys(OPTIONS)
             for COMMAND in [ProgramCommand(PROGRAM, k) for k in cmd_keys]:
-                ck_header('Analyzing command line: ' + COMMAND.key, level=1)
+                ck_header('Analyzing command line: ' + COMMAND.key, level=2)
 
                 # Iterate over datasets and check data files
                 datasets = COMMAND.get_datasets(OPTIONS.dataset_uoa)
                 for DATASET in [Dataset(d) for d in datasets]:
-                    ck_header('Analyzing dataset: ' + DATASET.uoa, level=2)
+                    ck_header('Analyzing dataset: ' + DATASET.uoa, level=3)
 
                     # Iterate over data files
                     for DATASET_FILE in DATASET.get_files(OPTIONS.dataset_files):
                         if DATASET_FILE:
-                            ck_header('Analyzing dataset file: ' + DATASET_FILE, level=3)
+                            ck_header('Analyzing dataset file: ' + DATASET_FILE, level=4)
 
                         # Iterate over libraries
                         for LIBRARY in map(LibraryEnv, library_envs):
                             if LIBRARY.data_uoa:
-                                ck_header('Analyzing library: ' + LIBRARY.data_uoa, level=4)
+                                ck_header('Analyzing library: ' + LIBRARY.data_uoa, level=5)
 
                             EXPERIMENT = Experiment(OPTIONS, CONFIG, PLATFORM, 
                                 PROGRAM, COMMAND, DATASET, DATASET_FILE, LIBRARY)
 
-                            # Show all tests to be performed, but do not run them 
-                            if OPTIONS.console and OPTIONS.see_tests:
-                                ck.out('        Autotune ID: ' + EXPERIMENT.autotune_id)
-                                ck.out('')
-                                continue
-
-                            EXPERIMENT.prepare(i)
                             EXPERIMENTS.append(EXPERIMENT)
                             # end of for each library
             ck_header('')
             # end of for each program
 
-        # Run all prepared experiments
         if OPTIONS.console:
             ck.out('Experiments prepared: {}'.format(len(EXPERIMENTS)))
 
-        for index, EXPERIMENT in enumerate(EXPERIMENTS):
+        def print_experiment(index, experiment):
             if OPTIONS.console:
                 ck.out('')
-                ck.out('---------------------------------------------------------------------------------------')
+                ck.out('--------------------------------------------------------')
                 ck.out('Experiment {} of {}:'.format(index+1, len(EXPERIMENTS)))
-                EXPERIMENT.print_report()
+                experiment.print_report()
+
+        # Show all tests to be performed, but do not run them 
+        if OPTIONS.see_tests and OPTIONS.console:
+            for index, EXPERIMENT in enumerate(EXPERIMENTS):
+                print_experiment(index, EXPERIMENT)
+            return {'return': 0}
+
+        # Prepare pipelines
+        ck_header('Preparing pipelines for all experiments ...')
+        for index, EXPERIMENT in enumerate(EXPERIMENTS):
+            print_experiment(index, EXPERIMENT)
+
+            EXPERIMENT.prepare(i)
 
             # TODO: comment needed, what does it need for? 
             # TODO: its result is not used and all seems working without it
-            #resolve_all_deps(EXPERIMENT.deps, PLATFORM)
+            resolve_all_deps(EXPERIMENT.deps, PLATFORM)
 
-            if OPTIONS.dry_run: continue
-            
+        # Prepare pipeline and resolve dependencies, but do not run it
+        if OPTIONS.dry_run:
+            for index, EXPERIMENT in enumerate(EXPERIMENTS):
+                print_experiment(index, EXPERIMENT)
+            return {'return': 0}
+
+        # Run all prepared pipelines
+        ck_header('Run experiments ...')
+        for index, EXPERIMENT in enumerate(EXPERIMENTS):
+            print_experiment(index, EXPERIMENT)
+
             # Pause before compiling and running test
             if OPTIONS.console and OPTIONS.pause:
                 ck.inp({'text': 'Press Enter to run experiment ...'})

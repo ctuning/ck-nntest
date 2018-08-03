@@ -84,6 +84,16 @@ To compile and run a single test listed above, use e.g.:
 $ ck run nntest:softmax-armcl-opencl
 ```
 
+To view all tests to be performed run this command with `see_tests` or `dry_run` options.
+The command with `see_tests` option only lists all combinations of a library, dataset,
+tensor shape to be processed. And command with `dry_run` option prepares a pipeline
+for each test but don't run it.
+
+```
+$ ck run nntest:softmax-armcl-opencl --see_tests
+$ ck run nntest:softmax-armcl-opencl --dry_run
+```
+
 ### Run experiments using Arm Compute Library with OpenCL
 
 CK-NNTest supports the following operators for the Arm Compute Library:
