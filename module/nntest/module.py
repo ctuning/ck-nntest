@@ -629,7 +629,7 @@ def run(i):
 
               (pause)               - if 'yes', pause before compiling and running test
 
-              (see_tests)           - show all tests to be performed, but do not run them 
+              (list_tests)          - show all tests to be performed, but do not run them 
               (dry_run)             - if 'yes', prepare pipeline and resolve dependencies, but do not run it (testing)
 
               (skip_deps_cache)     - if 'yes', do not cache deps
@@ -817,7 +817,8 @@ class ActionOptions:
         self.target = i.get('target','')
         self.user = i.get('user','')
 
-        self.dataset_files = i.get('dataset_file','').split(',')
+        dataset_file = i.get('dataset_file','')
+        self.dataset_files = dataset_file.split(',') if dataset_file else []
         self.dataset_uoa = i.get('dataset_uoa','')
 
         self.tags = self.__get_input_tags(i)
@@ -839,7 +840,7 @@ class ActionOptions:
         self.dry_run = i.get('dry_run') == 'yes'
         self.mali_hwc = i.get('mali_hwc') == 'yes'
         self.dvdt_prof = i.get('dvdt_prof') == 'yes'
-        self.see_tests = i.get('see_tests') == 'yes'
+        self.list_tests = i.get('list_tests') == 'yes'
         self.pause = i.get('pause') == 'yes'
         self.pause_if_fail = i.get('pause_if_fail') == 'yes'
         self.console = i.get('out') == 'con'
@@ -1503,7 +1504,7 @@ def crowdsource(i):
                 experiment.print_report()
 
         # Show all tests to be performed, but do not run them 
-        if OPTIONS.see_tests and OPTIONS.console:
+        if OPTIONS.list_tests and OPTIONS.console:
             for index, EXPERIMENT in enumerate(EXPERIMENTS):
                 print_experiment(index, EXPERIMENT)
             return {'return': 0}
