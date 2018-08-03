@@ -849,7 +849,7 @@ class ActionOptions:
         self.env = i.get('env',{})
 
         self.num_repetitions = int(i.get('repetitions') or 3)
-        self.iterations = int(i.get('repetitions') or -1)
+        self.iterations = int(i.get('iterations') or -1)
         if i.get('overwrite_reference_output','') == 'yes':
             self.iterations = 1
 
@@ -1381,16 +1381,16 @@ class Experiment:
         if self.batches_info:
             return self.batches_info
         autotuning = self.program.get_autotuning_from_file(self.autotune_id)
-        batch_size_choise_order = -1
+        batch_size_choice_order = -1
         for order, param in enumerate(autotuning.get('choices_order', [])):
             if param and 'CK_IN_SHAPE_N' in param[0]:
-                batch_size_choise_order = order
+                batch_size_choice_order = order
                 break
-        if batch_size_choise_order >= 0:
+        if batch_size_choice_order >= 0:
             choices_selection = autotuning.get('choices_selection', [])
-            if batch_size_choise_order < len(choices_selection):
-                choise = choices_selection[batch_size_choise_order]
-                batch_sizes = range(choise['start'], choise['stop']+1, choise['step'])
+            if batch_size_choice_order < len(choices_selection):
+                choice = choices_selection[batch_size_choice_order]
+                batch_sizes = range(choice['start'], choice['stop']+1, choice['step'])
                 self.batches_info = ','.join([str(bs) for bs in batch_sizes])
                 return self.batches_info
         return ''

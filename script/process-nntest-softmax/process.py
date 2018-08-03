@@ -25,6 +25,13 @@ def ck_preprocess(i):
     meta=i['meta']
     env=i['env']
 
+    in_channels = str(env.get('CK_IN_SHAPE_C',''))
+    ck.out('***********************************************')
+    ck.out('in_channels={}'.format(in_channels))
+    ck.inp({'text': 'Press Enter to run experiment ...'})
+    if in_channels == 1000:
+         return {'return':1, 'error':'AAAAAAAAAAAAAAAAAAA!'}
+
     new_env = {}
     files_to_push = []
     if i['target_os_dict'].get('remote','') == 'yes' and env.get('CK_PUSH_LIBS_TO_REMOTE', 'yes').lower() == 'yes':
