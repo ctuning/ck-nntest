@@ -1390,7 +1390,7 @@ class Experiment:
                 choice = choices_selection[batch_size_choice_order]
                 batch_sizes = range(choice['start'], choice['stop']+1, choice['step'])
                 batch_sizes = [str(bs) for bs in batch_sizes]
-                if self.options.iterations > 0 and self.options.iterations < len(batch_sizes):
+                if self.options.iterations > -1 and self.options.iterations < len(batch_sizes):
                     batch_sizes = batch_sizes[:self.options.iterations]
                 self.batches_info = ','.join(batch_sizes)
                 return self.batches_info
