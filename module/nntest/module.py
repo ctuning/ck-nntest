@@ -701,9 +701,9 @@ def ck_access(params_json, skip_error_codes = []):
     error_code = r['return']
     if error_code > 0 and not (error_code in skip_error_codes):
         ck.out('CK error details:')
-        ck.out('    action: ' + params_json.get('action'))
-        ck.out('    param: module_uoa=' + params_json.get('module_uoa'))
-        ck.out('    param: data_uoa=' + params_json.get('data_uoa'))
+        ck.out('    action: ' + params_json.get('action',''))
+        ck.out('    param: module_uoa=' + params_json.get('module_uoa',''))
+        ck.out('    param: data_uoa=' + params_json.get('data_uoa',''))
         import traceback
         stack_lines = traceback.format_stack()
         if len(stack_lines) >= 2:
@@ -1389,7 +1389,10 @@ class Experiment:
             if batch_size_choice_order < len(choices_selection):
                 choice = choices_selection[batch_size_choice_order]
                 batch_sizes = range(choice['start'], choice['stop']+1, choice['step'])
-                self.batches_info = ','.join([str(bs) for bs in batch_sizes])
+                batch_sizes = [str(bs) for bs in batch_sizes]
+                if self.options.iterations > 0 and self.options.iterations < len(batch_sizes):
+                    batch_sizes = batch_sizes[:self.options.iterations]
+                self.batches_info = ','.join(batch_sizes)
                 return self.batches_info
         return ''
 
@@ -1406,7 +1409,7 @@ class Experiment:
 
         ck.out('- Shape: dataset:{}:{}'.format(self.dataset.uoa, self.dataset_file))
         ck.out('- Autotune ID: {}'.format(self.autotune_id))
-        ck.out('- Batch sizes: {}'.format(self.__format_batch_sizes()))
+        ck.out('- Batch size(s): {}'.format(self.__format_batch_sizes()))
 
         if self.record_uoa:
             ck.out('- Repo: {}:experiment:{}'.format(self.config.exchange_repo, self.record_uoa))
