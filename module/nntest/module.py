@@ -848,6 +848,9 @@ class ActionOptions:
         self.flags = i.get('flags') or '-O3'
         self.env = i.get('env',{})
 
+        self.compute_platform_id = i.get('compute_platform_id','')
+        self.compute_device_id = i.get('compute_device_id','')
+
         self.num_repetitions = int(i.get('repetitions') or 3)
         self.iterations = int(i.get('iterations') or -1)
         if i.get('overwrite_reference_output','') == 'yes':
@@ -882,6 +885,8 @@ class ActionOptions:
 class TestConfig:
     def __init__(self, options):
         self.user = None # to be initialized externally
+        self.gpgpu_platform_id = options.compute_platform_id
+        self.gpgpu_device_id = options.compute_device_id
         self.__init_timestamps()
         self.__init_repo_names(options)
         self.__init_deps_cache(options)
@@ -1241,6 +1246,13 @@ class Experiment:
             'out': 'con' # TODO should it be the same as `i.get('out','')` ?
         }
 
+        # Restore GPU selection to avoid asking
+        if self.config.gpgpu_device_id and self.config.gpgpu_platform_id:
+            params_json['compute_platform_id'] = self.config.gpgpu_platform_id
+            params_json['compute_device_id'] = self.config.gpgpu_device_id
+            params_json['env']['CK_COMPUTE_PLATFORM_ID'] = self.config.gpgpu_platform_id
+            params_json['env']['CK_COMPUTE_DEVICE_ID'] = self.config.gpgpu_device_id
+
         # Pass vars from input to pipeline
         for var in pass_vars_to_autotune:
             if var in action_params_json:
@@ -1260,6 +1272,13 @@ class Experiment:
         if 'return' in r: del(r['return'])
         self.prepared_pipeline = r
         self.deps = r.get('dependencies', {})
+
+        # Store global gpu selection
+        if not self.config.gpgpu_device_id or not self.config.gpgpu_platform_id:
+            gpgpu_id = self.prepared_pipeline.get('features',{}).get('gpgpu',{}).get('gpgpu_id',{})
+            self.config.gpgpu_device_id = gpgpu_id.get('gpgpu_device_id')
+            self.config.gpgpu_platform_id = gpgpu_id.get('gpgpu_platform_id')
+
 
     def run(self):
         '''
@@ -1388,11 +1407,14 @@ class Experiment:
             choices_selection = autotuning.get('choices_selection', [])
             if batch_size_choice_order < len(choices_selection):
                 choice = choices_selection[batch_size_choice_order]
-                batch_sizes = range(choice['start'], choice['stop']+1, choice['step'])
+                batch_sizes = range(choice.get('start',0), choice.get('stop',0)+1, choice.get('step',0))
                 batch_sizes = [str(bs) for bs in batch_sizes]
                 if self.options.iterations > -1 and self.options.iterations < len(batch_sizes):
                     batch_sizes = batch_sizes[:self.options.iterations]
                 self.batches_info = ','.join(batch_sizes)
+                # TODO: currently we only support `loop` type of batches choices selection
+                if choice.get('type','') != 'loop':
+                    self.batches_info += ' (nonstandard autotuning: number of iterations may be estimated incorrectly)'
                 return self.batches_info
         return ''
 
@@ -1515,7 +1537,10 @@ def crowdsource(i):
         # Prepare pipelines
         ck_header('Preparing pipelines for all experiments ...')
         for index, EXPERIMENT in enumerate(EXPERIMENTS):
-            print_experiment(index, EXPERIMENT)
+            if OPTIONS.console:
+                ck.out('')
+                ck.out('--------------------------------------------------------')
+                print_experiment(index, EXPERIMENT)
 
             EXPERIMENT.prepare(i)
 
@@ -1532,7 +1557,10 @@ def crowdsource(i):
         # Run all prepared pipelines
         ck_header('Run experiments ...')
         for index, EXPERIMENT in enumerate(EXPERIMENTS):
-            print_experiment(index, EXPERIMENT)
+            if OPTIONS.console:
+                ck.out('')
+                ck.out('--------------------------------------------------------')
+                print_experiment(index, EXPERIMENT)
 
             # Pause before compiling and running test
             if OPTIONS.console and OPTIONS.pause:
