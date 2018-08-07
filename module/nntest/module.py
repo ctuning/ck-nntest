@@ -622,7 +622,7 @@ def run(i):
               (cmd_key)             - prune by CMD key, otherwise trying all
               (dataset_uoa)         - prune by dataset UOA, otherwise trying all
               (dataset_file)        - prune by dataset filename, otherwise trying all
-              (library_uoa)         - if !=', specify one or several lib UOAs to use (comma separated)
+              (library_uoa)         - if !='', specify one or several lib UOAs to use (comma separated)
 
               (pause_if_fail)       - if pipeline fails, ask to press Enter
                                       (useful to analyze which flags fail during compiler flag autotuning)
@@ -1054,7 +1054,7 @@ class Program:
             x = r.get('deps',{}).get('library',{}).get('uoa','')
             if x:
                 uoas.append(x)
-        # Filter by specified lib uoas
+        # Filter by specified lib UOAs
         if lib_uoas:
             uoas = [u for u in uoas if u in lib_uoas]
         if not uoas:
@@ -1088,7 +1088,7 @@ class ProgramCommand:
 
     def get_datasets(self, dataset_uoa):
         '''
-        Find datasets by command's dataset tags or by explicitly specified input uoa
+        Find datasets by command's dataset tags or by explicitly specified input UOA
         '''
         if not self.dataset_tags:
             return []
@@ -1186,7 +1186,7 @@ class Experiment:
         # Base tags set
         self.tags = ['nntest', program.uoa, library.get_tags_for_test()]
 
-        # Make record uoa from base tags and timestamps
+        # Make record UOA from base tags and timestamps
         self.record_uoa = ''
         if options.record:
             if options.record_uoa:
