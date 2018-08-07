@@ -12,7 +12,7 @@
       "extra_ld_vars": "$<<CK_ENV_LIB_ARMCL_LFLAG_CORE>>$",
       "local": "yes",
       "name": "ARM Compute Library (OpenCL)",
-      "or_tags": "vdefault;vfc",
+      "or_tags": "armcl;vdefault;vfc",
       "sort": -5,
       "tags": "lib,arm-compute-library,vopencl"
     },

@@ -27,7 +27,7 @@
       "extra_ld_vars": "$<<CK_ENV_LIB_ARMCL_LFLAG_CORE>>$",
       "local": "yes",
       "name": "ARM Compute Library (OpenCL, uint8)",
-      "or_tags": "vdefault;vsoftmax-uint8",
+      "or_tags": "armcl;vdefault;vsoftmax-uint8",
       "sort": 1,
       "tags": "lib,arm-compute-library,vopencl"
     },
