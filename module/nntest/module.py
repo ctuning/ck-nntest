@@ -1168,7 +1168,6 @@ class Experiment:
         self.dataset_file = dataset_file
         self.library = library
         self.skip_compilation = False
-        self.skip_copy_to_remote = False
 
         self.dvdt_prof = options.dvdt_prof and command.is_opencl
         self.mali_hwc = options.mali_hwc and command.is_opencl
@@ -1214,7 +1213,7 @@ class Experiment:
             self.compile_deps['library']['skip_cache'] = 'yes' # do not cache since we will iterate over it
 
         # Tune environment
-        self.env['CK_PUSH_LIBS_TO_REMOTE'] = yes_no(not self.skip_copy_to_remote)
+        self.env['CK_PUSH_LIBS_TO_REMOTE'] = yes_no(not self.skip_compilation)
 
         params_json = {
             'action': 'pipeline',
@@ -1242,7 +1241,7 @@ class Experiment:
             'env': self.env,
 
             'no_compile': yes_no(self.skip_compilation),
-            'compile_only_once': yes_no(True),
+            'compile_only_once': 'yes',
             'no_state_check': 'yes',
             'no_compiler_description': 'yes',
             'skip_calibration': 'yes',
@@ -1283,11 +1282,6 @@ class Experiment:
         self.prepared_pipeline = r
         self.deps = r.get('dependencies', {})
 
-        # Tune dependencies
-        for dep in self.prepared_pipeline.get('dependencies', {}):
-            if ('cus' in dep) and dep['cus']['dynamic_lib']:
-                dep['cus']['skip_copy_to_remote'] = yes_no(self.skip_copy_to_remote)
-
         # Store global gpu selection
         if not self.config.gpgpu_device_id or not self.config.gpgpu_platform_id:
             gpgpu_id = self.prepared_pipeline.get('features',{}).get('gpgpu',{}).get('gpgpu_id',{})
@@ -1300,6 +1294,17 @@ class Experiment:
         Run prepared pipeline.
         '''
         assert self.prepared_pipeline
+
+        # Tune dependencies
+        # TODO: it looks like should be working but it does not.
+        # program.pipeline resolves deps even thought they are already resolved,
+        # and we loose this optimization of prepared dependencies.
+        if self.deps and self.skip_compilation:
+            for dep in self.deps:
+                if ('cus' in self.deps[dep]) and self.deps[dep]['cus'].get('dynamic_lib'):
+                    self.deps[dep]['cus']['skip_copy_to_remote'] = 'yes'
+
+        self.prepared_pipeline['dependencies'] = self.deps
 
         params_json = {
             'action': 'autotune',
@@ -1440,9 +1445,10 @@ class Experiment:
             ck.out('- Library: {} {} ({})'.format(self.library.data_name, self.library.version, self.library.data_uoa))
 
         if self.compile_deps:
-            ck.out('- Compiler: {} v{} ({})'.format(self.compile_deps['compiler']['dict']['data_name'],
-                                                    self.compile_deps['compiler']['ver'],
-                                                    self.compile_deps['compiler']['uoa']))
+            compiler = self.compile_deps.get('compiler',{})
+            ck.out('- Compiler: {} v{} ({})'.format(compiler.get('dict',{}).get('data_name','?'),
+                                                    compiler.get('ver','?'),
+                                                    compiler.get('uoa','?')))
 
         ck.out('- Shape: dataset:{}:{}'.format(self.dataset.uoa, self.dataset_file))
         ck.out('- Autotune ID: {}'.format(self.autotune_id))
@@ -1487,10 +1493,10 @@ def crowdsource(i):
 
         # Initialize local environment for program optimization
         PLATFORM = PlatformInfo(i, CONFIG)
-        
+
         # Check user
         CONFIG.user = OPTIONS.user or PLATFORM.user or get_user_from_module_config()
-        
+
         # Now checking which experiments to run
         # Iteration order PROGRAM -> COMMAND -> DATASET -> DATASET_FILE -> LIBRARY
         ck_header('Preparing a list of experiments ...')
@@ -1529,7 +1535,6 @@ def crowdsource(i):
 
                             # We can skip program compilation when iterating over datasets
                             EXPERIMENT.skip_compilation = skip_compilation
-                            EXPERIMENT.skip_copy_to_remote = skip_compilation
                             skip_compilation = True
 
                             EXPERIMENTS.append(EXPERIMENT)
@@ -1554,6 +1559,8 @@ def crowdsource(i):
 
         # Prepare pipelines
         ck_header('Preparing pipelines for all experiments ...')
+        prepared_deps = None
+        prepared_cdeps = None
         for index, EXPERIMENT in enumerate(EXPERIMENTS):
             if OPTIONS.console:
                 ck.out('')
@@ -1562,9 +1569,18 @@ def crowdsource(i):
 
             EXPERIMENT.prepare(i)
 
+            # If experiment does not require compilation
+            # we can reused deps from previous compiled experiment
+            if EXPERIMENT.skip_compilation:
+                EXPERIMENT.deps = copy.deepcopy(prepared_deps)
+                EXPERIMENT.compile_deps = copy.deepcopy(prepared_cdeps)
+            else:
+                prepared_deps = EXPERIMENT.deps
+                prepared_cdeps = EXPERIMENT.compile_deps
+
             # TODO: comment needed, what does it need for? 
             # TODO: its result is not used and all seems working without it
-            resolve_all_deps(EXPERIMENT.deps, PLATFORM)
+            #resolve_all_deps(EXPERIMENT.deps, PLATFORM)
 
         # Prepare pipeline and resolve dependencies, but do not run it
         if OPTIONS.dry_run:
