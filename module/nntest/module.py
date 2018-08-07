@@ -619,10 +619,10 @@ def run(i):
               (tags)                - prune programs by tags (opencl, cpu, armcl, caffe, tensorflow ...)
               (species)             - list of species
 
-              (cmd_key)             - prune by CMD key, otherwise trying all
-              (dataset_uoa)         - prune by dataset UOA, otherwise trying all
-              (dataset_file)        - prune by dataset filename, otherwise trying all
-              (library_uoa)         - if !='', specify one or several lib UOAs to use (comma separated)
+              (cmd_key)             - prune by CMD key, otherwise try all
+              (dataset_uoa)         - prune by dataset UOA, otherwise try all
+              (dataset_file)        - prune by dataset filename, otherwise try all
+              (library)             - if !='', specify one or several lib UOAs to use (comma separated)
 
               (pause_if_fail)       - if pipeline fails, ask to press Enter
                                       (useful to analyze which flags fail during compiler flag autotuning)
@@ -773,41 +773,6 @@ def get_programs(data_uoa, tags_list, species_uids):
     return sorted(programs, key = lambda p: p.get('data_uoa',''))
 
 
-def load_lib_envs_sorted_by_id(library_env_uoas):
-    '''
-    Loads all library envs and returns them as a list sorted by `lib_id`
-    '''
-    lib_envs = []
-    for uoa in library_env_uoas:
-        if not uoa:
-            lib_envs.append({})
-        else:
-            lib_envs.append(ck_access({'action': 'load',
-                                       'module_uoa': 'env',
-                                       'data_uoa': uoa}))
-
-    return sorted(lib_envs, key = lambda x: x.get('dict',{})
-                                             .get('customize',{})
-                                             .get('lib_id',99999))
-
-
-def get_versions_of_all_deps(deps):
-    r = ck_access({'action': 'get_all_versions_in_deps',
-                   'module_uoa': cfg['module_deps']['env'],
-                   'deps': deps})
-    return r['versions']
-
-
-def resolve_all_deps(deps, platform):
-    r = ck_access({'action': 'resolve',
-                   'module_uoa': 'env',
-                   'host_os': platform.host_os,
-                   'target_os': platform.target_os,
-                   'device_id': platform.device_id,
-                   'deps': deps})
-    return r
-
-
 class ActionOptions:
     def __init__(self, i):
         self.data_uoa = i.get('data_uoa','')
@@ -816,8 +781,8 @@ class ActionOptions:
         self.target = i.get('target','')
         self.user = i.get('user','')
 
-        lib_uoas = i.get('library_uoa','')
-        self.lib_uoas = lib_uoas.split(',') if lib_uoas else []
+        libraries = i.get('library','')
+        self.libraries = libraries.split(',') if libraries else []
 
         dataset_file = i.get('dataset_file','')
         self.dataset_files = dataset_file.split(',') if dataset_file else []
@@ -1033,13 +998,13 @@ class Program:
         # Ignore development keys
         return sorted([k for k in self.commands if not k.startswith('dev')])
 
-    def get_lib_env_uoas(self, platform, lib_uoas):
+    def get_lib_envs(self, platform, libs):
         '''
-        Resolve library environment UOA(s) (don't use cache to get all choices)
+        Resolve library environments (don't use cache to get all choices)
         '''
         lib = self.compile_deps.get('library')
-        # Empty for at least one iteration even if library is not used
-        if not lib: return [''] 
+        if not lib:
+            raise CKException.throw('expected at least one library dependency')
 
         r = ck_access({'action': 'resolve',
                         'module_uoa': cfg['module_deps']['env'],
@@ -1054,12 +1019,22 @@ class Program:
             x = r.get('deps',{}).get('library',{}).get('uoa','')
             if x:
                 uoas.append(x)
+
         # Filter by specified lib UOAs
-        if lib_uoas:
-            uoas = [u for u in uoas if u in lib_uoas]
+        if libs:
+            uoas = [u for u in uoas if u in libs]
         if not uoas:
             raise CKException.throw('expected at least one library environment')
-        return uoas
+
+        # Load all library envs and returns them as a list sorted by `lib_id`
+        envs = []
+        for uoa in uoas:
+            envs.append(ck_access({'action': 'load',
+                                   'module_uoa': 'env',
+                                   'data_uoa': uoa}))
+        return sorted(envs, key = lambda x: x.get('dict',{})
+                                             .get('customize',{})
+                                             .get('lib_id',99999))
 
     def get_autotuning_from_file(self, autotune_id):
         '''
@@ -1126,10 +1101,9 @@ class LibraryEnv:
         self.lib_id = str(self.env.get('dict',{}).get('customize',{}).get('lib_id', 0))
 
     def get_tags_for_test(self):
-        if not self.data_uoa:
-            return 'no-library'
-
-        # Remove duplicates at the end of `tags` and beginning of `version` (e.g. avgpool-avgpool)
+        '''
+        Remove duplicates at the end of `tags` and beginning of `version` (e.g. avgpool-avgpool)
+        '''
         x1 = self.tags
         x2 = self.version
 
@@ -1208,9 +1182,8 @@ class Experiment:
         # `compile_deps` will be resolved after call of `prepare` 
         # and this object will be updated, so we need the copy
         self.compile_deps = copy.deepcopy(self.program.compile_deps)
-        if self.library.data_uoa:
-            self.compile_deps['library']['uoa'] = self.library.data_uoa
-            self.compile_deps['library']['skip_cache'] = 'yes' # do not cache since we will iterate over it
+        self.compile_deps['library']['uoa'] = self.library.data_uoa
+        self.compile_deps['library']['skip_cache'] = 'yes' # do not cache since we will iterate over it
 
         # Tune environment
         self.env['CK_PUSH_LIBS_TO_REMOTE'] = yes_no(not self.skip_compilation)
@@ -1386,7 +1359,7 @@ class Experiment:
             'dataset_uid': self.dataset.uid,
             'dataset_file': self.dataset_file,
 
-            'versions': get_versions_of_all_deps(self.deps)
+            'versions': self.__get_deps_versions()
         }  
 
         # Add hostname if required
@@ -1438,13 +1411,18 @@ class Experiment:
                 return self.batches_info
         return ''
 
+    def __get_deps_versions(self):
+        r = ck_access({'action': 'get_all_versions_in_deps',
+                       'module_uoa': cfg['module_deps']['env'],
+                       'deps': self.deps})
+        return r['versions']
+
     def print_report(self):
         ck.out('- Program: {} ({})'.format(self.program.uoa, self.program.uid))
+        ck.out('- Library: {} {} ({})'.format(self.library.data_name, self.library.version, self.library.data_uoa))
 
-        if self.library.data_uoa:
-            ck.out('- Library: {} {} ({})'.format(self.library.data_name, self.library.version, self.library.data_uoa))
-
-        if self.compile_deps:
+        # `compile_deps` is not yet resolved at `--list_tests` stage
+        if self.compile_deps: 
             compiler = self.compile_deps.get('compiler',{})
             ck.out('- Compiler: {} v{} ({})'.format(compiler.get('dict',{}).get('data_name','?'),
                                                     compiler.get('ver','?'),
@@ -1454,6 +1432,7 @@ class Experiment:
         ck.out('- Autotune ID: {}'.format(self.autotune_id))
         ck.out('- Batch size(s): {}'.format(self.__format_batch_sizes()))
 
+        # experiment recording can be suppressed with `--no_record`
         if self.record_uoa:
             ck.out('- Repo: {}:experiment:{}'.format(self.config.exchange_repo, self.record_uoa))
 
@@ -1498,7 +1477,7 @@ def crowdsource(i):
         CONFIG.user = OPTIONS.user or PLATFORM.user or get_user_from_module_config()
 
         # Now checking which experiments to run
-        # Iteration order PROGRAM -> COMMAND -> DATASET -> DATASET_FILE -> LIBRARY
+        # Iteration order PROGRAM -> LIBRARY -> COMMAND -> DATASET -> DATASET_FILE
         ck_header('Preparing a list of experiments ...')
         EXPERIMENTS = []
 
@@ -1508,11 +1487,9 @@ def crowdsource(i):
             ck_header('Analyzing program: {} ({})'.format(PROGRAM.uoa, PROGRAM.uid), level=1)
 
             # Iterate over libraries
-            lib_uoas = PROGRAM.get_lib_env_uoas(PLATFORM, OPTIONS.lib_uoas)
-            lib_envs = load_lib_envs_sorted_by_id(lib_uoas)
-            for LIBRARY in [LibraryEnv(e) for e in lib_envs]:
-                if LIBRARY.data_uoa:
-                    ck_header('Analyzing library: ' + LIBRARY.data_uoa, level=2)
+            envs = PROGRAM.get_lib_envs(PLATFORM, OPTIONS.libraries)
+            for LIBRARY in [LibraryEnv(e) for e in envs]:
+                ck_header('Analyzing library: ' + LIBRARY.data_uoa, level=2)
 
                 skip_compilation = False
 
@@ -1544,10 +1521,11 @@ def crowdsource(i):
         if OPTIONS.console:
             ck.out('Experiments prepared: {}'.format(len(EXPERIMENTS)))
 
-        def print_experiment(index, experiment):
+        def print_experiment(index, experiment, separators=1):
             if OPTIONS.console:
-                ck.out('')
-                ck.out('--------------------------------------------------------')
+                for _ in range(separators):
+                    ck.out('')
+                    ck.out('--------------------------------------------------------')
                 ck.out('Experiment {} of {}:'.format(index+1, len(EXPERIMENTS)))
                 experiment.print_report()
 
@@ -1562,10 +1540,7 @@ def crowdsource(i):
         prepared_deps = None
         prepared_cdeps = None
         for index, EXPERIMENT in enumerate(EXPERIMENTS):
-            if OPTIONS.console:
-                ck.out('')
-                ck.out('--------------------------------------------------------')
-                print_experiment(index, EXPERIMENT)
+            print_experiment(index, EXPERIMENT, separators=2)
 
             EXPERIMENT.prepare(i)
 
@@ -1578,10 +1553,6 @@ def crowdsource(i):
                 prepared_deps = EXPERIMENT.deps
                 prepared_cdeps = EXPERIMENT.compile_deps
 
-            # TODO: comment needed, what does it need for? 
-            # TODO: its result is not used and all seems working without it
-            #resolve_all_deps(EXPERIMENT.deps, PLATFORM)
-
         # Prepare pipeline and resolve dependencies, but do not run it
         if OPTIONS.dry_run:
             for index, EXPERIMENT in enumerate(EXPERIMENTS):
@@ -1591,10 +1562,7 @@ def crowdsource(i):
         # Run all prepared pipelines
         ck_header('Run experiments ...')
         for index, EXPERIMENT in enumerate(EXPERIMENTS):
-            if OPTIONS.console:
-                ck.out('')
-                ck.out('--------------------------------------------------------')
-                print_experiment(index, EXPERIMENT)
+            print_experiment(index, EXPERIMENT, separators=2)
 
             # Pause before compiling and running test
             if OPTIONS.console and OPTIONS.pause:
