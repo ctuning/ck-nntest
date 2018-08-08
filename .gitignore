@@ -4,3 +4,4 @@
 CMakeLists.txt
 cmake-build-debug
 __pycache__
+.ipynb_checkpoints/
