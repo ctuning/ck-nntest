@@ -653,6 +653,7 @@ def run(i):
               (record_uoa)          - use this experiment UOA to record all data to 
               (timestamp)           - use this instead of timestamp
               (record_repo)         - if !='', record to this repo (local by default)
+              (resume)              - if 'yes', continue interrupted experiment identified by `timestamp`
 
               (skip_output_validation)        - skip validation of output (dangerous during auto-tuning -
                                                   some optimizations may break semantics or change accuracy)
@@ -803,6 +804,7 @@ class ActionOptions:
         self.record_repo = i.get('record_repo', '')
         self.exchange_repo = i.get('exchange_repo','')
         self.exchange_subrepo = i.get('exchange_subrepo','')
+        self.resume = i.get('resume') == 'yes' and self.record and self.timestamp
 
         self.dry_run = i.get('dry_run') == 'yes'
         self.mali_hwc = i.get('mali_hwc') == 'yes'
@@ -1097,16 +1099,18 @@ class LibraryEnv:
         self.data_uoa = self.env.get('data_uoa','')
         self.data_name = self.env.get('data_name','')
         self.version = self.env['dict']['customize']['version']
-        self.tags = self.env['data_name'].lower().replace(', ','-').replace(' ','-').replace(',','-').replace('(','').replace(')','')
+        self.tag = self.__make_tag()
         self.lib_id = str(self.env.get('dict',{}).get('customize',{}).get('lib_id', 0))
 
-    def get_tags_for_test(self):
+    def __make_tag(self):
         '''
-        Remove duplicates at the end of `tags` and beginning of `version` (e.g. avgpool-avgpool)
+        Make library tag from its name and version. e.g. `arm-compute-library-opencl-18.03-e40997b`
+        Tag is used for identification of experiment record.
         '''
-        x1 = self.tags
+        x1 = self.env['data_name'].lower().replace(', ','-').replace(' ','-').replace(',','-').replace('(','').replace(')','')
         x2 = self.version
 
+        # Remove duplicates at the end of `data_name` and beginning of `version` (e.g. avgpool-avgpool)
         j1=x1.rfind('-')
         if j1>0:
             xx=x1[j1+1:]
@@ -1122,6 +1126,29 @@ class LibraryEnv:
         return x1+'-'+x2
 
 
+class ExperimentRecord:
+    def __init__(self,
+                 options,        # instance of ActionOptions
+                 config,         # instance of TestConfig
+                 program,        # instance of Program
+                 library         # instance of LibraryEnv
+                ):
+        self.uoa = ''
+        self.cid = ''
+
+        if options.record:
+            if options.record_uoa:
+                # Use explicitly specified record UOA
+                self.uoa = options.record_uoa
+            else:
+                # Or generate it from involved entities
+                self.uoa = 'nntest-{}-{}-{}'.format(program.uoa,
+                                                    library.tag,
+                                                    options.timestamp or config.stimestamp)
+
+            self.cid = '{}:experiment:{}'.format(config.exchange_repo, self.uoa)
+
+
 class Experiment:
     def __init__(self,
                  options,        # instance of ActionOptions
@@ -1131,7 +1158,8 @@ class Experiment:
                  command,        # instance of ProgramCommand 
                  dataset,        # instance of Dataset  
                  dataset_file,   # string
-                 library         # instance of LibraryEnv
+                 library,        # instance of LibraryEnv
+                 record          # instance of ExperimentRecord
                 ):
         self.options = options
         self.config = config
@@ -1141,7 +1169,7 @@ class Experiment:
         self.dataset = dataset
         self.dataset_file = dataset_file
         self.library = library
-        self.skip_compilation = False
+        self.record = record
 
         self.dvdt_prof = options.dvdt_prof and command.is_opencl
         self.mali_hwc = options.mali_hwc and command.is_opencl
@@ -1151,29 +1179,20 @@ class Experiment:
         else:
             self.env = options.env
 
+        # To be updated externally
+        self.skip_compilation = False
+
         # These are valid only after call of `prepare`
         self.deps = None
         self.compile_deps = None
         self.prepared_pipeline = None
-        self.batches_info = None
-
-        # Base tags set
-        self.tags = ['nntest', program.uoa, library.get_tags_for_test()]
-
-        # Make record UOA from base tags and timestamps
-        self.record_uoa = ''
-        if options.record:
-            if options.record_uoa:
-                self.record_uoa = options.record_uoa
-            else:
-                ts = options.timestamp or config.stimestamp
-                self.record_uoa = '-'.join(self.tags) + '-' + ts
 
         # Full tags set
-        self.tags.extend([config.timestamp, config.stimestamp, program.species_uoas_str])
+        self.tags = ['nntest', program.uoa, library.tag, config.timestamp, config.stimestamp, program.species_uoas_str]
 
         # Get specific autotuner
         self.autotune_id = options.autotune_id or library.lib_id
+        self.batches_info = self.__format_batch_sizes()
 
     def prepare(self, action_params_json):
         '''
@@ -1227,7 +1246,7 @@ class Experiment:
             'energy': 'no',
 
             'skip_print_timers': 'yes',
-            'out': 'con' # TODO should it be the same as `i.get('out','')` ?
+            'out': 'con'
         }
 
         # Restore GPU selection to avoid asking
@@ -1260,7 +1279,6 @@ class Experiment:
             gpgpu_id = self.prepared_pipeline.get('features',{}).get('gpgpu',{}).get('gpgpu_id',{})
             self.config.gpgpu_device_id = gpgpu_id.get('gpgpu_device_id')
             self.config.gpgpu_platform_id = gpgpu_id.get('gpgpu_platform_id')
-
 
     def run(self):
         '''
@@ -1300,12 +1318,12 @@ class Experiment:
             'record_failed': 'yes',
             'record_dict': { 'subview_uoa': cfg['data_deps']['experiment.view.nntest'] },
             'record_params': { 'search_point_by_features': 'yes' },
-            'record_uoa': self.record_uoa,
+            'record_uoa': self.record.uoa,
 
             'pause': yes_no(self.options.pause),
             'pause_if_fail': yes_no(self.options.pause_if_fail),
             'skip_stat_analysis': yes_no(self.dvdt_prof), # too much raw statistics
-            'out': 'con' # TODO should it be the same as `i.get('out','')` ?
+            'out': 'con'
         }
 
         self.__apply_autotuning_params(params_json)
@@ -1388,8 +1406,6 @@ class Experiment:
             target_json.update(self.options.custom_autotuning)
 
     def __format_batch_sizes(self):
-        if self.batches_info:
-            return self.batches_info
         autotuning = self.program.get_autotuning_from_file(self.autotune_id)
         batch_size_choice_order = -1
         for order, param in enumerate(autotuning.get('choices_order', [])):
@@ -1430,11 +1446,11 @@ class Experiment:
 
         ck.out('- Shape: dataset:{}:{}'.format(self.dataset.uoa, self.dataset_file))
         ck.out('- Autotune ID: {}'.format(self.autotune_id))
-        ck.out('- Batch size(s): {}'.format(self.__format_batch_sizes()))
+        ck.out('- Batch size(s): {}'.format(self.batches_info))
 
         # experiment recording can be suppressed with `--no_record`
-        if self.record_uoa:
-            ck.out('- Repo: {}:experiment:{}'.format(self.config.exchange_repo, self.record_uoa))
+        if self.record.cid:
+            ck.out('- Repo: {}'.format(self.record.cid))
 
         ck.out('- Tags: {}'.format(self.tags))
 
@@ -1491,6 +1507,15 @@ def crowdsource(i):
             for LIBRARY in [LibraryEnv(e) for e in envs]:
                 ck_header('Analyzing library: ' + LIBRARY.data_uoa, level=2)
 
+                RECORD = ExperimentRecord(OPTIONS, CONFIG, PROGRAM, LIBRARY)
+
+                # Try to resume interrupted experiments for current library
+                if OPTIONS.resume:
+                    ck_header('Resuming experiments: {}'.format(RECORD.cid))
+                    # TODO
+                    return {'return': 0}
+
+                # Program have to be recompiled after library changes
                 skip_compilation = False
 
                 # Iterate over command lines
@@ -1508,7 +1533,7 @@ def crowdsource(i):
                             ck_header('Analyzing dataset file: ' + DATASET_FILE, level=5)
 
                             EXPERIMENT = Experiment(OPTIONS, CONFIG, PLATFORM, 
-                                PROGRAM, COMMAND, DATASET, DATASET_FILE, LIBRARY)
+                                PROGRAM, COMMAND, DATASET, DATASET_FILE, LIBRARY, RECORD)
 
                             # We can skip program compilation when iterating over datasets
                             EXPERIMENT.skip_compilation = skip_compilation
