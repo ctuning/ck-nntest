@@ -820,7 +820,7 @@ class ActionOptions:
         self.compute_platform_id = i.get('compute_platform_id')
         self.compute_device_id = i.get('compute_device_id')
 
-        self.num_repetitions = int(i.get('repetitions') or 3)
+        self.repetitions = int(i.get('repetitions') or 3)
         self.iterations = int(i.get('iterations') or -1)
         if i.get('overwrite_reference_output','') == 'yes':
             self.iterations = 1
@@ -1126,6 +1126,22 @@ class LibraryEnv:
         return x1+'-'+x2
 
 
+class PointInfo:
+    def __init__(self, point_uid, point_data):
+        self.point_uid = point_uid
+        self.dataset_uoa = point_data['choices']['dataset_uoa']
+        self.dataset_file = point_data['choices']['dataset_file']
+        self.shape_cid = 'dataset:{}:{}'.format(self.dataset_uoa, self.dataset_file)
+        self.repetitions = point_data['features']['statistical_repetitions']
+
+    def are_conditions_different(self, options):
+        '''
+        Check if the point was recorded at different experimental conditions.
+        Currently we only check if number of repetitions changes.
+        '''
+        return self.repetitions != options.repetitions
+
+
 class ExperimentRecord:
     def __init__(self,
                  options,        # instance of ActionOptions
@@ -1133,6 +1149,8 @@ class ExperimentRecord:
                  program,        # instance of Program
                  library         # instance of LibraryEnv
                 ):
+        self.repo = config.exchange_repo
+
         self.uoa = ''
         self.cid = ''
 
@@ -1147,6 +1165,33 @@ class ExperimentRecord:
                                                     options.timestamp or config.stimestamp)
 
             self.cid = '{}:experiment:{}'.format(config.exchange_repo, self.uoa)
+
+    def get_point_uids(self):
+        r = ck_access({'module_uoa': cfg['module_deps']['experiment'],
+                       'action': 'list_points',
+                       'repo_uoa': self.repo,
+                       'data_uoa': self.uoa
+                      }, skip_error_codes = [NOT_FOUND_ERROR])
+        return r.get('points',[])
+
+    def get_subpoint_uids(self, point_uid):
+        r = ck_access({'module_uoa': cfg['module_deps']['experiment'],
+                       'action': 'list_points',
+                       'repo_uoa': self.repo,
+                       'data_uoa': self.uoa,
+                       'point': point_uid
+                      }, skip_error_codes = [NOT_FOUND_ERROR])
+        return r.get('subpoints',[])
+
+    def load_point_data(self, point_uid, subpoint_uid):
+        r = ck_access({'module_uoa': cfg['module_deps']['experiment'],
+                       'action': 'load_point',
+                       'repo_uoa': self.repo,
+                       'data_uoa': self.uoa,
+                       'point': point_uid,
+                       'subpoint': subpoint_uid
+                      })
+        return r['dict'][subpoint_uid]
 
 
 class Experiment:
@@ -1310,7 +1355,7 @@ class Experiment:
             'features_keys_to_process': ['##choices#*'],
 
             'iterations': self.options.iterations,
-            'repetitions': self.options.num_repetitions,
+            'repetitions': self.options.repetitions,
 
             'record': yes_no(self.options.record),
             'record_repo': self.config.exchange_repo,
@@ -1509,11 +1554,73 @@ def crowdsource(i):
 
                 RECORD = ExperimentRecord(OPTIONS, CONFIG, PROGRAM, LIBRARY)
 
+                processed_shapes = []
+
+                def is_already_processed(dataset_uoa, dataset_files):
+                    for s in processed_shapes:
+                        if s['dataset_uoa'] == dataset_uoa and s['dataset_file'] == dataset_files:
+                            return True
+                    return False
+
                 # Try to resume interrupted experiments for current library
                 if OPTIONS.resume:
-                    ck_header('Resuming experiments: {}'.format(RECORD.cid))
+                    ck_header('Resuming experiments: {}'.format(RECORD.cid), level=3)
+
+                    # Analize which shapes were already processed
+                    points_done = [] # points already processed
+                    points_to_ask = [] # points processed but with different parameters
+                    for point_uid in RECORD.get_point_uids():
+                        ck_header('Analyzing point: ' + point_uid, level=4)
+
+                        point_info = None
+                        for subpoint_uid in  RECORD.get_subpoint_uids(point_uid):
+                            ck_header('Analyzing subpoint: ' + subpoint_uid, level=5)
+                            
+                            point_data = RECORD.load_point_data(point_uid, subpoint_uid)
+                            point_info = PointInfo(point_uid, point_data)
+                            # If at least one subpoint has the same conditions
+                            # then we consider this shape as already processed
+                            if not point_info.are_conditions_different(OPTIONS):
+                                points_done.append(point_info)
+                                point_info = None
+                                break
+
+                        if point_info:
+                            points_to_ask.append(point_info)
+
+                    if points_done:
+                        ck_header('These shapes were already processed and will be skipped:', level=4)
+                        # TODO filter points we don't need to know about (by OPTIONS.dataset_uoa, OPTIONS.dataset_files) 
+                        for point in points_done:
+                            ck_header(point.shape_cid, level=5)
+                            processed_shapes.append({
+                                'dataset_uoa': point.dataset_uoa,
+                                'dataset_file': point.dataset_file
+                            })
+
+                    if points_to_ask:
+                        ck.out('')
+                        ck.out('These shapes were processed at different conditions:')
+                        # TODO filter points we don't need to know about (by OPTIONS.dataset_uoa, OPTIONS.dataset_files) 
+                        for point in points_to_ask:
+                            ck.out('  ' + point.shape_cid)
+                        # TODO select what we have to do with these points
+                        # TODO skip: add these points into `processed_shapes` list and continue
+                        # TODO overwrite: remove these points and continue
+                        # TODO append: do nothing with these points, just continue
+                        # Skip:
+                        for point in points_to_ask:
+                            processed_shapes.append({
+                                'dataset_uoa': point.dataset_uoa,
+                                'dataset_file': point.dataset_file
+                            })
+                        ck.out('')
+
+                    if not processed_shapes:
+                        ck_header('There is nothing to resume', level=4)
+
                     # TODO
-                    return {'return': 0}
+                    #return {'return': 0}
 
                 # Program have to be recompiled after library changes
                 skip_compilation = False
@@ -1532,6 +1639,10 @@ def crowdsource(i):
                         for DATASET_FILE in DATASET.get_files(OPTIONS.dataset_files):
                             ck_header('Analyzing dataset file: ' + DATASET_FILE, level=5)
 
+                            if is_already_processed(DATASET.uoa, DATASET_FILE):
+                                ck_header('File is already processed, skipping', level=6)
+                                continue
+
                             EXPERIMENT = Experiment(OPTIONS, CONFIG, PLATFORM, 
                                 PROGRAM, COMMAND, DATASET, DATASET_FILE, LIBRARY, RECORD)
 
@@ -1540,8 +1651,7 @@ def crowdsource(i):
                             skip_compilation = True
 
                             EXPERIMENTS.append(EXPERIMENT)
-
-            ck_header('')
+        ck_header('')
 
         if OPTIONS.console:
             ck.out('Experiments prepared: {}'.format(len(EXPERIMENTS)))
