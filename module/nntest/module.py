@@ -1127,12 +1127,15 @@ class LibraryEnv:
 
 
 class PointInfo:
-    def __init__(self, point_uid, point_data):
+    def __init__(self, point_uid, point_json):
         self.point_uid = point_uid
-        self.dataset_uoa = point_data['choices']['dataset_uoa']
-        self.dataset_file = point_data['choices']['dataset_file']
+        self.dataset_uoa = point_json['choices']['dataset_uoa']
+        self.dataset_file = point_json['choices']['dataset_file']
         self.shape_cid = 'dataset:{}:{}'.format(self.dataset_uoa, self.dataset_file)
-        self.repetitions = point_data['features']['statistical_repetitions']
+        self.repetitions = point_json['features']['statistical_repetitions']
+
+    def get_info_str(self):
+        return '{} (point: {})'.format(self.shape_cid, self.point_uid)
 
     def are_conditions_different(self, options):
         '''
@@ -1150,7 +1153,6 @@ class ExperimentRecord:
                  library         # instance of LibraryEnv
                 ):
         self.repo = config.exchange_repo
-
         self.uoa = ''
         self.cid = ''
 
@@ -1183,7 +1185,7 @@ class ExperimentRecord:
                       }, skip_error_codes = [NOT_FOUND_ERROR])
         return r.get('subpoints',[])
 
-    def load_point_data(self, point_uid, subpoint_uid):
+    def load_point_json(self, point_uid, subpoint_uid):
         r = ck_access({'module_uoa': cfg['module_deps']['experiment'],
                        'action': 'load_point',
                        'repo_uoa': self.repo,
@@ -1192,6 +1194,20 @@ class ExperimentRecord:
                        'subpoint': subpoint_uid
                       })
         return r['dict'][subpoint_uid]
+
+    def delete_point(self, point_uid):
+        ck_access({'module_uoa': cfg['module_deps']['experiment'],
+                   'action': 'delete_points',
+                   'points': [{
+                       'module_uoa': cfg['module_deps']['experiment'],
+                       'module_uid': cfg['module_deps']['experiment'],
+                       'repo_uoa': self.repo,
+                       'repo_uid': self.repo,
+                       'data_uoa': self.uoa,
+                       'data_uid': self.uoa,
+                       'point_uid': point_uid,
+                    }]
+                  })
 
 
 class Experiment:
@@ -1555,29 +1571,36 @@ def crowdsource(i):
                 RECORD = ExperimentRecord(OPTIONS, CONFIG, PROGRAM, LIBRARY)
 
                 processed_shapes = []
-
                 def is_already_processed(dataset_uoa, dataset_files):
                     for s in processed_shapes:
-                        if s['dataset_uoa'] == dataset_uoa and s['dataset_file'] == dataset_files:
+                        if s.dataset_uoa == dataset_uoa and s.dataset_file == dataset_files:
                             return True
                     return False
 
                 # Try to resume interrupted experiments for current library
                 if OPTIONS.resume:
                     ck_header('Resuming experiments: {}'.format(RECORD.cid), level=3)
+                    ck_header('Analyzing existing experiments:', level=4)
 
                     # Analize which shapes were already processed
                     points_done = [] # points already processed
                     points_to_ask = [] # points processed but with different parameters
                     for point_uid in RECORD.get_point_uids():
-                        ck_header('Analyzing point: ' + point_uid, level=4)
+                        ck_header('point: ' + point_uid, level=5)
 
                         point_info = None
                         for subpoint_uid in  RECORD.get_subpoint_uids(point_uid):
-                            ck_header('Analyzing subpoint: ' + subpoint_uid, level=5)
-                            
-                            point_data = RECORD.load_point_data(point_uid, subpoint_uid)
-                            point_info = PointInfo(point_uid, point_data)
+                            ck_header('subpoint: ' + subpoint_uid, level=6)
+
+                            point_json = RECORD.load_point_json(point_uid, subpoint_uid)
+                            point_info = PointInfo(point_uid, point_json)
+ 
+                            # Filter points we don't requested and have no need to know about 
+                            if (OPTIONS.dataset_uoa and p.dataset_uoa != OPTIONS.dataset_uoa) or \
+                               (OPTIONS.dataset_files and p.dataset_file not in OPTIONS.dataset_files):
+                               point_info = None
+                               continue
+
                             # If at least one subpoint has the same conditions
                             # then we consider this shape as already processed
                             if not point_info.are_conditions_different(OPTIONS):
@@ -1588,39 +1611,34 @@ def crowdsource(i):
                         if point_info:
                             points_to_ask.append(point_info)
 
+                    # These shapes were already processed and can be skipped
                     if points_done:
-                        ck_header('These shapes were already processed and will be skipped:', level=4)
-                        # TODO filter points we don't need to know about (by OPTIONS.dataset_uoa, OPTIONS.dataset_files) 
-                        for point in points_done:
-                            ck_header(point.shape_cid, level=5)
-                            processed_shapes.append({
-                                'dataset_uoa': point.dataset_uoa,
-                                'dataset_file': point.dataset_file
-                            })
+                        ck_header('These shapes were already processed and can be skipped:', level=4)
+                        for p in points_done:
+                            ck_header(p.get_info_str(), level=5)
+                            processed_shapes.append(p)
 
+                    # These shapes were processed at different conditions
                     if points_to_ask:
+                        ck_header('These shapes were processed at different conditions:', level=4)
+                        for p in points_to_ask:
+                            ck_header(p.get_info_str(), level=5)
                         ck.out('')
-                        ck.out('These shapes were processed at different conditions:')
-                        # TODO filter points we don't need to know about (by OPTIONS.dataset_uoa, OPTIONS.dataset_files) 
-                        for point in points_to_ask:
-                            ck.out('  ' + point.shape_cid)
-                        # TODO select what we have to do with these points
-                        # TODO skip: add these points into `processed_shapes` list and continue
-                        # TODO overwrite: remove these points and continue
-                        # TODO append: do nothing with these points, just continue
-                        # Skip:
-                        for point in points_to_ask:
-                            processed_shapes.append({
-                                'dataset_uoa': point.dataset_uoa,
-                                'dataset_file': point.dataset_file
-                            })
+                        ck.out('What do you want to do with them?')
+                        res = ck_access({'action': 'select_uoa',
+                                         'module_uoa': 'choice',
+                                         'choices': [
+                                            {'data_uid': 'SKIP', 'data_uoa': 'Skip these points, do not process again'},
+                                            {'data_uid': 'OVERWRITE', 'data_uoa': 'Remove these points an process shapes again'},
+                                            {'data_uid': 'APPEND', 'data_uoa': 'Process shapes one more time, append new subpoints'}
+                                         ]})
                         ck.out('')
-
-                    if not processed_shapes:
-                        ck_header('There is nothing to resume', level=4)
-
-                    # TODO
-                    #return {'return': 0}
+                        if res['choice'] == 'SKIP':
+                            for p in points_to_ask:
+                                processed_shapes.append(p)
+                        elif res['choice'] == 'OVERWRITE':
+                            for p in points_to_ask:
+                                RECORD.delete_point(p.point_uid)
 
                 # Program have to be recompiled after library changes
                 skip_compilation = False
@@ -1636,12 +1654,16 @@ def crowdsource(i):
                         ck_header('Analyzing dataset: ' + DATASET.uoa, level=4)
 
                         # Iterate over data files
+                        dataset_files_count = 0
                         for DATASET_FILE in DATASET.get_files(OPTIONS.dataset_files):
                             ck_header('Analyzing dataset file: ' + DATASET_FILE, level=5)
 
                             if is_already_processed(DATASET.uoa, DATASET_FILE):
-                                ck_header('File is already processed, skipping', level=6)
+                                ck_header('already processed, will be skipped', level=6)
                                 continue
+
+                            ck_header('will be processed', level=6)
+                            dataset_files_count += 1
 
                             EXPERIMENT = Experiment(OPTIONS, CONFIG, PLATFORM, 
                                 PROGRAM, COMMAND, DATASET, DATASET_FILE, LIBRARY, RECORD)
@@ -1651,6 +1673,12 @@ def crowdsource(i):
                             skip_compilation = True
 
                             EXPERIMENTS.append(EXPERIMENT)
+
+                        # Dataset report
+                        if dataset_files_count > 0:
+                            ck_header('Files to process: {}'.format(dataset_files_count), level=5)
+                        else:
+                            ck_header('No files to process', level=5)
         ck_header('')
 
         if OPTIONS.console:
