@@ -337,6 +337,16 @@ To list the results saved locally, use e.g.:
 $ ck list local:experiment:nntest-softmax-armcl-opencl-*
 ```
 
+### Interrupt and resume test session
+
+If not all the shapes have processed during execution, test session can be continued later running the same command with `--resume` option, e.g.:
+
+```
+$ ck run nntest:softmax-armcl-opencl --iterations=1 --repetitions=1 --timestamp=odroid-conv-0001 --resume
+```
+
+**NB** It's significant to pass `--timestamp` explicitly to identify a tests session to be resumed.
+
 ### Output validation
 
 When a test is invoked with a particular dataset for the first time, CK saves
