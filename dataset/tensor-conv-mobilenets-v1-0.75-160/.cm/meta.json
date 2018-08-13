@@ -6,6 +6,9 @@
     "shape-48-40-40-1-96-1-0": {
       "name": "MobileNet_0.75_160 Conv2d_2 input 40x40x48 filter 1x1x96 stride 1 pad 0"
     }, 
+    "shape-768-1-1-1-1001-1-0": {
+      "name": "MobileNet_0.75_160 Logits_Conv2d_1c_1x1 input 1x1x768 filter 1x1x1001 stride 1 pad 0"
+    }, 
     "shape-192-10-10-1-384-1-0": {
       "name": "MobileNet_0.75_160 Conv2d_6 input 10x10x192 filter 1x1x384 stride 1 pad 0"
     }, 
@@ -20,9 +23,6 @@
     }, 
     "shape-96-40-40-1-96-1-0": {
       "name": "MobileNet_0.75_160 Conv2d_3 input 40x40x96 filter 1x1x96 stride 1 pad 0"
-    }, 
-    "shape-1024-1-1-1-1001-1-0": {
-      "name": "MobileNet_0.75_160 Logits_Conv2d_1c_1x1 input 1x1x1024 filter 1x1x1001 stride 1 pad 0"
     }, 
     "shape-96-20-20-1-192-1-0": {
       "name": "MobileNet_0.75_160 Conv2d_4 input 20x20x96 filter 1x1x192 stride 1 pad 0"
@@ -45,7 +45,7 @@
     "shape-384-10-10-1-384-1-0", 
     "shape-384-5-5-1-768-1-0", 
     "shape-768-5-5-1-768-1-0", 
-    "shape-1024-1-1-1-1001-1-0"
+    "shape-768-1-1-1-1001-1-0"
   ], 
   "tags": [
     "dataset", 

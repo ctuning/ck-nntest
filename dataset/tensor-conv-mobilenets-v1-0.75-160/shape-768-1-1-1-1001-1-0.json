@@ -1,5 +1,5 @@
 {
-  "CK_IN_SHAPE_C": 1024, 
+  "CK_IN_SHAPE_C": 768, 
   "CK_IN_SHAPE_H": 1, 
   "CK_IN_SHAPE_W": 1, 
   "CK_OUT_SHAPE_C": 1001, 

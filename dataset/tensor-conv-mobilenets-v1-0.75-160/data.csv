@@ -14,4 +14,4 @@ MobileNet_0.75_160,10,10,384,1,384,1,0,,Conv2d_10
 MobileNet_0.75_160,10,10,384,1,384,1,0,,Conv2d_11
 MobileNet_0.75_160,5,5,384,1,768,1,0,,Conv2d_12
 MobileNet_0.75_160,5,5,768,1,768,1,0,,Conv2d_13
-MobileNet_0.75_160,1,1,1024,1,1001,1,0,,Logits_Conv2d_1c_1x1
+MobileNet_0.75_160,1,1,768,1,1001,1,0,,Logits_Conv2d_1c_1x1
