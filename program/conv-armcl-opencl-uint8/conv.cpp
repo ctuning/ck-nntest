@@ -73,7 +73,7 @@ int main() {
 
   measure_setup([&]() {
     // Prepare input tensor
-    TensorInfo in_tensor_info(native_in_shape, 1, DataType::QASYMM8);
+    TensorInfo in_tensor_info = make_tensor_info(native_in_shape, DataType::QASYMM8);
     float in_data_min = -40;
     float in_data_max = 1000;
     init_quantization_info(in_tensor_info, in_data_min, in_data_max);
@@ -99,7 +99,7 @@ int main() {
     biases.allocator()->init(biases_tensor_info);
 
     // Prepare output tensor
-    TensorInfo out_tensor_info(native_out_shape, 1, DataType::QASYMM8);
+    TensorInfo out_tensor_info = make_tensor_info(native_out_shape, DataType::QASYMM8);
     out_tensor_info.set_quantization_info(QuantizationInfo(input_product_scale * 2, 0));
     print_quantization_info_info("output", out_tensor_info);
     output.allocator()->init(out_tensor_info);

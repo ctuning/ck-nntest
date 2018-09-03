@@ -229,13 +229,13 @@ inline void init_quantization_info(arm_compute::TensorInfo &info, float min_valu
 arm_compute::DataLayout get_data_layout_from_env() {
   auto data_layout_str = getenv("CK_DATA_LAYOUT");
 
-  if (!tuner_type)
+  if (!data_layout_str)
     return arm_compute::DataLayout::NCHW;
 
-  if (strcmp(tuner_type, "NCHW") == 0)
+  if (strcmp(data_layout_str, "NCHW") == 0)
     return arm_compute::DataLayout::NCHW;
 
-  if (strcmp(tuner_type, "NHWC") == 0)
+  if (strcmp(data_layout_str, "NHWC") == 0)
     return arm_compute::DataLayout::NHWC;
     
   printf("WARNING: Unknown data layout: %s\n", data_layout_str);

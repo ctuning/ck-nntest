@@ -75,8 +75,8 @@ int main() {
   TensorShape native_out_shape = to_tensor_shape_whcn(out_shape);
 
   measure_setup([&]() {
-    input.allocator()->init(TensorInfo(native_in_shape, Format::F32));
-    output.allocator()->init(TensorInfo(native_out_shape, Format::F32));
+    input.allocator()->init(make_tensor_info(native_in_shape, DataType::F32));
+    output.allocator()->init(make_tensor_info(native_out_shape, DataType::F32));
     weights.allocator()->init(TensorInfo(native_weights_shape, Format::F32));
     biases.allocator()->init(TensorInfo(native_biases_shape, Format::F32));
 
