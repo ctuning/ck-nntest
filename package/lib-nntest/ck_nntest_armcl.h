@@ -21,6 +21,11 @@
 namespace CK {
 namespace armcl {
 
+enum CKDataLayout {
+  LAYOUT_NCHW,
+  LAYOUT_NHWC,
+};
+
 void printf_callback(const char *buffer, unsigned int len, size_t complete, void *user_data) {
   printf("%.*s", len, buffer);
 }
@@ -108,20 +113,44 @@ inline arm_compute::TensorShape tensor_info_to_shape(const arm_compute::TensorIn
   return shape;
 }
 
-inline arm_compute::TensorShape to_tensor_shape_whcn(const Shape &shape) {
-  return arm_compute::TensorShape(
-           static_cast<size_t>(shape.width),
-           static_cast<size_t>(shape.height),
-           static_cast<size_t>(shape.channels),
-           static_cast<size_t>(shape.num));
+// ArmCL stores dimensions as
+// Layout NCHW:      [N C H W]
+// Dimension index:  [3 2 1 0]
+// Layout NHWC:      [N H W C]
+inline arm_compute::TensorShape to_tensor_shape(const Shape &shape, CKDataLayout data_layout) {
+  switch (data_layout) {
+    case LAYOUT_NCHW:
+      return arm_compute::TensorShape(
+               static_cast<size_t>(shape.width),
+               static_cast<size_t>(shape.height),
+               static_cast<size_t>(shape.channels),
+               static_cast<size_t>(shape.num));
+    case LAYOUT_NHWC:
+      return arm_compute::TensorShape(
+               static_cast<size_t>(shape.channels),
+               static_cast<size_t>(shape.width),
+               static_cast<size_t>(shape.height),
+               static_cast<size_t>(shape.num));
+  }
+  return arm_compute::TensorShape();
 }
 
-inline Shape to_ck_shape_whcn(const arm_compute::TensorInfo *info) {
+inline Shape to_ck_shape(const arm_compute::TensorInfo *info, CKDataLayout data_layout) {
   Shape shape;
-  shape.width = info->dimension(0);
-  shape.height = info->dimension(1);
-  shape.channels = info->dimension(2);
-  shape.num = info->dimension(3);
+  switch (data_layout) {
+    case LAYOUT_NCHW:
+      shape.width = info->dimension(0);
+      shape.height = info->dimension(1);
+      shape.channels = info->dimension(2);
+      shape.num = info->dimension(3);
+      break;
+    case LAYOUT_NHWC:
+      shape.channels = info->dimension(0);
+      shape.width = info->dimension(1);
+      shape.height = info->dimension(2);
+      shape.num = info->dimension(3);
+      break;
+  }
   return shape;
 }
 
@@ -225,29 +254,41 @@ inline void init_quantization_info(arm_compute::TensorInfo &info, float min_valu
   info.set_quantization_info(get_quantization_info(min_value, max_value));
 }
 
+inline CKDataLayout get_data_layout_from_env() {
 #if defined(ARMCL_18_08_PLUS)
-arm_compute::DataLayout get_data_layout_from_env() {
   auto data_layout_str = getenv("CK_DATA_LAYOUT");
 
   if (!data_layout_str)
-    return arm_compute::DataLayout::NCHW;
+    return LAYOUT_NCHW;
 
   if (strcmp(data_layout_str, "NCHW") == 0)
-    return arm_compute::DataLayout::NCHW;
+    return LAYOUT_NCHW;
 
   if (strcmp(data_layout_str, "NHWC") == 0)
-    return arm_compute::DataLayout::NHWC;
+    return LAYOUT_NHWC;
     
   printf("WARNING: Unknown data layout: %s\n", data_layout_str);
-  return arm_compute::DataLayout::NCHW;
+#endif
+  return LAYOUT_NCHW;
 }
+
+inline arm_compute::TensorInfo make_tensor_info(const arm_compute::TensorShape& tensor_shape,
+                                                arm_compute::DataType data_type,
+                                                CKDataLayout data_layout) {
+  arm_compute::TensorInfo tensor_info(tensor_shape, 1, data_type);
+
+#if defined(ARMCL_18_08_PLUS)
+  switch (data_layout) {
+    case LAYOUT_NCHW:
+      tensor_info.set_data_layout(arm_compute::DataLayout::NCHW);
+      break;
+
+    case LAYOUT_NHWC:
+      tensor_info.set_data_layout(arm_compute::DataLayout::NHWC);
+      break;
+  }
 #endif
 
-const arm_compute::TensorInfo make_tensor_info(const arm_compute::TensorShape& tensor_shape, arm_compute::DataType data_type) {
-  arm_compute::TensorInfo tensor_info(tensor_shape, 1, data_type);
-#if defined(ARMCL_18_08_PLUS)
-  tensor_info.set_data_layout(get_data_layout_from_env());
-#endif
   return tensor_info;
 }
 

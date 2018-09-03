@@ -26,6 +26,7 @@ int main() {
   init_test();
   init_armcl();
 
+  auto data_layout = get_data_layout_from_env();
   Shape in_shape = get_input_shape_from_env(DEFAULT_IN_N, DEFAULT_IN_C,
                                             DEFAULT_IN_H, DEFAULT_IN_W);
 
@@ -34,8 +35,8 @@ int main() {
 
   measure_setup([&]() {
     // Prepare input shape
-    TensorShape native_in_shape = to_tensor_shape_whcn(in_shape);
-    input.allocator()->init(make_tensor_info(native_in_shape, DataType::F32));
+    TensorShape native_in_shape = to_tensor_shape(in_shape, data_layout);
+    input.allocator()->init(make_tensor_info(native_in_shape, DataType::F32, data_layout));
 
     // Prepare operation params
     PoolingParams pool_params = get_pooling_params_from_env(
@@ -56,6 +57,8 @@ int main() {
     // Populate input buffer
     float *in_data = get_random_raw_data<float>(in_shape);
     print_input_raw_data(in_data, in_shape);
+    if (data_layout == LAYOUT_NHWC)
+      convert_data_layout_NCHW_to_NHWC(in_data, in_shape);
     copy_raw_data_to_tensor(&input, in_data, in_shape);
     delete[] in_data;
   });
@@ -68,9 +71,12 @@ int main() {
   });
 
   // Get and process output data
-  Shape out_shape = to_ck_shape_whcn(output.info());
+  Shape out_shape = to_ck_shape(output.info(), data_layout);
   float *out_data = new float[out_shape.data_count()];
   copy_raw_data_from_tensor(&output, out_data, out_shape);
+  // We should change data layout to match the results with TensorFlow tests
+  if (data_layout == LAYOUT_NHWC)
+    convert_data_layout_NHWC_to_NCHW(out_data, out_shape);
   print_output_raw_data(out_data, out_shape);
   dump_output_raw_data(out_data, out_shape);
   delete[] out_data;
