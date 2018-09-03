@@ -35,7 +35,7 @@ int main() {
   measure_setup([&]() {
     // Prepare input shape
     TensorShape native_in_shape = to_tensor_shape_whcn(in_shape);
-    input.allocator()->init(TensorInfo(native_in_shape, Format::F32));
+    input.allocator()->init(make_tensor_info(native_in_shape, DataType::F32));
 
     // Prepare operation params
     PoolingParams pool_params = get_pooling_params_from_env(

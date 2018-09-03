@@ -225,6 +225,32 @@ inline void init_quantization_info(arm_compute::TensorInfo &info, float min_valu
   info.set_quantization_info(get_quantization_info(min_value, max_value));
 }
 
+#if defined(ARMCL_18_08_PLUS)
+arm_compute::DataLayout get_data_layout_from_env() {
+  auto data_layout_str = getenv("CK_DATA_LAYOUT");
+
+  if (!tuner_type)
+    return arm_compute::DataLayout::NCHW;
+
+  if (strcmp(tuner_type, "NCHW") == 0)
+    return arm_compute::DataLayout::NCHW;
+
+  if (strcmp(tuner_type, "NHWC") == 0)
+    return arm_compute::DataLayout::NHWC;
+    
+  printf("WARNING: Unknown data layout: %s\n", data_layout_str);
+  return arm_compute::DataLayout::NCHW;
+}
+#endif
+
+const arm_compute::TensorInfo make_tensor_info(const arm_compute::TensorShape& tensor_shape, arm_compute::DataType data_type) {
+  arm_compute::TensorInfo tensor_info(tensor_shape, 1, data_type);
+#if defined(ARMCL_18_08_PLUS)
+  tensor_info.set_data_layout(get_data_layout_from_env());
+#endif
+  return tensor_info;
+}
+
 } // namespace armcl
 } // namespace CK
 
