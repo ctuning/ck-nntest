@@ -722,14 +722,17 @@ def convert_to_flat_dict(i):
     '''
     Check if any key in input dictionary has . and convert to dict (for example deps.xyz or env.xyz) 
     '''
+    del_keys = []
     for key in i:
         if '.' in key:
             value = i[key]
-            del(i[key])
+            del_keys.append(key)
             new_key = '##' + key.replace('.', '#')
             r = ck.set_by_flat_key({'dict': i, 'key': new_key, 'value': value})
             if r['return'] > 0:
                 raise CKException(r)
+    for key in del_keys:
+        del(i[key])
 
 
 def get_user_from_module_config():
