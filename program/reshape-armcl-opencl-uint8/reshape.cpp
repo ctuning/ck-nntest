@@ -20,6 +20,8 @@ int main() {
   init_test();
   init_armcl();
 
+  auto data_layout = get_data_layout_from_env();
+
   Shape in_shape = get_input_shape_from_env();
 
   Shape out_shape;
@@ -43,13 +45,12 @@ int main() {
   const size_t out_shape_num = out_shape.num;
 
   measure_setup([&]() {
-    TensorShape tensor_shape(static_cast<size_t>(in_shape_width), static_cast<size_t>(in_shape_height),
-                             static_cast<size_t>(in_shape_channels), static_cast<size_t>(in_shape_num));
-    TensorShape shape_reshaped(static_cast<size_t>(out_shape_width), static_cast<size_t>(out_shape_height),
-                               static_cast<size_t>(out_shape_channels), static_cast<size_t>(in_shape_num));
+    TensorShape tensor_shape = to_tensor_shape(in_shape, data_layout);
+    TensorShape shape_reshaped = to_tensor_shape(out_shape, data_layout);
 
-    input.allocator()->init(TensorInfo(tensor_shape, 1, DataType::QASYMM8));
-    output.allocator()->init(TensorInfo(shape_reshaped, 1, DataType::QASYMM8));
+    input.allocator()->init(make_tensor_info(tensor_shape, DataType::QASYMM8, data_layout));
+    output.allocator()->init(make_tensor_info(shape_reshaped, DataType::QASYMM8, data_layout));
+
     layer.configure(&input, &output);
 
     input.allocator()->allocate();
@@ -57,6 +58,8 @@ int main() {
 
     uint8_t *in_data =  get_random_raw_data<uint8_t>(in_shape, 0, 255);
     print_input_raw_data(in_data, in_shape);
+    if (data_layout == LAYOUT_NHWC)
+      convert_data_layout_NCHW_to_NHWC(in_data, in_shape);
     copy_raw_data_to_tensor(&input, in_data, in_shape);
     delete[] in_data;
   });
@@ -69,8 +72,9 @@ int main() {
 
   uint8_t *out_data = new uint8_t[out_shape.data_count()];
   copy_raw_data_from_tensor(&output, out_data, out_shape);
+  if (data_layout == LAYOUT_NHWC)
+    convert_data_layout_NHWC_to_NCHW(out_data, out_shape);
   print_output_raw_data(out_data, out_shape);
-
   dump_output_raw_data(out_data, out_shape);
   delete[] out_data;
 

@@ -43,9 +43,10 @@ int main() {
 #endif
 
   // Prepare input shape
+  auto data_layout = get_data_layout_from_env();
   Shape in_shape = get_input_shape_from_env(DEFAULT_IN_N, DEFAULT_IN_C,
                                             DEFAULT_IN_H, DEFAULT_IN_W);
-  TensorShape native_in_shape = to_tensor_shape_whcn(in_shape);
+  TensorShape native_in_shape = to_tensor_shape(in_shape, data_layout);
 
   // Prepare operation params
   size_t in_feature_maps = static_cast<size_t>(in_shape.channels);
@@ -72,11 +73,11 @@ int main() {
   out_shape.height = (in_shape.height + 2 * conv_params.pad - conv_params.kernel) / conv_params.stride + 1;
   printf("Calculated output image size: W=%d, H=%d\n", out_shape.width, out_shape.height);
   assert(out_shape.width > 0 && out_shape.height > 0);
-  TensorShape native_out_shape = to_tensor_shape_whcn(out_shape);
+  TensorShape native_out_shape = to_tensor_shape(out_shape, data_layout);
 
   measure_setup([&]() {
-    input.allocator()->init(TensorInfo(native_in_shape, Format::F32));
-    output.allocator()->init(TensorInfo(native_out_shape, Format::F32));
+    input.allocator()->init(make_tensor_info(native_in_shape, DataType::F32, data_layout));
+    output.allocator()->init(make_tensor_info(native_out_shape, DataType::F32, data_layout));
     weights.allocator()->init(TensorInfo(native_weights_shape, Format::F32));
     biases.allocator()->init(TensorInfo(native_biases_shape, Format::F32));
 
@@ -87,6 +88,8 @@ int main() {
     float *in_data = get_random_raw_data<float>(in_shape);
     //float* in_data = get_const_raw_data<float>(in_shape.data_count(), 1.f);
     print_input_raw_data(in_data, in_shape);
+    if (data_layout == LAYOUT_NHWC)
+      convert_data_layout_NCHW_to_NHWC(in_data, in_shape);
     copy_raw_data_to_tensor(&input, in_data, in_shape);
     delete[] in_data;
 
@@ -132,6 +135,9 @@ int main() {
   // Process output data
   float *out_data = new float[out_shape.data_count()];
   copy_raw_data_from_tensor(&output, out_data, out_shape);
+  // We should change data layout to match the results with TensorFlow tests
+  if (data_layout == LAYOUT_NHWC)
+    convert_data_layout_NHWC_to_NCHW(out_data, out_shape);
   print_output_raw_data(out_data, out_shape);
   dump_output_raw_data(out_data, out_shape);
   delete[] out_data;

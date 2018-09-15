@@ -36,9 +36,11 @@ static const char *TENSOR_NAMES[TENSOR_COUNT] = {
   [OUTPUT]  = "OUTPUT"
 };
 
-void init_tensor_data(CLTensor *tensor, const CK::Shape &shape, const char *env_var, const char *title) {
+void init_tensor_data(CLTensor *tensor, const CK::Shape &shape, const char *env_var, const char *title, CKDataLayout data_layout) {
   float *in_data = get_random_raw_data<float>(shape);
   log_raw_data(in_data, shape, env_var, title);
+  if (data_layout == LAYOUT_NHWC)
+    convert_data_layout_NCHW_to_NHWC(in_data, shape);
   copy_raw_data_to_tensor(tensor, in_data, shape);
   delete[] in_data;
 }
@@ -46,6 +48,8 @@ void init_tensor_data(CLTensor *tensor, const CK::Shape &shape, const char *env_
 int main() {
   init_test();
   init_armcl();
+
+  auto data_layout = get_data_layout_from_env();
 
   const unsigned int m = getenv_i("CK_GEMM_M", DEFAULT_M);
   const unsigned int n = getenv_i("CK_GEMM_N", DEFAULT_N);
@@ -68,7 +72,7 @@ int main() {
   measure_setup([&]() {
     for (int i = 0; i < TENSOR_COUNT; ++i) {
       auto a = tensors[i].allocator();
-      a->init(TensorInfo(to_tensor_shape_whcn(shapes[i]), Format::F32));
+      a->init(make_tensor_info(to_tensor_shape(shapes[i], data_layout), DataType::F32, data_layout));
     }
 
     // Exceptionally, the CLGEMM configure must be called before allocating any tensors
@@ -79,7 +83,7 @@ int main() {
     for (int i = 0; i < TENSOR_COUNT; ++i) {
       tensors[i].allocator()->allocate();
       if (i != OUTPUT) {
-        init_tensor_data(tensors + i, shapes[i], "CK_PRINT_IN_TENSOR", TENSOR_NAMES[i]);
+        init_tensor_data(tensors + i, shapes[i], "CK_PRINT_IN_TENSOR", TENSOR_NAMES[i], data_layout);
       }
     }
   });
@@ -94,6 +98,8 @@ int main() {
   const CK::Shape &output_shape = shapes[OUTPUT];
   float *out_data = new float[output_shape.data_count()];
   copy_raw_data_from_tensor(tensors + OUTPUT, out_data, output_shape);
+  if (data_layout == LAYOUT_NHWC)
+    convert_data_layout_NHWC_to_NCHW(out_data, output_shape);
   print_output_raw_data(out_data, output_shape);
   dump_output_raw_data(out_data, output_shape);
   delete[] out_data;

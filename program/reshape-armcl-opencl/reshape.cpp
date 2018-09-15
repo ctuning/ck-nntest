@@ -22,6 +22,8 @@ int main() {
   auto tuner = get_lws_tuner<CLTuner_Reshape>();
   init_armcl(tuner.get());
 
+  auto data_layout = get_data_layout_from_env();
+
   Shape in_shape = get_input_shape_from_env();
 
   Shape out_shape;
@@ -35,17 +37,11 @@ int main() {
   CLReshapeLayer layer;
 
   measure_setup([&]() {
-    TensorShape tensor_shape(static_cast<unsigned int>(in_shape.width),
-                             static_cast<unsigned int>(in_shape.height),
-                             static_cast<unsigned int>(in_shape.channels),
-                             static_cast<unsigned int>(in_shape.num));
-    TensorShape shape_reshaped(static_cast<unsigned int>(out_shape.width),
-                               static_cast<unsigned int>(out_shape.height),
-                               static_cast<unsigned int>(out_shape.channels),
-                               static_cast<unsigned int>(in_shape.num));
+    TensorShape tensor_shape = to_tensor_shape(in_shape, data_layout);
+    TensorShape shape_reshaped = to_tensor_shape(out_shape, data_layout);
 
-    input.allocator()->init(TensorInfo(tensor_shape, Format::F32));
-    output.allocator()->init(TensorInfo(shape_reshaped, Format::F32));
+    input.allocator()->init(make_tensor_info(tensor_shape, DataType::F32, data_layout));
+    output.allocator()->init(make_tensor_info(shape_reshaped, DataType::F32, data_layout));
 
     layer.configure(&input, &output);
 
@@ -54,6 +50,8 @@ int main() {
 
     float *in_data =  get_random_raw_data<float>(in_shape);
     print_input_raw_data(in_data, in_shape);
+    if (data_layout == LAYOUT_NHWC)
+      convert_data_layout_NCHW_to_NHWC(in_data, in_shape);
     copy_raw_data_to_tensor(&input, in_data, in_shape);
     delete[] in_data;
   });
@@ -65,6 +63,8 @@ int main() {
   });
 
   float *out_data = new float[out_shape.data_count()];
+  if (data_layout == LAYOUT_NHWC)
+    convert_data_layout_NHWC_to_NCHW(out_data, out_shape);
   copy_raw_data_from_tensor(&output, out_data, out_shape);
   print_output_raw_data(out_data, out_shape);
 
