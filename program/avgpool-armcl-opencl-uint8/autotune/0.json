@@ -9,7 +9,7 @@
       "default": 1, 
       "start": 1, 
       "step": 1, 
-      "stop": 16, 
+      "stop": 4,
       "type": "loop"
     }
   ]

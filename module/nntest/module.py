@@ -722,7 +722,7 @@ def convert_to_flat_dict(i):
     '''
     Check if any key in input dictionary has . and convert to dict (for example deps.xyz or env.xyz) 
     '''
-    for key in i:
+    for key in i.keys():
         if '.' in key:
             value = i[key]
             del(i[key])
@@ -1252,7 +1252,7 @@ class Experiment:
         self.tags = ['nntest', program.uoa, library.tag, config.timestamp, config.stimestamp, program.species_uoas_str]
 
         # Get specific autotuner
-        self.autotune_id = options.autotune_id or library.lib_id
+        self.autotune_id = options.autotune_id or 0
         self.batches_info = self.__format_batch_sizes()
 
     def prepare(self, action_params_json):
