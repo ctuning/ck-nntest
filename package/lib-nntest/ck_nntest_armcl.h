@@ -94,11 +94,11 @@ TunerPtr get_lws_tuner() {
   return TunerPtr();
 }
 
-inline int get_flat_index(const Shape &shape, const arm_compute::Coordinates &id) {
+inline int get_flat_index(const Shape &shape, const arm_compute::Coordinates &id, CKDataLayout data_layout) {
   const int n = id[3];
-  const int c = id[2];
-  const int h = id[1];
-  const int w = id[0];
+  const int c = data_layout == LAYOUT_NCHW ? id[2] : id[0];
+  const int h = data_layout == LAYOUT_NCHW ? id[1] : id[2];
+  const int w = data_layout == LAYOUT_NCHW ? id[0] : id[1];
   return n * (shape.width * shape.height * shape.channels) +
          c * (shape.width * shape.height) +
          h * shape.width +
@@ -154,14 +154,23 @@ inline Shape to_ck_shape(const arm_compute::TensorInfo *info, CKDataLayout data_
   return shape;
 }
 
+inline CKDataLayout get_data_layout(arm_compute::CLTensor *tensor) {
+#if defined(ARMCL_18_08_PLUS)
+  return tensor->info()->data_layout() == arm_compute::DataLayout::NCHW ? LAYOUT_NCHW : LAYOUT_NHWC;
+#else
+  return LAYOUT_NCHW;
+#endif
+}
+
 template <typename TData>
 inline void copy_raw_data_to_tensor(arm_compute::CLTensor *tensor, TData *data, const Shape &shape) {
+  auto data_layout = get_data_layout(tensor);
   arm_compute::Window window;
   window.use_tensor_dimensions(tensor_info_to_shape(tensor->info()));
   tensor->map();
   arm_compute::Iterator it(tensor, window);
   arm_compute::execute_window_loop(window, [&](const arm_compute::Coordinates & id) {
-    *reinterpret_cast<TData *>(it.ptr()) = data[get_flat_index(shape, id)];
+    *reinterpret_cast<TData *>(it.ptr()) = data[get_flat_index(shape, id, data_layout)];
   }, it);
   tensor->unmap();
 }
@@ -182,12 +191,13 @@ inline void copy_raw_data_to_tensor(arm_compute::CLTensor *tensor, TData *data, 
 
 template <typename TData>
 inline void copy_raw_data_from_tensor(arm_compute::CLTensor *tensor, TData *data, const Shape &shape) {
+  auto data_layout = get_data_layout(tensor);
   arm_compute::Window window;
   window.use_tensor_dimensions(tensor_info_to_shape(tensor->info()));
   tensor->map();
   arm_compute::Iterator it(tensor, window);
   arm_compute::execute_window_loop(window, [&](const arm_compute::Coordinates & id) {
-    data[get_flat_index(shape, id)] = *reinterpret_cast<TData *>(it.ptr());
+    data[get_flat_index(shape, id, data_layout)] = *reinterpret_cast<TData *>(it.ptr());
   }, it);
   tensor->unmap();
 }

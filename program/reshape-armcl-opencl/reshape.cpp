@@ -63,9 +63,9 @@ int main() {
   });
 
   float *out_data = new float[out_shape.data_count()];
+  copy_raw_data_from_tensor(&output, out_data, out_shape);
   if (data_layout == LAYOUT_NHWC)
     convert_data_layout_NHWC_to_NCHW(out_data, out_shape);
-  copy_raw_data_from_tensor(&output, out_data, out_shape);
   print_output_raw_data(out_data, out_shape);
 
   dump_output_raw_data(out_data, out_shape);
