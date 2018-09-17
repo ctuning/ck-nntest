@@ -22,6 +22,7 @@ int main() {
   auto tuner = get_lws_tuner<CLTuner_FullyConnected>();
   init_armcl(tuner.get());
 
+  auto data_layout = get_data_layout_from_env();
   Shape in_shape = get_input_shape_from_env();
 
   bool transpose_weights = getenv_i("CK_TRANSPOSE_WEIGHTS", 0);
@@ -58,7 +59,15 @@ int main() {
     TensorShape native_out(out_batch_size, batch_count);
     output.allocator()->init(TensorInfo(native_out, 1, DataType::F32));
 
+#if defined(ARMCL_18_08_PLUS)
+    FullyConnectedLayerInfo fc_info;
+    fc_info.transpose_weights = transpose_weights;
+    fc_info.are_weights_reshaped = are_weights_reshaped;
+    fc_info.weights_trained_layout = data_layout == LAYOUT_NCHW ? DataLayout::NCHW : DataLayout::NHWC;
+    layer.configure(&input, &weights, &biases, &output, fc_info);
+#else
     layer.configure(&input, &weights, &biases, &output, transpose_weights, are_weights_reshaped);
+#endif
     print_tensor_shape("Configured CL shape", &output);
 
     input.allocator()->allocate();

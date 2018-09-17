@@ -57,8 +57,8 @@ int main() {
     // Populate input buffer
     float *in_data = get_random_raw_data<float>(in_shape);
     print_input_raw_data(in_data, in_shape);
-    if (data_layout == LAYOUT_NHWC)
-      convert_data_layout_NCHW_to_NHWC(in_data, in_shape);
+//    if (data_layout == LAYOUT_NHWC)
+  //    convert_data_layout_NCHW_to_NHWC(in_data, in_shape);
     copy_raw_data_to_tensor(&input, in_data, in_shape);
     delete[] in_data;
   });
