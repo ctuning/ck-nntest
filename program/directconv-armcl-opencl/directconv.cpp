@@ -53,8 +53,9 @@ int main() {
                                 conv_params.pad, conv_params.pad);
 
   // Prepare weights shape
-  TensorShape native_weights_shape(conv_params.kernel, conv_params.kernel,
-                                   in_feature_maps, out_feature_maps);
+  TensorShape native_weights_shape = data_layout == LAYOUT_NCHW ?
+    TensorShape(conv_params.kernel, conv_params.kernel, in_feature_maps, out_feature_maps):
+    TensorShape(in_feature_maps, conv_params.kernel, conv_params.kernel, out_feature_maps);
 
   // Prepare biases shape
   TensorShape native_biases_shape(out_feature_maps);
@@ -70,9 +71,9 @@ int main() {
   TensorShape native_out_shape = to_tensor_shape(out_shape, data_layout);
 
   measure_setup([&]() {
-    input.allocator()->init(TensorInfo(native_in_shape, Format::F32));
-    output.allocator()->init(TensorInfo(native_out_shape, Format::F32));
-    weights.allocator()->init(TensorInfo(native_weights_shape, Format::F32));
+    input.allocator()->init(make_tensor_info(native_in_shape, DataType::F32, data_layout));
+    output.allocator()->init(make_tensor_info(native_out_shape, DataType::F32, data_layout));
+    weights.allocator()->init(make_tensor_info(native_weights_shape, DataType::F32, data_layout));
     biases.allocator()->init(TensorInfo(native_biases_shape, Format::F32));
 
     layer.configure(&input, &weights, &biases, &output, pad_stride_info);
@@ -82,8 +83,6 @@ int main() {
     float *in_data = get_random_raw_data<float>(in_shape);
     //float* in_data = get_const_raw_data<float>(in_shape.data_count(), 1.f);
     print_input_raw_data(in_data, in_shape);
-    if (data_layout == LAYOUT_NHWC)
-      convert_data_layout_NCHW_to_NHWC(in_data, in_shape);
     copy_raw_data_to_tensor(&input, in_data, in_shape);
     delete[] in_data;
 
@@ -123,9 +122,6 @@ int main() {
   // Process output data
   float *out_data = new float[out_shape.data_count()];
   copy_raw_data_from_tensor(&output, out_data, out_shape);
-  // We should change data layout to match the results with TensorFlow tests
-  if (data_layout == LAYOUT_NHWC)
-    convert_data_layout_NHWC_to_NCHW(out_data, out_shape);
   print_output_raw_data(out_data, out_shape);
   dump_output_raw_data(out_data, out_shape);
   delete[] out_data;
