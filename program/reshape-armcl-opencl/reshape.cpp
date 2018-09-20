@@ -22,7 +22,8 @@ int main() {
   auto tuner = get_lws_tuner<CLTuner_Reshape>();
   init_armcl(tuner.get());
 
-  auto data_layout = get_data_layout_from_env();
+  // CLReshapeLayerKernel doesn't care about data layout
+  auto data_layout = LAYOUT_NCHW;
 
   Shape in_shape = get_input_shape_from_env();
 
@@ -50,8 +51,6 @@ int main() {
 
     float *in_data =  get_random_raw_data<float>(in_shape);
     print_input_raw_data(in_data, in_shape);
-    if (data_layout == LAYOUT_NHWC)
-      convert_data_layout_NCHW_to_NHWC(in_data, in_shape);
     copy_raw_data_to_tensor(&input, in_data, in_shape);
     delete[] in_data;
   });
@@ -64,8 +63,6 @@ int main() {
 
   float *out_data = new float[out_shape.data_count()];
   copy_raw_data_from_tensor(&output, out_data, out_shape);
-  if (data_layout == LAYOUT_NHWC)
-    convert_data_layout_NHWC_to_NCHW(out_data, out_shape);
   print_output_raw_data(out_data, out_shape);
 
   dump_output_raw_data(out_data, out_shape);
