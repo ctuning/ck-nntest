@@ -36,13 +36,6 @@ void init_tensor_data(CLTensor *tensor, const Shape &shape, const char *env_var,
   delete[] in_data;
 }
 
-TensorShape to_tensor_shape(const Shape &shape) {
-  return TensorShape(
-           static_cast<size_t>(shape.width),
-           static_cast<size_t>(shape.height),
-           static_cast<size_t>(shape.channels),
-           static_cast<size_t>(shape.num));
-}
 
 class LayerWrapper {
 public:
@@ -93,6 +86,7 @@ int main() {
   auto tuner = get_lws_tuner<CLTuner_DepthwiseConvolution>();
   init_armcl(tuner.get());
 
+  auto data_layout = get_data_layout_from_env();
   Shape input_shape = get_input_shape_from_env();
   Shape kernel_shape = Shape::make_chw(input_shape.channels, KERNEL_H, KERNEL_W);
 
@@ -112,13 +106,13 @@ int main() {
 
   measure_setup([&]() {
     TensorShape tensor_shapes[TENSOR_COUNT] = {
-      [INPUT]   = to_tensor_shape(input_shape),
-      [WEIGHTS] = to_tensor_shape(kernel_shape),
-      [OUTPUT]  = to_tensor_shape(output_shape)
+      [INPUT]   = to_tensor_shape(input_shape, data_layout),
+      [WEIGHTS] = to_tensor_shape(kernel_shape, data_layout),
+      [OUTPUT]  = to_tensor_shape(output_shape, data_layout)
     };
 
     for (int i = 0; i < TENSOR_COUNT; ++i) {
-      tensors[i].allocator()->init(TensorInfo(tensor_shapes[i], 1, DataType::F32));
+      tensors[i].allocator()->init(make_tensor_info(tensor_shapes[i], DataType::F32, data_layout));
     }
 
     layer.configure(tensors + INPUT, tensors + WEIGHTS, NULL, tensors + OUTPUT, conv_info);
