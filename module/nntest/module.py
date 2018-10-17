@@ -1786,7 +1786,7 @@ def dashboard(i):
 ##############################################################################
 # start NN/SW/HW co-design dashboard with new widget
 
-def dashboard2(i):
+def widget(i):
     """
     Input:  {
               (host)        - Internal web server host

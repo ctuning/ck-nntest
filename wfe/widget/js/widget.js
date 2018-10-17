@@ -1447,9 +1447,11 @@ var CkRepoWdiget = function () {
         value: function init(rootId, headerId, loadingLayerId) {
             var _this9 = this;
 
-            // dev url
-            const kApiUrl = 'http://localhost:3344/';
-            // var kApiUrl = 'http://cknowledge.org/repo/json.php';
+            // If this widget is running on local machine, e.g. launched through `ck widget nntest`
+            this.isLocalRun = true;
+
+            // Url where to get data from
+            const kApiUrl = (this.isLocalRun ? 'http://localhost:3344/' : 'http://cknowledge.org/repo/json.php');
             var kActionGetData = 'get_raw_data';
             var kActionGetConfig = 'get_raw_config';
 
@@ -1484,16 +1486,6 @@ var CkRepoWdiget = function () {
 
             var workflows = [_extends({}, workflowBase, {
                 filter: new CkRepoWidgetFilter(),
-                name: 'ReQuEST @ ASPLOS\'18 tournament (Pareto-efficient image classification)',
-                moduleUoa: 'request.asplos18',
-                defaultXDimensionIndex: 3,
-                defaultYDimensionIndex: 4,
-                defaultCDimensionIndex: 0,
-                defaultSDimensionIndex: 6,
-                defaultXVariationVisible: true,
-                defaultYVariationVisible: false
-            }), _extends({}, workflowBase, {
-                filter: new CkRepoWidgetFilter(),
                 name: 'NNTest (collaboratively benchmarking and optimizing neural network operations)',
                 moduleUoa: 'nntest',
                 defaultXDimensionIndex: 0,
@@ -1503,190 +1495,8 @@ var CkRepoWdiget = function () {
                 defaultXVariationVisible: false,
                 defaultYVariationVisible: false,
                 isSDimensionEnabled: false
-            }), _extends({}, workflowBase, {
-                filter: defaultQuantumFilterIBM,
-                name: 'Quantum Hackathon 2018-10-06 (Variational Quantum Eigensolver on IBM) - Solution Convergence',
-                moduleUoa: 'hackathon.20181006',
-                defaultXDimensionIndex: 2,
-                defaultYDimensionIndex: 1,
-                defaultCDimensionIndex: 3,
-                defaultSDimensionIndex: 5,
-                defaultXVariationVisible: false,
-                defaultYVariationVisible: false,
-                dataPrefix: 'full_',
-                configPrefix: 'full_'
-           }), _extends({}, workflowBase, {
-                filter: new CkRepoWidgetFilter(),
-                name: 'Quantum Hackathon 2018-10-06 (Variational Quantum Eigensolver on IBM) - Time To Solution',
-                moduleUoa: 'hackathon.20181006',
-                defaultXDimensionIndex: 3,
-                defaultYDimensionIndex: 2,
-                defaultCDimensionIndex: 4,
-                defaultSDimensionIndex: 6,
-                defaultXVariationVisible: false,
-                defaultYVariationVisible: false,
-                dataPrefix: 'metrics_',
-                configPrefix: 'metrics_',
-                props: {
-                    '__fun_key': 'fun_exact',
-                    '__time_key': 'total_q_shots',
-                    '__delta': 0.01,
-                    '__prob': 0.8
-                },
-                tableProcessor: function tableProcessor(table, props) {
-                    CkRepoWidgetUtils.prepareTable(table);
-
-                    var delta = props['__delta'];
-                    var prob = props['__prob'];
-                    var which_fun_key = props['__fun_key'];
-                    var which_time_key = props['__time_key'];
-
-                    var _iteratorNormalCompletion9 = true;
-                    var _didIteratorError9 = false;
-                    var _iteratorError9 = undefined;
-
-                    try {
-                        for (var _iterator9 = table[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-                            var row = _step9.value;
-
-                            var _CkRepoWidgetUtils$qu2 = CkRepoWidgetUtils.quantum.benchmark_list_of_runs(row['runs'], delta, prob, which_fun_key, which_time_key),
-                                classical_energy = _CkRepoWidgetUtils$qu2.classical_energy,
-                                minimizer_method = _CkRepoWidgetUtils$qu2.minimizer_method,
-                                minimizer_src = _CkRepoWidgetUtils$qu2.minimizer_src,
-                                n_succ = _CkRepoWidgetUtils$qu2.n_succ,
-                                T_ave = _CkRepoWidgetUtils$qu2.T_ave,
-                                T_err = _CkRepoWidgetUtils$qu2.T_err,
-                                t_ave = _CkRepoWidgetUtils$qu2.t_ave,
-                                t_err = _CkRepoWidgetUtils$qu2.t_err,
-                                s = _CkRepoWidgetUtils$qu2.s,
-                                s_err = _CkRepoWidgetUtils$qu2.s_err,
-                                energies = _CkRepoWidgetUtils$qu2.energies,
-                                times = _CkRepoWidgetUtils$qu2.times;
-
-                            row['T_ave'] = T_ave;
-                            row['T_ave#min'] = T_ave - T_err;
-                            row['T_ave#max'] = T_ave + T_err;
-                            row['T_err'] = T_err;
-                            row['t_ave'] = t_ave;
-                            row['t_ave#min'] = t_ave - t_err;
-                            row['t_ave#max'] = t_ave + t_err;
-                            row['t_err'] = t_err;
-                            row['s'] = s;
-                            row['s_err'] = s_err;
-                            row['__energies'] = energies;
-                            row['__times'] = times;
-
-                            row[CkRepoWidgetConstants.kRowHiddenKey] = Number.isNaN(T_ave);
-                        }
-                    } catch (err) {
-                        _didIteratorError9 = true;
-                        _iteratorError9 = err;
-                    } finally {
-                        try {
-                            if (!_iteratorNormalCompletion9 && _iterator9.return) {
-                                _iterator9.return();
-                            }
-                        } finally {
-                            if (_didIteratorError9) {
-                                throw _iteratorError9;
-                            }
-                        }
-                    }
-                },
-                colorRange: ['#0000FF', '#00FFFF', '#00FF00', '#FFFF00', '#FF0000']
-            }), _extends({}, workflowBase, {
-                filter: defaultQuantumFilterRigetti,
-                name: 'Quantum Hackathon 2018-06-15 (Variational Quantum Eigensolver on Rigetti) - Solution Convergence',
-                moduleUoa: 'hackathon.20180615',
-                defaultXDimensionIndex: 2,
-                defaultYDimensionIndex: 1,
-                defaultCDimensionIndex: 3,
-                defaultSDimensionIndex: 5,
-                defaultXVariationVisible: false,
-                defaultYVariationVisible: false,
-                dataPrefix: 'full_',
-                configPrefix: 'full_'
-            }), _extends({}, workflowBase, {
-                filter: new CkRepoWidgetFilter(),
-                name: 'Quantum Hackathon 2018-06-15 (Variational Quantum Eigensolver on Rigetti) - Time To Solution',
-                moduleUoa: 'hackathon.20180615',
-                defaultXDimensionIndex: 3,
-                defaultYDimensionIndex: 2,
-                defaultCDimensionIndex: 4,
-                defaultSDimensionIndex: 6,
-                defaultXVariationVisible: false,
-                defaultYVariationVisible: false,
-                dataPrefix: 'metrics_',
-                configPrefix: 'metrics_',
-                props: {
-                    '__fun_key': 'fun_exact',
-                    '__time_key': 'total_q_shots',
-                    '__delta': 0.1,
-                    '__prob': 0.5
-                },
-                tableProcessor: function tableProcessor(table, props) {
-                    CkRepoWidgetUtils.prepareTable(table);
-
-                    var delta = props['__delta'];
-                    var prob = props['__prob'];
-                    var which_fun_key = props['__fun_key'];
-                    var which_time_key = props['__time_key'];
-
-                    var _iteratorNormalCompletion9 = true;
-                    var _didIteratorError9 = false;
-                    var _iteratorError9 = undefined;
-
-                    try {
-                        for (var _iterator9 = table[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-                            var row = _step9.value;
-
-                            var _CkRepoWidgetUtils$qu2 = CkRepoWidgetUtils.quantum.benchmark_list_of_runs(row['runs'], delta, prob, which_fun_key, which_time_key),
-                                classical_energy = _CkRepoWidgetUtils$qu2.classical_energy,
-                                minimizer_method = _CkRepoWidgetUtils$qu2.minimizer_method,
-                                minimizer_src = _CkRepoWidgetUtils$qu2.minimizer_src,
-                                n_succ = _CkRepoWidgetUtils$qu2.n_succ,
-                                T_ave = _CkRepoWidgetUtils$qu2.T_ave,
-                                T_err = _CkRepoWidgetUtils$qu2.T_err,
-                                t_ave = _CkRepoWidgetUtils$qu2.t_ave,
-                                t_err = _CkRepoWidgetUtils$qu2.t_err,
-                                s = _CkRepoWidgetUtils$qu2.s,
-                                s_err = _CkRepoWidgetUtils$qu2.s_err,
-                                energies = _CkRepoWidgetUtils$qu2.energies,
-                                times = _CkRepoWidgetUtils$qu2.times;
-
-                            row['T_ave'] = T_ave;
-                            row['T_ave#min'] = T_ave - T_err;
-                            row['T_ave#max'] = T_ave + T_err;
-                            row['T_err'] = T_err;
-                            row['t_ave'] = t_ave;
-                            row['t_ave#min'] = t_ave - t_err;
-                            row['t_ave#max'] = t_ave + t_err;
-                            row['t_err'] = t_err;
-                            row['s'] = s;
-                            row['s_err'] = s_err;
-                            row['__energies'] = energies;
-                            row['__times'] = times;
-
-                            row[CkRepoWidgetConstants.kRowHiddenKey] = Number.isNaN(T_ave);
-                        }
-                    } catch (err) {
-                        _didIteratorError9 = true;
-                        _iteratorError9 = err;
-                    } finally {
-                        try {
-                            if (!_iteratorNormalCompletion9 && _iterator9.return) {
-                                _iterator9.return();
-                            }
-                        } finally {
-                            if (_didIteratorError9) {
-                                throw _iteratorError9;
-                            }
-                        }
-                    }
-                },
-                colorRange: ['#0000FF', '#00FFFF', '#00FF00', '#FFFF00', '#FF0000']
             })];
-            var defaultWorkflow = workflows[1];
+            var defaultWorkflow = workflows[0];
 
             var showWorkflow = function showWorkflow(workflow) {
                 _this9.selectedWorkflow = workflow;
@@ -1948,9 +1758,13 @@ var CkRepoWdiget = function () {
             this.dom.sidePanelFiltersTabBtn.on('click', function () {
                 return _this9._openSidePanelFiltersTab();
             });
-            this.dom.sidePanelInfoTabBtn.on('click', function () {
-                return _this9._openSidePanelInfoTab();
-            });
+            
+            if (!this.isLocalRun) {
+                this.dom.sidePanelInfoTabBtn.on('click', function () {
+                    return _this9._openSidePanelInfoTab();
+                });
+            }
+
             this.dom.sidePanelCloseBtn.on('click', function () {
                 return _this9._hideSidePanel();
             });
@@ -2004,8 +1818,10 @@ var CkRepoWdiget = function () {
     }, {
         key: '_openSidePanelFiltersTab',
         value: function _openSidePanelFiltersTab() {
-            this.dom.sidePanelFiltersTabBtn.attr('class', 'ck-repo-widget-side-panel-header-tab-btn ck-repo-widget-side-panel-header-tab-btn_active');
-            this.dom.sidePanelInfoTabBtn.attr('class', 'ck-repo-widget-side-panel-header-tab-btn');
+            if (!this.isLocalRun) {
+                this.dom.sidePanelFiltersTabBtn.attr('class', 'ck-repo-widget-side-panel-header-tab-btn ck-repo-widget-side-panel-header-tab-btn_active');
+                this.dom.sidePanelInfoTabBtn.attr('class', 'ck-repo-widget-side-panel-header-tab-btn');
+            }
             this.dom.sidePanelFiltersBody.style('display', 'block');
             this.dom.sidePanelInfoBody.style('display', 'none');
 
@@ -2126,9 +1942,17 @@ var CkRepoWdiget = function () {
                 onChange(workflows[selectedIndex]);
             };
 
+            let needShowOldRepoLink = false;
             var old_repo = '<center><small><b>[ <a href="http://cKnowledge.org/repo-beta"><b>Other crowd-optimization scenarios</b></a> ]</b></small></center>';
 
-            var select = root.append('div').html(old_repo).attr('class', 'ck-repo-widget-select_workflow-container').append('select').attr('id', id).attr('class', 'ck-repo-widget-select ck-repo-widget-select_workflow').on('change', changeHandler);
+            var select = root
+                .append('div')
+                .html(needShowOldRepoLink ? old_repo : "")
+                .attr('class', 'ck-repo-widget-select_workflow-container')
+                .append('select')
+                .attr('id', id)
+                .attr('class', 'ck-repo-widget-select ck-repo-widget-select_workflow')
+                .on('change', changeHandler);
 
             select.selectAll('option').data(workflows).enter().append('option').attr('value', function (_, i) {
                 return i;
@@ -2142,20 +1966,26 @@ var CkRepoWdiget = function () {
                 return _this11._openSidePanelFiltersTab();
             });
 
-            root.append('div').attr('class', 'ck-repo-widget-side-panel-btn ck-repo-widget-side-panel-btn_info').html('<i class="fas fa-info"></i>').on('click', function () {
-                return _this11._openSidePanelInfoTab();
-            });
+            if (!this.isLocalRun) {
+                root.append('div').attr('class', 'ck-repo-widget-side-panel-btn ck-repo-widget-side-panel-btn_info').html('<i class="fas fa-info"></i>').on('click', function () {
+                    return _this11._openSidePanelInfoTab();
+                });
+            }
 
             return select;
         }
     }, {
         key: '_initDom',
         value: function _initDom(root, header, loadingLayer) {
+            let sidePanelButtonStyle = (this.isLocalRun ? 'ck-repo-widget-side-panel-header-tab' : 'ck-repo-widget-side-panel-header-tab-btn');
+
             var sidePanel = root.append('div').attr('class', 'ck-repo-widget-side-panel');
             var sidePanelHeader = sidePanel.append('div').attr('class', 'ck-repo-widget-side-panel-header');
             var sidePanelTabsLayout = sidePanelHeader.append('div').attr('class', 'ck-repo-widget-side-panel-header-tabs-layout');
-            var sidePanelFiltersTabBtn = sidePanelTabsLayout.append('div').attr('class', 'ck-repo-widget-side-panel-header-tab-btn').text('Filters');
-            var sidePanelInfoTabBtn = sidePanelTabsLayout.append('div').attr('class', 'ck-repo-widget-side-panel-header-tab-btn').text('Info');
+            var sidePanelFiltersTabBtn = sidePanelTabsLayout.append('div').attr('class', sidePanelButtonStyle).text('Filters');
+            if (!this.isLocalRun) {
+                var sidePanelInfoTabBtn = sidePanelTabsLayout.append('div').attr('class', sidePanelButtonStyle).text('Info');
+            }
             var sidePanelCloseBtn = sidePanelHeader.append('div').attr('class', 'ck-repo-widget-side-panel-header-close-btn').html('<i class="fa fa-times"></i>');
             var sidePanelFiltersBody = sidePanel.append('div').attr('class', 'ck-repo-widget-side-panel-body');
             var sidePanelInfoBody = sidePanel.append('div').attr('class', 'ck-repo-widget-side-panel-body').html(this._getInfoHtml());
