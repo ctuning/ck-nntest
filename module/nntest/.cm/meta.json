@@ -6,6 +6,9 @@
     "dashboard": {
       "desc": "start NN/SW/HW co-design dashboard"
     }, 
+    "widget": {
+      "desc": "start web dashboard with new widget"
+    }, 
     "get_raw_config": {
       "desc": "get raw config for repo widget", 
       "for_web": "yes"
