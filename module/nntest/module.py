@@ -61,6 +61,13 @@ k_view_all='all'
 
 hidden_keys=[k_hi_uid, k_hi_user, k_view_all]
 
+dimensions=[
+             {"key":"experiment", "name":"Experiment number", "skip_from_cache":"yes", "view_key":"__number"},
+             {"key":"##characteristics#run#execution_time", "name":"Execution time (min, sec.)"},
+             {"key":"##characteristics#run#run_time_state#time_setup", "name":"Setup time (min, sec.)"},
+             {"key":"##characteristics#run#run_time_state#time_test", "name":"Test time (min, sec.)"},
+           ]
+
 view_cache=[
   "##choices#env#CK_ABS_DIFF_THRESHOLD#min",
   "##choices#env#CK_DATASET_FILENAME#min",
@@ -1775,3 +1782,198 @@ def dashboard(i):
     i['cid']=''
 
     return ck.access(i)
+
+##############################################################################
+# get raw data for repo-widget
+
+def get_raw_data(i):
+    """
+    Input:  {
+            }
+
+    Output: {
+              return       - return code =  0, if successful
+                                         >  0, if error
+              (error)      - error text if return > 0
+            }
+
+    """
+
+    import os
+    import copy
+    import time
+
+    # Preparing various parameters to render HTML dashboard
+    st=''
+
+    view_all=i.get(k_view_all,'')
+
+    cmuoa=i.get('crowd_module_uoa','')
+    ckey=i.get('crowd_key','')
+
+    if 'reset_'+form_name in i: reset=True
+    else: reset=False
+
+    if 'all_choices_'+form_name in i: all_choices=True
+    else: all_choices=False
+
+    debug=(i.get('debug','')=='yes')
+#    debug=True
+
+    conc=i.get('crowd_on_change','')
+    if conc=='':
+        conc=onchange
+
+    hi_uid=i.get(k_hi_uid,'')
+    hi_user=i.get(k_hi_user,'')
+
+    refresh_cache=i.get('refresh_cache','')
+
+    # Check host URL prefix and default module/action *********************************************
+    rx=ck.access({'action':'form_url_prefix',
+                  'module_uoa':'wfe',
+                  'host':i.get('host',''), 
+                  'port':i.get('port',''), 
+                  'template':i.get('template','')})
+    if rx['return']>0: return rx
+    url0=rx['url']
+    template=rx['template']
+
+    url=url0
+    action=i.get('action','')
+    muoa=i.get('module_uoa','')
+
+    url+='action=index&module_uoa=wfe&native_action='+action+'&'+'native_module_uoa='+muoa
+    url1=url
+
+    # Prepare first level of selection with pruning ***********************************************
+    r=ck.access({'action':'prepare_selector',
+                 'module_uoa':cfg['module_deps']['experiment'],
+                 'original_input':i,
+                 'tags':'nntest',
+                 'debug': debug,
+                 'selector':selector,
+                 'crowd_key':ckey,
+                 'crowd_on_change':conc,
+                 'url1':url1,
+                 'form_name':form_name,
+                 'skip_html_selector':'yes'})
+    if r['return']>0: return r
+
+    olst=r['lst'] # original list (if all_choices)
+    plst=r['pruned_lst']
+
+    # Sort list ***********************************************************************************
+    dt=time.time()
+    splst=sorted(plst, key=lambda x: (
+        x.get('meta',{}).get('meta',{}).get('prog_uoa',''), 
+        x.get('meta',{}).get('meta',{}).get('dataset_uoa',''), 
+        x.get('meta',{}).get('meta',{}).get('plat_name',''), 
+        x.get('meta',{}).get('meta',{}).get('timestamp','')
+        ))
+
+    # Prune list **********************************************************************************
+    len_plst=len(plst)
+    if len_plst>prune_first_level:
+       plst=plst[:prune_first_level]
+
+    # Prepare and cache results for the table
+    r=ck.access({'action':'get_and_cache_results',
+                 'module_uoa':cfg['module_deps']['experiment'],
+                 'lst':splst,
+                 'cache_uid':work['self_module_uid'],
+                 'refresh_cache':refresh_cache,
+                 'view_cache':view_cache,
+                 'table_view':table_view})
+    if r['return']>0: return 
+    table=r['table']
+
+    # Prepare second level of selection with pruning ***********************************************
+    r=ck.access({'action':'prepare_selector',
+                 'module_uoa':cfg['module_deps']['experiment'],
+                 'original_input':i,
+                 'lst':table,
+                 'skip_meta_key':'yes',
+                 'debug': debug,
+                 'selector':selector2,
+                 'crowd_key':ckey,
+                 'crowd_on_change':conc,
+                 'url1':url1,
+                 'form_name':form_name,
+                 'skip_form_init':'yes'})
+    if r['return']>0: return r
+    table=r['pruned_lst']
+
+    # Extra fields (customized for this module) *****************************************************************************
+    for row in table:
+        duoa=row.get('##data_uid','')
+        dpoint=row.get('##point_uid','')
+
+        x=''
+        if duoa!='' and dpoint!='':
+           x='ck replay experiment:'+duoa+' --point='+str(dpoint)
+           y=ck.cfg.get('add_extra_to_replay','')
+           if y!='':x+=' '+y
+
+        row['##extra#html_replay_button']={
+            'title': 'CK replay',
+            'cmd': x
+           }
+
+    # Prune first list based on second selection*****************************************************************************
+    if all_choices:
+       nsplst=olst
+    elif reset:
+       nsplst=splst
+    else:
+       all_uid=[]
+       for row in table:
+           duid=row['##data_uid']
+           if duid!='' and duid not in all_uid:
+              all_uid.append(duid)
+
+       nsplst=[]
+       for q in splst:
+           if q['data_uid'] in all_uid:
+              nsplst.append(q)
+
+    # Check if too many *****************************************************************************************************
+    ltable=len(table)
+
+    if ltable==0:
+        return {'return':0, 'table':[], 'view_cache':view_cache}
+
+    elif ltable>prune_second_level and view_all!='yes':
+       table=table[:prune_second_level]
+
+    stable=sorted(table, key=lambda row: (
+        ck.safe_float(row.get('##characteristics#run#execution_time#min',None),0.0)
+        ))
+
+    return {'return':0, 'table':stable, 'view_cache':view_cache}
+
+##############################################################################
+# get raw config for repo widget
+
+def get_raw_config(i):
+    """
+    Input:  {
+            }
+
+    Output: {
+              return       - return code =  0, if successful
+                                         >  0, if error
+              (error)      - error text if return > 0
+            }
+
+    """
+
+    return {
+        'return':0,
+        'selector':selector,
+        'selector2':selector2,
+        'selector3':selector3,
+        'dimensions':dimensions,
+        'view_cache':view_cache,
+        'table_view':table_view
+        }
