@@ -1784,6 +1784,36 @@ def dashboard(i):
     return ck.access(i)
 
 ##############################################################################
+# start NN/SW/HW co-design dashboard with new widget
+
+def dashboard2(i):
+    """
+    Input:  {
+              (host)        - Internal web server host
+              (port)        - Internal web server port
+
+              (wfe_host)    - External web server host
+              (wfe_port)    - External web server port
+
+              (extra_url)   - extra URL
+            }
+
+    Output: {
+              return       - return code =  0, if successful
+                                         >  0, if error
+              (error)      - error text if return > 0
+            }
+
+    """
+
+    i['action']='start'
+    i['module_uoa']='web'
+    i['browser']='yes'
+    i['template']='widget'
+    i['cid']=''
+
+    return ck.access(i)
+##############################################################################
 # get raw data for repo-widget
 
 def get_raw_data(i):

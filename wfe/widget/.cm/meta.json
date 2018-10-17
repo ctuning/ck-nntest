@@ -1,0 +1,16 @@
+{
+  "extra_html_after_menu": "",
+  "share": " <!-- AddToAny BEGIN -->\n <div class=\"a2a_kit a2a_default_style\" style=\"margin:0 auto;font-size:12px;width:60px;\">\n  <a class=\"a2a_dd\" href=\"https://www.addtoany.com/share_save\">Share</a>\n </div>\n <script type=\"text/javascript\" src=\"//static.addtoany.com/menu/page.js\"></script>\n <!-- AddToAny END -->\n",
+  "template_file": "template.html",
+  "top_menu": [
+    {
+      "module_uoa": "",
+      "module_uoas": [
+        ""
+      ],
+      "name": "Dashboard",
+      "native_action": "show",
+      "native_module_uoa": "nntest"
+    }
+  ]
+}
