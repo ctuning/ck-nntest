@@ -1942,12 +1942,11 @@ var CkRepoWdiget = function () {
                 onChange(workflows[selectedIndex]);
             };
 
-            let needShowOldRepoLink = false;
             var old_repo = '<center><small><b>[ <a href="http://cKnowledge.org/repo-beta"><b>Other crowd-optimization scenarios</b></a> ]</b></small></center>';
 
             var select = root
                 .append('div')
-                .html(needShowOldRepoLink ? old_repo : "")
+                .html(old_repo)
                 .attr('class', 'ck-repo-widget-select_workflow-container')
                 .append('select')
                 .attr('id', id)
