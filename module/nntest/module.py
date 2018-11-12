@@ -841,7 +841,7 @@ class ActionOptions:
                 t = tag.strip()
                 # Check opencl, cuda and cpu keywoards and add `v`
                 if t == 'opencl': t = 'vopencl'
-                elif x == 'cuda': t = 'vcuda'
+                elif t == 'cuda': t = 'vcuda'
                 elif t == 'cpu': t = 'vcpu'
                 tags.append(t)
         return tags
