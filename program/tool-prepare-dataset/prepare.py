@@ -9,6 +9,7 @@
 # Reads shape data from CSV file and creates a list of respective dataset files
 #
 
+import ck.kernel as ck
 import csv
 import json
 import os
@@ -167,7 +168,7 @@ def prepare_reshape(row):
 
 if __name__ == '__main__':
   dataset_dir = os.getenv('CK_NNTEST_DATASET_PATH')
-  print('Processing dataset in {} ...'.format(dataset_dir))
+  ck.out('Processing dataset in {} ...'.format(dataset_dir))
 
   # Load meta
   meta_file = os.path.join(dataset_dir, '.cm', 'meta.json')
@@ -195,8 +196,8 @@ if __name__ == '__main__':
   # Load tensor shape descriptions from csv
   csv_file = os.path.join(dataset_dir, 'data.csv')
   if not os.path.isfile(csv_file):
-    print('\nShape descriptions file not found.')
-    print('It seems this dataset was prepared manually and need not be updated by this program.')
+    ck.out('\nShape descriptions file not found.')
+    ck.out('It seems this dataset was prepared manually and need not be updated by this program.')
     exit(0)
   rows = []
   with open(csv_file) as f:
@@ -217,18 +218,18 @@ if __name__ == '__main__':
     try:
       name, desc, data = prepare_func(row)
     except ValueError:
-      print('Skip row {}'.format(row))
+      ck.out('Skip row {}'.format(row))
       continue
 
     if name in dataset_files:
-      print('Duplicated shape: {}, second is skipped'.format(name))
+      ck.out('Duplicated shape: {}, second is skipped'.format(name))
       continue
 
     dataset_files.append(name)
     desc_dataset_files[name] = {'name': desc}
 
     # Save dataset files
-    print('Saving file {} ...'.format(name))
+    ck.out('Saving file {} ...'.format(name))
     # TODO I'm not sure why this empty file, it was in original script. Comment needed.
     fn = os.path.join(dataset_dir, name)
     with open(fn, 'w') as f:
@@ -241,7 +242,7 @@ if __name__ == '__main__':
   old_files = meta.get('dataset_files', [])
   for old_file in old_files:
     if old_file not in dataset_files:
-      print('Removing file {} ...'.format(old_file))
+      ck.out('Removing file {} ...'.format(old_file))
       fn = os.path.join(dataset_dir, old_file)
       if os.path.isfile(fn):
         os.remove(fn)
@@ -255,4 +256,4 @@ if __name__ == '__main__':
   with open(meta_file, 'w') as f:
     json.dump(meta, f, indent=2)
 
-  print('\nDone')
+  ck.out('\nDone')
