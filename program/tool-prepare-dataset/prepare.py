@@ -194,10 +194,15 @@ if __name__ == '__main__':
     raise Exception('Unsupported dataset')
 
   # Load tensor shape descriptions from csv
-  csv_file = os.path.join(dataset_dir, 'data.csv')
+  csv_file_name = meta.get('dataset_files')
+  if csv_file_name is None:
+    csv_file_name = 'data.csv'
+  else:
+    csv_file_name = csv_file_name[0]
+  csv_file = os.path.join(dataset_dir, csv_file_name)
   if not os.path.isfile(csv_file):
     ck.out('\nShape descriptions file not found.')
-    ck.out('It seems this dataset was prepared manually and need not be updated by this program.')
+    ck.out('It seems this dataset was prepared manually and does not need to be updated by this program.')
     exit(0)
   rows = []
   with open(csv_file) as f:
