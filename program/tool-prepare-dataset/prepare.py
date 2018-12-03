@@ -104,10 +104,11 @@ def prepare_depthwiseconv(row):
 ########################################################################
 
 
-fullyconnected_net_name = None
+global fullyconnected_net_name
 
 
 def prepare_fullyconnected(row):
+  fullyconnected_net_name = None
   try:
     layer = row[0].strip()
     c = int(row[2])
@@ -134,7 +135,6 @@ def prepare_fullyconnected(row):
 
   except Exception as e:
     if layer:
-      global fullyconnected_net_name
       fullyconnected_net_name = layer
     raise e
 
