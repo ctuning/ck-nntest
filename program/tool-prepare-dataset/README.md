@@ -15,3 +15,8 @@ The program searches for datasets by tag `nntest` and you have to choose one tha
 ```
 ck run program:tool-prepare-dataset
 ```
+
+or one can explicitly specify which dataset should be processed:
+```
+ck run program:tool-prepare-dataset --env.CK_DATASET=tensor-fullyconnected-0001
+```

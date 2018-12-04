@@ -104,12 +104,13 @@ def prepare_depthwiseconv(row):
 
 ########################################################################
 
-
-global fullyconnected_net_name
-
+# Variable is used to generate description of the dataset
+# e.g. "Inception v3 fc1 input 1x1x2048 output 1x1x1000" (fullyconnected_net_name = 'Inception')
+# All calls of `prepare_fullyconnected` will describe the created dataset with this name
+# or will update this name when shifting to a section of shapes related to another network
+fullyconnected_net_name = None
 
 def prepare_fullyconnected(row):
-  fullyconnected_net_name = None
   try:
     layer = row[0].strip()
     c = int(row[2])
@@ -135,7 +136,11 @@ def prepare_fullyconnected(row):
     return name, desc, data
 
   except Exception as e:
+    # If we can't parse the row then it's header row (e.g.: "Inception v3,,,,,,,")
+    # and the layer name (parsed from the first column) gives a network name.
+    # Store it in order to reuse during parsing of subsequent rows:
     if layer:
+      global fullyconnected_net_name
       fullyconnected_net_name = layer
     raise e
 
@@ -194,14 +199,10 @@ if __name__ == '__main__':
     raise Exception('Unsupported dataset')
 
   # Load tensor shape descriptions from csv
-  csv_file_name = meta.get('dataset_files')
-  if csv_file_name is None:
-    csv_file_name = 'data.csv'
-  else:
-    csv_file_name = csv_file_name[0]
+  csv_file_name = meta.get('dataset_descr_file', 'data.csv')
   csv_file = os.path.join(dataset_dir, csv_file_name)
   if not os.path.isfile(csv_file):
-    ck.out('\nShape descriptions file not found.')
+    ck.out('\nShape descriptions file "{}" not found.'.format(csv_file_name))
     ck.out('It seems this dataset was prepared manually and does not need to be updated by this program.')
     exit(0)
   rows = []
