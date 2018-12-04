@@ -14,8 +14,11 @@ import os
 def ck_preprocess(i):
   ck = i['ck_kernel']
 
+  dataset_uoa = i['env'].get('CK_DATASET', '')
+
   res = ck.access({'action': 'search',
                    'module_uoa': 'dataset',
+                   'data_uoa': dataset_uoa,
                    'tags': 'nntest'})
   if res['return'] > 0:
     return res
