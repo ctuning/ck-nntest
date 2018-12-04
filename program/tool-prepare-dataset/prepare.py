@@ -104,13 +104,14 @@ def prepare_depthwiseconv(row):
 
 ########################################################################
 
-# Variable is used to generate description of the dataset
-# e.g. "Inception v3 fc1 input 1x1x2048 output 1x1x1000" (fullyconnected_net_name = 'Inception')
+# This variable is used to generate description of the dataset
+# e.g. "Inception v3 fc1 input 1x1x2048 output 1x1x1000" (fullyconnected_net_name = 'Inception').
 # All calls of `prepare_fullyconnected` will describe the created dataset with this name
-# or will update this name when shifting to a section of shapes related to another network
+# or will update this name when shifting to a section of shapes related to another network.
 fullyconnected_net_name = None
 
 def prepare_fullyconnected(row):
+  global fullyconnected_net_name
   try:
     layer = row[0].strip()
     c = int(row[2])
@@ -140,7 +141,6 @@ def prepare_fullyconnected(row):
     # and the layer name (parsed from the first column) gives a network name.
     # Store it in order to reuse during parsing of subsequent rows:
     if layer:
-      global fullyconnected_net_name
       fullyconnected_net_name = layer
     raise e
 
