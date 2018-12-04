@@ -214,11 +214,15 @@ if __name__ == '__main__':
   dataset_files = []
   desc_dataset_files = {}
   for row in rows:
-    # Column 0 defines network name but not all the rows has it
-    if row[0]:
-      net_name = row[0]
-    else:
-      row[0] = net_name
+    # Column 0 defines network name but not all rows have it
+    try:
+      if row[0]:
+        net_name = row[0]
+      else:
+        row[0] = net_name
+    except:
+      ck.out('Skip row {}'.format(row))
+      continue
 
     # Run preparation func
     try:
