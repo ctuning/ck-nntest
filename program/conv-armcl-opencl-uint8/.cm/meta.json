@@ -45,8 +45,8 @@
   ],
   "compiler_env": "CK_CXX",
   "compiler_flags_as_env": "$<<CK_COMPILER_FLAG_CPP11>>$ $<<CK_FLAG_PREFIX_INCLUDE>>$$<<CK_ENV_LIB_ARMCL_INCLUDE>>$ -Wno-ignored-attributes",
-  "extra_ld_vars": "$<<CK_ENV_LIB_STDCPP_DYNAMIC>>$", 
   "data_name": "conv-armcl-opencl-uint8",
+  "extra_ld_vars": "$<<CK_ENV_LIB_STDCPP_DYNAMIC>>$",
   "main_language": "cpp",
   "only_for_target_os_tags": [
     "android",

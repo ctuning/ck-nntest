@@ -14,30 +14,6 @@
       "sort": 8,
       "tags": "lib,blas,openblas"
     },
-    "lib-nntest": {
-      "local": "yes",
-      "name": "NNTest library",
-      "sort": 2,
-      "tags": "lib,nntest"
-    },
-    "lib-protobuf-host": {
-      "local": "yes",
-      "name": "ProtoBuf HOST library",
-      "only_for_target_os_tags": [
-        "linux",
-        "windows"
-      ],
-      "sort": 9,
-      "tags": "lib,protobuf-host,v3.1.0"
-    },
-    "library": {
-      "local": "yes",
-      "name": "Caffe library (OpenCL)",
-      "no_tags": "vcuda",
-      "skip_pruning_by_other_deps": "yes",
-      "sort": -5,
-      "tags": "lib,caffe,vopencl"
-    },
     "lib-boost": {
       "local": "yes",
       "name": "Boost library",
@@ -69,6 +45,30 @@
       },
       "sort": 70,
       "tags": "lib,glog"
+    },
+    "lib-nntest": {
+      "local": "yes",
+      "name": "NNTest library",
+      "sort": 2,
+      "tags": "lib,nntest"
+    },
+    "lib-protobuf-host": {
+      "local": "yes",
+      "name": "ProtoBuf HOST library",
+      "only_for_target_os_tags": [
+        "linux",
+        "windows"
+      ],
+      "sort": 9,
+      "tags": "lib,protobuf-host,v3.1.0"
+    },
+    "library": {
+      "local": "yes",
+      "name": "Caffe library (OpenCL)",
+      "no_tags": "vcuda",
+      "skip_pruning_by_other_deps": "yes",
+      "sort": -5,
+      "tags": "lib,caffe,vopencl"
     },
     "xopenme": {
       "local": "yes",
