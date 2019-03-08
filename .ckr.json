@@ -4,9 +4,8 @@
   "data_alias": "ck-nntest",
   "data_name": "ck-nntest",
   "dict": {
-    "private": "yes",
     "shared": "git",
-    "url": "https://github.com/ctuning/ck-nntest",
+    "url": " https://github.com/ctuning/ck-nntest ",
     "repo_deps": [
        {
          "repo_uoa": "ck-crowdtuning"
