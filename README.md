@@ -7,38 +7,49 @@
 [![DOI](https://zenodo.org/badge/107417515.svg)](https://zenodo.org/badge/latestdoi/107417515)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-## Installation
+## [Installation](https://github.com/ctuning/ck#installation)
 
-```
-$ sudo pip install ck
-$ ck pull repo:ck-nntest
-```
+### CK
 
-**NB:** You may prefer to install CK locally as described [here](https://github.com/ctuning/ck#minimal-installation).
+```bash
+$ python -m pip install ck --user
+```
 
 ### CK-NNTest
 
+```bash
+$ ck pull repo:ck-nntest
+$ ck install package --tags=lib,nntest
 ```
-$ ck install package:lib-nntest
+
+### Arm Compute Library with Neon
+
+To use [Arm Compute Library](https://developer.arm.com/technologies/compute-library) (Neon) tests with the latest development branch:
+
+```bash
+$ ck install package --tags=lib,armcl,neon,dev
+```
+
+To install a specific release of the library (e.g. `20.05`):
+```bash
+$ ck install package --tags=lib,armcl,neon,rel.20.05
 ```
 
 ### Arm Compute Library with OpenCL
 
-To use Arm Compute Library (OpenCL) tests with the master branch of the public [repository](https://github.com/Arm-software/ComputeLibrary.git), install:
-```
-$ ck install package:lib-armcl-opencl-master
+To use [Arm Compute Library](https://developer.arm.com/technologies/compute-library) (OpenCL) tests with the latest development branch:
+
+```bash
+$ ck install package --tags=lib,armcl,opencl,dev
 ```
 
-To install a specific version of the library (e.g., 18.05), use:
-```
-$ ck install package:lib-armcl-opencl-18.05
-```
-To check out other versions available, use:
-```
-$ ck list package:lib-armcl-opencl-*
+To install a specific release of the library (e.g. `20.05`):
+```bash
+$ ck install package --tags=lib,armcl,opencl,rel.20.05
 ```
 
-### TensorFlow
+
+### [DEPRECATED] TensorFlow
 
 To use TensorFlow CPU tests, install a third-party [TensorFlow_CC](https://github.com/FloopCZ/tensorflow_cc) package:
 ```
@@ -48,7 +59,7 @@ $ ck install package:lib-tensorflow_cc-shared-1.7.0 [--env.CK_HOST_CPU_NUMBER_OF
 To install, follow the instructions in the [Readme](https://github.com/ctuning/ck-tensorflow/blob/master/package/lib-tensorflow_cc-shared-1.7.0/README.md)
 **NB:** You may want to limit the number of build threads on a memory-constrained platform (e.g. to 2 as above).
 
-### Caffe
+### [DEPRECATED] Caffe
 
 To use Caffe tests, get the public [CK-Caffe](https://github.com/dividiti/ck-caffe) repository:
 ```
@@ -76,7 +87,7 @@ $ ck install package:lib-caffe-bvlc-opencl-clblast-universal
 
 To view all available NNTest test programs and data sets:
 
-```
+```bash
 $ ck search program --tags=nntest | sort
 $ ck search dataset --tags=nntest | sort
 ```
