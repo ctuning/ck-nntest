@@ -18,9 +18,9 @@
       "extra_ld_vars": "$<<CK_ENV_LIB_ARMCL_LFLAG_CORE>>$",
       "local": "yes",
       "name": "ARM Compute Library (OpenCL)",
-      "or_tags": "armcl;vdefault;vsoftmax",
-      "sort": -5,
-      "tags": "lib,arm-compute-library,vopencl"
+      "or_tags": "vopencl;opencl;vdefault;vsoftmax",
+      "sort": 1,
+      "tags": "lib,armcl"
     },
     "opencl": {
       "local": "yes",
@@ -29,6 +29,7 @@
         "android": "yes"
       },
       "sort": 20,
+      "no_tags": "armcl,armnn",
       "tags": "lib,opencl"
     },
     "xopenme": {
@@ -46,7 +47,7 @@
   "compiler_env": "CK_CXX",
   "compiler_flags_as_env": "$<<CK_COMPILER_FLAG_CPP11>>$ $<<CK_FLAG_PREFIX_INCLUDE>>$$<<CK_ENV_LIB_ARMCL_INCLUDE>>$ -Wno-ignored-attributes",
   "data_name": "softmax-armcl-opencl",
-  "extra_ld_vars": "$<<CK_ENV_LIB_STDCPP_DYNAMIC>>$",
+  "extra_ld_vars": "$<<CK_ENV_LIB_STDCPP_DYNAMIC>>$ -ldl -lpthread",
   "main_language": "cpp",
   "only_for_target_os_tags": [
     "android",
