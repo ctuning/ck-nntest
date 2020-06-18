@@ -232,8 +232,11 @@ inline void print_tensor_data(const char *header, arm_compute::CLTensor *tensor)
   tensor->unmap();
 }
 
-inline void print_quantization_info_info(const char *header, const arm_compute::TensorInfo &info) {
-  printf("Quantized %s: scale=%f, offset=%d\n", header, info.quantization_info().scale, info.quantization_info().offset);
+
+// FIXME: 'scale' used to be of type 'float', now of type 'std::vector<float>';
+// 'offset' used to be of type 'int', now of type 'std::vector<int, std:allocator<int> >'.
+inline void print_quantization_info(const char *header, const arm_compute::TensorInfo &info) {
+  printf("Quantized %s: scale=%f, offset=%d\n", header, info.quantization_info().scale(), info.quantization_info().offset());
 }
 
 typedef ConvolutionParams PoolingParams;
