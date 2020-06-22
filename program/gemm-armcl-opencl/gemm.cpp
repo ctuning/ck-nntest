@@ -11,6 +11,7 @@
 
 #include "ck_nntest_armcl.h"
 #include <memory>
+#include <fstream>
 
 static const int DEFAULT_M = 1024;
 static const int DEFAULT_N = 1024;
@@ -36,11 +37,30 @@ static const char *TENSOR_NAMES[TENSOR_COUNT] = {
   [OUTPUT]  = "OUTPUT"
 };
 
-void init_tensor_data(CLTensor *tensor, const CK::Shape &shape, const char *env_var, const char *title, CKDataLayout data_layout) {
-  float *in_data = get_random_raw_data<float>(shape);
+void init_tensor_data(CLTensor *tensor, const CK::Shape &shape, const char *env_var,
+                      const char *title, CKDataLayout data_layout) {
+  float *in_data;
+  // TODO: Outline into a common helper function.
+  char *dataset_path = getenv("CK_DATASET_PATH");
+  char *dataset_file = getenv("CK_DATASET_FILENAME");
+  const std::string tensor_path = std::string(dataset_path) + \
+    std::string(dataset_file) + "." + std::string(title);
+  std::ifstream tensor_file(tensor_path, std::ios::in | std::ios::binary);
+  if (tensor_file) {
+    const long int in_data_count = shape.data_count();
+    const long int in_data_size = in_data_count * sizeof(float);
+    in_data = new float[in_data_count];
+    tensor_file.read((char*)in_data, in_data_size);
+    // NB: Important side-effect!
+    store_value_i(X_VAR_BITS, "data_bits", sizeof(float) * 8);
+  } else {
+    in_data = get_random_raw_data<float>(shape);
+  }
   log_raw_data(in_data, shape, env_var, title);
-  if (data_layout == LAYOUT_NHWC)
+  printf("%s source: %s\n\n", title, tensor_file ? tensor_path.c_str() : "random");
+  if (data_layout == LAYOUT_NHWC) {
     convert_data_layout_NCHW_to_NHWC(in_data, shape);
+  }
   copy_raw_data_to_tensor(tensor, in_data, shape);
   delete[] in_data;
 }
@@ -62,8 +82,8 @@ int main() {
   CK::Shape shapes[TENSOR_COUNT] = {
     [INPUT_A] = CK::Shape::make_chw(1, m, k),
     [INPUT_B] = CK::Shape::make_chw(1, k, n),
-    [INPUT_C] = CK::Shape::make_chw(1, n, m),
-    [OUTPUT]  = CK::Shape::make_chw(1, n, m)
+    [INPUT_C] = CK::Shape::make_chw(1, m, n),
+    [OUTPUT]  = CK::Shape::make_chw(1, m, n)
   };
 
   CLTensor tensors[TENSOR_COUNT];
