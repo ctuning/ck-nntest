@@ -3,5 +3,7 @@
   "CK_GEMM_BETA": 0.0, 
   "CK_GEMM_K": 2, 
   "CK_GEMM_M": 3, 
-  "CK_GEMM_N": 4
+  "CK_GEMM_N": 4,
+  "CK_PRINT_IN_TENSOR": 1,
+  "CK_PRINT_OUT_TENSOR": 1
 }
