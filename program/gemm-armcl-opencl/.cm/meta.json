@@ -103,11 +103,6 @@
   },
   "run_vars": {
     "CK_ABS_DIFF_THRESHOLD": 0.001,
-    "CK_GEMM_ALPHA": 1.0,
-    "CK_GEMM_BETA": 0.0,
-    "CK_GEMM_K": 1024,
-    "CK_GEMM_M": 1024,
-    "CK_GEMM_N": 1024,
     "CK_IN_SHAPE_N": 1,
     "CK_OUT_RAW_DATA": "tmp-ck-output.bin",
     "CK_SEED": 42
