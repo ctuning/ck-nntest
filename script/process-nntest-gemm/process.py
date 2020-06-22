@@ -1,14 +1,14 @@
 #
-# Copyright (c) 2017 cTuning foundation.
+# Copyright (c) 2017-2020 cTuning foundation.
 # See CK COPYRIGHT.txt for copyright details.
 #
 # SPDX-License-Identifier: BSD-3-Clause.
 # See CK LICENSE.txt for licensing details.
 #
-# Convert raw output of a fc test program to the CK format.
+# Convert raw output of a GEMM test program to the CK format.
 #
 # Developer(s):
-#   - Anton Lokhmotov, dividiti, 2017
+#   - Anton Lokhmotov, dividiti, 2017, 2020
 #
 
 import json
@@ -89,6 +89,29 @@ def ck_postprocess(i):
 
     d['execution_time']=total_time
     d['execution_time_kernel_0']=total_time
+
+    # Calculate floating-point operations (flops) for C[M][N] = alpha * A[M][K] * B[K][N] + beta * C[M][N]
+    # and then billion flops per second (GFLOPS).
+    alpha = float(env.get('CK_GEMM_ALPHA', '1.0'))
+    beta  = float(env.get('CK_GEMM_BETA', '0.0'))
+    K     = int(env.get('CK_GEMM_K', '1024'))
+    M     = int(env.get('CK_GEMM_M', '1024'))
+    N     = int(env.get('CK_GEMM_N', '1024'))
+    flops = 0
+    if alpha != 0.0: # multiply matrix A by matrix B
+        flops += M * N * 2 * K
+        if alpha != 1.0: # multiply by scalar alpha
+            flops += M * N
+    if beta != 0.0:
+        if beta != 1.0:
+            flops += M * N # multiply matrix C by scalar beta
+        flops += M * N # add matrix (alpha A * B) and matrix (beta * C)
+    Gflops = 1e-9 * flops
+    GFLOPS = Gflops / drts['time_test']
+    ck.out('GFLOPS = {0:.3f}'.format(GFLOPS))
+    d['flops'] = flops
+    d['Gflops'] = Gflops
+    d['GFLOPS'] = GFLOPS
 
     if d.get('post_processed','')=='yes':
         r=ck.save_json_to_file({'json_file':rt['fine_grain_timer_file'], 'dict':d, 'sort_keys':'yes'})
