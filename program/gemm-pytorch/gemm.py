@@ -9,10 +9,11 @@ from pprint import pprint
 start_setup_time = perf_counter()
 
 # Setup.
+output_bin = os.environ.get('CK_OUT_RAW_DATA', 'tmp-ck-output.bin')
+output_json = output_bin.replace('bin', 'json')
+
 dataset_path = os.environ.get('CK_DATASET_PATH', '')
 dataset_file_base = os.environ.get('CK_DATASET_FILENAME', '')
-print_in_tensor = os.environ.get('CK_PRINT_IN_TENSOR', 0) in [ 'yes', 'YES', 'ON', 'on', 1 ]
-print_out_tensor = os.environ.get('CK_PRINT_OUT_TENSOR', 0) in [ 'yes', 'YES', 'ON', 'on', 1 ]
 
 alpha = np.float32(os.environ.get('CK_GEMM_ALPHA', '1.0'))
 beta  = np.float32(os.environ.get('CK_GEMM_BETA', '0.0'))
@@ -22,13 +23,16 @@ N     = int(os.environ.get('CK_GEMM_N', '1024'))
 rnd_seed = int(os.environ.get('CK_SEED', '42'))
 np.random.seed(rnd_seed)
 
-sizeof_float32 = 4
+print_in_tensor = os.environ.get('CK_PRINT_IN_TENSOR', 0) in [ 'yes', 'YES', 'ON', 'on', 1 ]
+print_out_tensor = os.environ.get('CK_PRINT_OUT_TENSOR', 0) in [ 'yes', 'YES', 'ON', 'on', 1 ]
 
 tensors = {
     'A' : [ M, K ],
     'B' : [ K, N ],
     'C' : [ M, N ]
 }
+
+sizeof_float32 = 4
 
 for tensor_name, tensor_shape in tensors.items():
     tensor_path = os.path.join(dataset_path, '{}.{}'.format(dataset_file_base, tensor_name))
@@ -57,15 +61,13 @@ if print_out_tensor:
 # Convert output to flat list.
 output_list = output.flatten().tolist()
 
-# Dump output as JSON.
-output_json = 'tmp-ck-output.json'
-with open(output_json, 'w') as output_file:
-    output_file.write( json.dumps(output_list, indent=2) )
-
 # Dump output as binary.
-output_bin = 'tmp-ck-output.bin'
 with open(output_bin, 'wb') as output_file:
     output_file.write( struct.pack('f'*len(output_list), *output_list) )
+
+# Dump output as JSON.
+with open(output_json, 'w') as output_file:
+    output_file.write( json.dumps(output_list, indent=2) )
 
 # Dump timing and misc info.
 timer_json = 'tmp-ck-timer.json'
