@@ -23,8 +23,8 @@ N     = int(os.environ.get('CK_GEMM_N', '1024'))
 rnd_seed = int(os.environ.get('CK_SEED', '42'))
 np.random.seed(rnd_seed)
 
-print_in_tensor = os.environ.get('CK_PRINT_IN_TENSOR', 0) in [ 'yes', 'YES', 'ON', 'on', 1 ]
-print_out_tensor = os.environ.get('CK_PRINT_OUT_TENSOR', 0) in [ 'yes', 'YES', 'ON', 'on', 1 ]
+print_in_tensor = os.environ.get('CK_PRINT_IN_TENSOR', 'no') in [ 'yes', 'YES', 'ON', 'on', '1' ]
+print_out_tensor = os.environ.get('CK_PRINT_OUT_TENSOR', 'no') in [ 'yes', 'YES', 'ON', 'on', '1' ]
 
 tensors = {
     'A' : [ M, K ],
@@ -45,7 +45,9 @@ for tensor_name, tensor_shape in tensors.items():
         tensor_as_array = np.random.random_sample(tensor_shape)
     tensors[tensor_name] = torch.from_numpy(tensor_as_array)
     if print_in_tensor:
+        print("Input '{}':".format(tensor_name))
         pprint(tensors[tensor_name])
+        print("")
 
 finish_setup_time = perf_counter()
 
@@ -56,6 +58,7 @@ finish_gemm_time = perf_counter()
 
 # Print output as tensor.
 if print_out_tensor:
+    print("Output 'alpha*A*B + beta*C':")
     pprint(output)
 
 # Convert output to flat list.
