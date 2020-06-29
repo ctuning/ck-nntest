@@ -1,6 +1,14 @@
 {
   "data_name": "gemm-pytorch",
   "backup_data_uid": "6ac244466493cbcd",
+  "compile_deps": {
+    "library": {
+      "local": "yes",
+      "name": "NNTest library",
+      "sort": 2,
+      "tags": "lib,nntest"
+    }
+  },
   "main_language": "python",
   "no_compile": "yes",
   "no_target_file": "yes",
@@ -11,12 +19,6 @@
       "name": "Python interpreter",
       "sort": 0,
       "tags": "compiler,python"
-    },
-    "lib-nntest": {
-      "local": "yes",
-      "name": "NNTest library",
-      "sort": 2,
-      "tags": "lib,nntest"
     },
     "library": {
       "local": "yes",

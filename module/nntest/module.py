@@ -1011,7 +1011,7 @@ class Program:
         '''
         Resolve library environments (don't use cache to get all choices)
         '''
-        lib = self.compile_deps.get('library')
+        lib = self.compile_deps.get('library') or self.meta.get('run_deps').get('library')
         if not lib:
             raise CKException.throw('expected at least one library dependency')
 
