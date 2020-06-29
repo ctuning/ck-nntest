@@ -11,6 +11,7 @@
   "print_files_after_run": [
     "tmp-stderr.tmp"
   ],
+  "pass_env_to_resolve": "yes",
   "process_in_tmp": "yes",
   "program": "yes",
   "run_cmds": {
@@ -67,6 +68,15 @@
       "sort": 1,
       "tags": "lib,pytorch"
     },
+    "weights": {
+      "enable_if_env": [
+        { "CK_LSTM_PYTORCH_WEIGHTS": [1, "1", "YES", "yes"] }
+      ],
+      "local": "yes",
+      "name": "PyTorch weights",
+      "sort": 10,
+      "tags": "model,pytorch"
+    },
     "python": {
       "local": "yes",
       "name": "Python interpreter",
@@ -78,7 +88,8 @@
     "CK_ABS_DIFF_THRESHOLD": 0.001,
     "CK_IN_SHAPE_N": 1,
     "CK_OUT_RAW_DATA": "tmp-ck-output.bin",
-    "CK_SEED": 42
+    "CK_SEED": 42,
+    "CK_LSTM_PYTORCH_WEIGHTS": 1
   },
   "source_files": [
     "lstm.py"
