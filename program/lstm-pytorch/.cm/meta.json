@@ -19,7 +19,7 @@
       "dataset_tags": [
         "dataset",
         "nntest",
-        "tensor-gemm"
+        "tensor-lstm"
       ],
       "ignore_return_code": "no",
       "run_time": {

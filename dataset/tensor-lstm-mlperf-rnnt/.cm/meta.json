@@ -1,0 +1,16 @@
+{
+  "dataset_files": [
+    "shape-0-1"
+  ],
+  "desc_dataset_files": {
+    "shape-0-1": {
+      "name": "LSTM 0 (Pre-RNN); sample 1"
+    }
+  },
+  "tags": [
+    "dataset",
+    "nntest",
+    "tensor-lstm",
+    "lstm"
+  ]
+}
