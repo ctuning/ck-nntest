@@ -90,6 +90,8 @@ def ck_postprocess(i):
     d['execution_time']=total_time
     d['execution_time_kernel_0']=total_time
 
+    #TODO - CALCULATE FLOPS
+    '''
     # Calculate floating-point operations (flops) for C[M][N] = alpha * A[M][K] * B[K][N] + beta * C[M][N]
     # and then billion flops per second (GFLOPS).
     alpha = float(env.get('CK_GEMM_ALPHA', '1.0'))
@@ -112,6 +114,7 @@ def ck_postprocess(i):
     d['flops'] = flops
     d['Gflops'] = Gflops
     d['GFLOPS'] = GFLOPS
+    '''
 
     if d.get('post_processed','')=='yes':
         r=ck.save_json_to_file({'json_file':rt['fine_grain_timer_file'], 'dict':d, 'sort_keys':'yes'})
