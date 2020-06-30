@@ -94,7 +94,8 @@
     "CK_LSTM_HIDDEN_WIDTH": 1024,
     "CK_LSTM_INPUT_WIDTH": 240,
     "CK_LSTM_WEIGHTS_PREFIX": "weights",
-    "CK_LSTM_DATASET_PREFIX": "sample"
+    "CK_LSTM_DATASET_PREFIX": "sample",
+    "CK_SEED": 42
   },
   "source_files": [
     "lstm.py"
