@@ -1,10 +1,46 @@
 {
   "dataset_files": [
-    "shape-0-1"
+    "sample-0-000000",
+    "sample-0-000001",
+    "sample-0-000002",
+    "sample-0-000003",
+    "sample-0-000004",
+    "sample-0-000005",
+    "sample-0-000006",
+    "sample-0-000007",
+    "sample-0-000008",
+    "sample-0-000009"
   ],
   "desc_dataset_files": {
-    "shape-0-1": {
+    "sample-0-000000": {
+      "name": "LSTM 0 (Pre-RNN); sample 0"
+    },
+    "sample-0-000001": {
       "name": "LSTM 0 (Pre-RNN); sample 1"
+    },
+    "sample-0-000002": {
+      "name": "LSTM 0 (Pre-RNN); sample 2"
+    },
+    "sample-0-000003": {
+      "name": "LSTM 0 (Pre-RNN); sample 3"
+    },
+    "sample-0-000004": {
+      "name": "LSTM 0 (Pre-RNN); sample 4"
+    },
+    "sample-0-000005": {
+      "name": "LSTM 0 (Pre-RNN); sample 5"
+    },
+    "sample-0-000006": {
+      "name": "LSTM 0 (Pre-RNN); sample 6"
+    },
+    "sample-0-000007": {
+      "name": "LSTM 0 (Pre-RNN); sample 7"
+    },
+    "sample-0-000008": {
+      "name": "LSTM 0 (Pre-RNN); sample 8"
+    },
+    "sample-0-000009": {
+      "name": "LSTM 0 (Pre-RNN); sample 9"
     }
   },
   "tags": [

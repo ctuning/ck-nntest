@@ -1,7 +1,15 @@
 {
-  "backup_data_uid": "46f9d05ff6014e28",
-  "build_compiler_vars": {},
   "data_name": "lstm-pytorch",
+  "backup_data_uid": "46f9d05ff6014e28",
+  "compile_deps": {
+    "library": {
+      "local": "yes",
+      "name": "NNTest library",
+      "sort": 2,
+      "tags": "lib,nntest"
+    }
+  },
+  "build_compiler_vars": {},
   "main_language": "python",
   "no_compile": "yes",
   "no_target_file": "yes",
@@ -56,12 +64,6 @@
     }
   },
   "run_deps": {
-    "lib-nntest": {
-      "local": "yes",
-      "name": "NNTest library",
-      "sort": 2,
-      "tags": "lib,nntest"
-    },
     "library": {
       "local": "yes",
       "name": "PyTorch",
@@ -88,8 +90,11 @@
     "CK_ABS_DIFF_THRESHOLD": 0.001,
     "CK_IN_SHAPE_N": 1,
     "CK_OUT_RAW_DATA": "tmp-ck-output.bin",
-    "CK_SEED": 42,
-    "CK_LSTM_PYTORCH_WEIGHTS": 1
+    "CK_LSTM_LAYERS": 2,
+    "CK_LSTM_HIDDEN_WIDTH": 1024,
+    "CK_LSTM_INPUT_WIDTH": 240,
+    "CK_LSTM_WEIGHTS_PREFIX": "weights",
+    "CK_LSTM_DATASET_PREFIX": "sample"
   },
   "source_files": [
     "lstm.py"

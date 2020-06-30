@@ -1,5 +1,6 @@
 import os
 import torch
+import torch.nn as nn
 import struct
 import numpy as np
 import json
@@ -13,52 +14,48 @@ output_bin = os.environ.get('CK_OUT_RAW_DATA', 'tmp-ck-output.bin')
 output_json = output_bin.replace('bin', 'json')
 
 dataset_path = os.environ.get('CK_DATASET_PATH', '')
-dataset_file_base = os.environ.get('CK_DATASET_FILENAME', '')
 
-alpha = np.float32(os.environ.get('CK_GEMM_ALPHA', '1.0'))
-beta  = np.float32(os.environ.get('CK_GEMM_BETA', '0.0'))
-K     = int(os.environ.get('CK_GEMM_K', '1024'))
-M     = int(os.environ.get('CK_GEMM_M', '1024'))
-N     = int(os.environ.get('CK_GEMM_N', '1024'))
-rnd_seed = int(os.environ.get('CK_SEED', '42'))
-np.random.seed(rnd_seed)
+weights_prefix = os.environ.get('CK_LSTM_WEIGHTS_PREFIX', '')
+dataset_prefix = os.environ.get('CK_LSTM_DATASET_PREFIX', '')
+
+op_id = os.environ.get('CK_LSTM_OP_ID', '')
+sample_id = os.environ.get('CK_LSTM_SAMPLE_ID', '0').zfill(6)
+
+layers = int(os.environ.get('CK_LSTM_LAYERS', '1'))
+hidden_width = int(os.environ.get('CK_LSTM_HIDDEN_WIDTH', ''))
+input_width = int(os.environ.get('CK_LSTM_INPUT_WIDTH', ''))
 
 print_in_tensor = os.environ.get('CK_PRINT_IN_TENSOR', 'no') in [ 'yes', 'YES', 'ON', 'on', '1' ]
 print_out_tensor = os.environ.get('CK_PRINT_OUT_TENSOR', 'no') in [ 'yes', 'YES', 'ON', 'on', '1' ]
 
-tensors = {
-    'A' : [ M, K ],
-    'B' : [ K, N ],
-    'C' : [ M, N ]
-}
+weights_file = os.path.join(dataset_path, '{}{}-{}.W'.format(dataset_path, weights_prefix, op_id))
+sample_file  = os.path.join(dataset_path, '{}{}-{}-{}.x'.format(dataset_path, dataset_prefix, op_id, sample_id))
 
 sizeof_float32 = 4
 
-for tensor_name, tensor_shape in tensors.items():
-    tensor_path = os.path.join(dataset_path, '{}.{}'.format(dataset_file_base, tensor_name))
-    tensor_size = tensor_shape[0] * tensor_shape[1]
-    try:
-        with open(tensor_path, 'rb') as tensor_file:
-            tensor_as_list = struct.unpack('f'*tensor_size, tensor_file.read(sizeof_float32*tensor_size))
-        tensor_as_array = np.array(tensor_as_list, dtype=np.float32).reshape(tensor_shape)
-    except IOError:
-        tensor_as_array = np.random.random_sample(tensor_shape)
-    tensors[tensor_name] = torch.from_numpy(tensor_as_array)
-    if print_in_tensor:
-        print("Input '{}':".format(tensor_name))
-        pprint(tensors[tensor_name])
-        print("")
+# LOAD LSTM
+lstm = torch.load(weights_file)
+
+# LOAD DATA
+input_data = torch.load(sample_file)
+
+if print_in_tensor:
+    print("Input:")
+    pprint(input_data)
+    print("")
+
+logit_count, _, _ = input_data.size()
 
 finish_setup_time = perf_counter()
 
-# GEMM.
-output = alpha * torch.mm(tensors['A'], tensors['B']) + beta * tensors['C']
+# RUN THE TEST
+output, _ = lstm(input_data, None)
 
-finish_gemm_time = perf_counter()
+finish_lstm_time = perf_counter()
 
 # Print output as tensor.
 if print_out_tensor:
-    print("Output 'alpha*A*B + beta*C':")
+    print("LSTM Output:")
     pprint(output)
 
 # Convert output to flat list.
@@ -73,21 +70,24 @@ with open(output_json, 'w') as output_file:
     output_file.write( json.dumps(output_list, indent=2) )
 
 # Dump timing and misc info.
+height, batch, width = output.size()
+
 timer_json = 'tmp-ck-timer.json'
 with open(timer_json, 'w') as output_file:
     timer = {
-        "execution_time": (finish_gemm_time - start_setup_time),
-        "execution_time_kernel_0": (finish_gemm_time - start_setup_time),
-        "execution_time_kernel_1": (finish_gemm_time - finish_setup_time),
+        "execution_time": (finish_lstm_time - start_setup_time),
         "run_time_state": {
-            "out_shape_N": 1,
+            "input_width": input_width,
+            "hidden_width": hidden_width,
+            "num_layers": layers,
+            "logit_count": logit_count,
+            "out_shape_N": batch,
             "out_shape_C": 1,
-            "out_shape_H": M,
-            "out_shape_W": N,
-            "rnd_seed": rnd_seed,
-            "data_bits": sizeof_float32 * 8,
+            "out_shape_H": height,
+            "out_shape_W": width,
+            "data_bits": sizeof_float32*8,
             "time_setup": (finish_setup_time - start_setup_time),
-            "time_test": (finish_gemm_time - finish_setup_time)
+            "time_test": (finish_lstm_time - finish_setup_time)
         }
     }
     output_file.write( json.dumps(timer, indent=2) )
