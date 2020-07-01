@@ -1,16 +1,33 @@
 {
   "dataset_files": [
-    "sample-0-000000"
+    "random-0-000000",
+    "random-0-000001",
+    "random-0-000002",
+    "random-0-000003",
+    "random-0-000004"
   ],
   "desc_dataset_files": {
-    "sample-0-000000": {
-      "name": "LSTM 0 (Pre-RNN); sample 0"
+    "random-0-000000": {
+      "name": "LSTM 0 (Pre-RNN); random input 0"
+    },
+    "random-0-000001": {
+      "name": "LSTM 0 (Pre-RNN); random input 1"
+    },
+    "random-0-000002": {
+      "name": "LSTM 0 (Pre-RNN); random input 2"
+    },
+    "random-0-000003": {
+      "name": "LSTM 0 (Pre-RNN); random input 3"
+    },
+    "random-0-000004": {
+      "name": "LSTM 0 (Pre-RNN); random input 4"
     }
   },
   "tags": [
     "dataset",
     "nntest",
     "tensor-lstm",
-    "lstm"
+    "lstm",
+    "random"
   ]
 }
