@@ -11,9 +11,9 @@ class PluginLstmRnntPost(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
-        print("------------------------------------")
-        print("LOADING RNNT LSTM PRE: NAIVE PYTORCH")
-        print("------------------------------------")
+        print("-------------------------------------")
+        print("LOADING RNNT LSTM POST: NAIVE PYTORCH")
+        print("-------------------------------------")
 
         model = torch.load(os.path.join(checkpoint_dir,"rnnt.pt"), map_location="cpu")
 
