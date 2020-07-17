@@ -17,9 +17,9 @@ class PluginLstmRnntPost(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
-        print("---------------------- -----")
+        print("----------------------------")
         print("LOADING RNNT LSTM POST: GLOW")
-        print("----------------------- ----")
+        print("----------------------------")
 
         self.libc = ctypes.CDLL(plugin_dir + "/model.so")
         self.lstm = self.libc.lstm
