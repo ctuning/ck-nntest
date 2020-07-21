@@ -18,6 +18,12 @@
       "sort": 0,
       "tags": "compiler,lang-cpp"
     },
+    "glow-compiler": {
+      "local": "yes",
+      "name": "Glow compiler",
+      "sort": 0,
+      "tags": "compiler,glow"
+    },
     "plugin-lstm-rnnt-post-onnx": {
       "add_to_path": "no",
       "local": "yes",

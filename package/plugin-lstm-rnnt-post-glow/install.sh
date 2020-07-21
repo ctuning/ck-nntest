@@ -15,18 +15,6 @@
 # PACKAGE_DIR
 # INSTALL_DIR
 
-if [ -z "$CK_ENV_COMPILER_GLOW" ]; then
-    echo "*****************************************************"
-    echo "*****************************************************"
-    echo "*****************************************************"
-    echo "Error: CK_ENV_COMPILER_GLOW not set."
-    echo ""
-    echo "Set this to the build directory of your glow install."
-    echo "*****************************************************"
-    echo "*****************************************************"
-    echo "*****************************************************"
-    exit 1
-fi
 
 function exit_if_error() {
   message=${1:-"unknown"}
@@ -56,7 +44,7 @@ sed -i -e "s/NUM_LAYERS/${PLUGIN_LSTM_NUM_LAYERS}/g" ${PLUGIN_DIR}/${PLUGIN_NAME
 echo "Converting ONNX to Glow bundle ..."
 echo ""
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${CK_ENV_COMPILER_GLOW}/lib/
+
 ${CK_ENV_COMPILER_GLOW}/bin/model-compiler -backend=CPU -model=${CK_NNTEST_PLUGIN_POST_ONNX}/plugin/model.onnx -emit-bundle=${BUNDLE_DIR} -relocation-model=pic -bundle-api-verbose -onnx-define-symbol=batch,1
 exit_if_error "Conversion from ONNX to Glow failed"
 
