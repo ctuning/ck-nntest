@@ -25,8 +25,14 @@
       "force_target_as_host": "yes",
       "local": "yes",
       "name": "Python interpreter",
-      "sort": 70,
+      "sort": 80,
       "tags": "compiler,python"
+    },
+    "pytorch": {
+      "local": "yes",
+      "name": "PyTorch framework",
+      "sort": 90,
+      "tags": "lib,pytorch"
     }
   },
   "end_full_path_universal": "plugin/lstm_rnnt_dec.py",
