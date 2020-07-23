@@ -21,8 +21,6 @@ echo ""
 
 PLUGIN_DIR=${INSTALL_DIR}/plugin/
 
-env
-
 mkdir -p ${PLUGIN_DIR}
 
 cp -r ${PACKAGE_DIR}/${PLUGIN_SUBDIR}/* ${PLUGIN_DIR}

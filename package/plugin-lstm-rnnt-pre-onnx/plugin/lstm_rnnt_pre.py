@@ -36,6 +36,9 @@ class PluginLstmRnntPre(torch.nn.Module):
         self.output = self.session.get_outputs()[0].name
         self.h_n = self.session.get_outputs()[1].name
         self.c_n = self.session.get_outputs()[2].name
+        self.output_shape_o = self.session.get_outputs()[0].shape
+        self.output_shape_hn = self.session.get_outputs()[1].shape
+        self.output_shape_cn = self.session.get_outputs()[2].shape
 
         self.zeros_h_0 = numpy.zeros(self.input_shape_h0, dtype=numpy.float32)
         self.zeros_c_0 = numpy.zeros(self.input_shape_c0, dtype=numpy.float32)
@@ -43,6 +46,9 @@ class PluginLstmRnntPre(torch.nn.Module):
         print("input x", self.input_shape_x)
         print("input h0", self.input_shape_h0)
         print("input c0", self.input_shape_c0)
+        print("output o", self.output_shape_o)
+        print("output hn", self.output_shape_hn)
+        print("output cn", self.output_shape_cn)
 
 
     def forward(self, x: torch.Tensor, 

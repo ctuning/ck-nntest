@@ -35,7 +35,7 @@ class PluginLstmRnntDec(torch.nn.Module):
         self.lstm.set_weights(weights)
 
     def forward(self, x: torch.Tensor, 
-                init_states: Optional[Tuple[torch.Tensor]]=None
+                init_states: Optional[Tuple[torch.Tensor, torch.Tensor]]=None
                ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
 
         return self.lstm.forward(x, init_states)

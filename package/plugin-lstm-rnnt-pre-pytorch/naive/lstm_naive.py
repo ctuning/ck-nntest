@@ -38,6 +38,8 @@ class NaiveLayerLSTM(torch.nn.Module):
         self.b_io = Parameter(torch.Tensor(hidden_sz))
         self.b_ho = Parameter(torch.Tensor(hidden_sz))
 
+        self.h_t, self.c_t = torch.zeros(self.hidden_size), torch.zeros(self.hidden_size)
+
     def set_weights(self, weights):
         self.W_ii = Parameter(weights[0][0].transpose(0,1))
         self.W_if = Parameter(weights[0][1].transpose(0,1))
@@ -67,7 +69,7 @@ class NaiveLayerLSTM(torch.nn.Module):
     def get_states(self):
             return self.h_t, self.c_t
 
-    def forward(self, x_t: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x_t: torch.Tensor) -> torch.Tensor:
         """Assumes x_t is of shape feature"""
         i_t = torch.sigmoid(x_t @ self.W_ii + self.b_ii + self.h_t @ self.W_hi + self.b_hi)
         f_t = torch.sigmoid(x_t @ self.W_if + self.b_if + self.h_t @ self.W_hf + self.b_hf)
@@ -93,6 +95,7 @@ class NaiveStackedLSTM(torch.nn.Module):
 
         self.layers = nn.ModuleList(self.layers)
 
+        self.num_layers = num_layers
 
     def set_weights(self, ref):
         for l in range(len(self.layers)):
@@ -104,12 +107,12 @@ class NaiveStackedLSTM(torch.nn.Module):
 
 
     def forward(self, x: torch.Tensor, 
-                init_states: Optional[Tuple[torch.Tensor]]=None
+                init_states: Optional[Tuple[torch.Tensor, torch.Tensor]]=None
                ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
 
         """Initialize the hidden states"""
-        for l in range(len(self.layers)):
-            state = None if not init_states else (init_states[0][l], init_states[1][l])
+        for l in range(self.num_layers):
+            state = None if init_states is None else (init_states[0][l], init_states[1][l])
             self.layers[l].set_states(x, state)
   
         """Assumes x is of shape (sequence, batch, feature)"""
@@ -129,8 +132,10 @@ class NaiveStackedLSTM(torch.nn.Module):
         c_layers = []
         for l in range(len(self.layers)):
             h_t, c_t = self.layers[l].get_states()
-            h_layers.append(h_t)
-            c_layers.append(c_t)
+            h_layers.append(h_t.unsqueeze(Dim.batch))
+            c_layers.append(c_t.unsqueeze(Dim.batch))
 
+        h_layers = torch.cat(h_layers, dim=Dim.seq)
+        c_layers = torch.cat(c_layers, dim=Dim.seq)
         return hidden_seq, (h_layers, c_layers)
 

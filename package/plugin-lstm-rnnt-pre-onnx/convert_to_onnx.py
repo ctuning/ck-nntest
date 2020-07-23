@@ -21,12 +21,17 @@ def main(args):
     h = torch.randn(args.layers, 1, args.hidden_size)
     c = torch.randn(args.layers, 1, args.hidden_size)
 
+    o = torch.randn([1,1,args.hidden_size])
+    hn = torch.randn(args.layers, 1, args.hidden_size)
+    cn = torch.randn(args.layers, 1, args.hidden_size)
+
     torch.onnx.export(model, (x,(h, c)),
                       args.dest,
                       opset_version=9,
                       input_names=['input', 'h_0', 'c_0'],
                       output_names=['output', 'h_n', 'c_n'],
                       dynamic_axes = {'input': {0: 'batch'}, 'output': {0: 'batch'}},
+                      example_outputs = (o,(hn, cn)),
                       verbose=True
                   )
 
