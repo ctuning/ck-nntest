@@ -7,7 +7,7 @@ import json
 from time import perf_counter
 from pprint import pprint
 
-from lstm_rnnt_pre import PluginLstmRnntPre
+from lstm_rnnt_post import PluginLstmRnntPost
 
 start_setup_time = perf_counter()
 
@@ -22,9 +22,9 @@ dataset_prefix = os.environ.get('CK_LSTM_DATASET_PREFIX', 'sample')
 op_id = os.environ.get('CK_LSTM_OP_ID', '')
 sample_id = os.environ.get('CK_LSTM_SAMPLE_ID', '0').zfill(6)
 
-layers = int(os.environ.get('CK_LSTM_LAYERS', '2'))
+layers = int(os.environ.get('CK_LSTM_LAYERS', '3'))
 hidden_width = int(os.environ.get('CK_LSTM_HIDDEN_WIDTH', '1024'))
-input_width = int(os.environ.get('CK_LSTM_INPUT_WIDTH', '240'))
+input_width = int(os.environ.get('CK_LSTM_INPUT_WIDTH', '2048'))
 
 logit_count = int(os.environ.get('CK_LSTM_LOGIT_COUNT', '128'))
 batch_size = int(os.environ.get('CK_LSTM_BATCH_SIZE', '1'))
@@ -43,7 +43,7 @@ sizeof_float32 = 4
 
 # LOAD LSTM
 
-lstm = PluginLstmRnntPre()
+lstm = PluginLstmRnntPost()
 
 # LOAD DATA
 if os.path.exists(sample_file):

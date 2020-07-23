@@ -1,5 +1,5 @@
 {
-  "backup_data_uid": "c01331d6b4234a23",
+  "backup_data_uid": "9978e9248efbd46b",
   "build_compiler_vars": {},
   "compile_deps": {
     "library": {
@@ -9,7 +9,7 @@
       "tags": "lib,nntest"
     }
   },
-  "data_name": "lstm-pre",
+  "data_name": "lstm-rnnt-dec",
   "main_language": "python",
   "no_compile": "yes",
   "no_target_file": "yes",
@@ -29,7 +29,7 @@
         "dataset",
         "nntest",
         "tensor-lstm",
-        "pre"
+        "dec"
       ],
       "ignore_return_code": "no",
       "run_time": {
@@ -71,6 +71,81 @@
       "sort": 1,
       "tags": "lib,pytorch"
     },
+    "plugins-dec-glow": {
+      "enable_if_env": [
+        {
+          "CK_RNNT_DEC_BACKEND": [
+            "glow"
+          ]
+        }
+      ],
+      "local": "yes",
+      "name": "GLOW LSTM RNNT Dec plugin",
+      "sort": 120,
+      "tags": "nntest,plugin,rnnt-dec,glow",
+      "update_tags_if_env": {
+        "naive": [
+          {
+            "CK_RNNT_DEC": "naive"
+          }
+        ],
+        "orig": [
+          {
+            "CK_RNNT_DEC": "orig"
+          }
+        ]
+      }
+    },
+    "plugins-dec-onnx": {
+      "enable_if_env": [
+        {
+          "CK_RNNT_DEC_BACKEND": [
+            "onnx"
+          ]
+        }
+      ],
+      "local": "yes",
+      "name": "ONNX LSTM RNNT Dec plugin",
+      "sort": 120,
+      "tags": "nntest,plugin,rnnt-dec,onnx",
+      "update_tags_if_env": {
+        "naive": [
+          {
+            "CK_RNNT_DEC": "naive"
+          }
+        ],
+        "orig": [
+          {
+            "CK_RNNT_DEC": "orig"
+          }
+        ]
+      }
+    },
+    "plugins-dec-pytorch": {
+      "enable_if_env": [
+        {
+          "CK_RNNT_DEC_BACKEND": [
+            "pytorch"
+          ]
+        }
+      ],
+      "local": "yes",
+      "name": "Pytorch LSTM RNNT Dec plugin",
+      "sort": 120,
+      "tags": "nntest,plugin,rnnt-dec,pytorch",
+      "update_tags_if_env": {
+        "naive": [
+          {
+            "CK_RNNT_DEC": "naive"
+          }
+        ],
+        "orig": [
+          {
+            "CK_RNNT_DEC": "orig"
+          }
+        ]
+      }
+    },
     "python": {
       "local": "yes",
       "name": "Python interpreter",
@@ -92,53 +167,14 @@
       "name": "PyTorch weights",
       "sort": 10,
       "tags": "model,pytorch"
-    },
-    "plugins-pre-pytorch": {
-      "local": "yes",
-      "name": "Pytorch LSTM RNNT Pre plugin",
-      "sort": 120,
-      "tags": "nntest,plugin,rnnt-pre,pytorch",
-      "enable_if_env": [
-        { "CK_RNNT_PRE_BACKEND": ["pytorch"] }
-      ],
-      "update_tags_if_env" : {
-        "orig": [ { "CK_RNNT_PRE": "orig" } ],
-        "naive": [ { "CK_RNNT_PRE": "naive" } ]
-      }
-    },
-    "plugins-pre-onnx": {
-      "local": "yes",
-      "name": "ONNX LSTM RNNT Pre plugin",
-      "sort": 120,
-      "tags": "nntest,plugin,rnnt-pre,onnx",
-      "enable_if_env": [
-        { "CK_RNNT_PRE_BACKEND": ["onnx"] }
-      ],
-      "update_tags_if_env" : {
-        "orig": [ { "CK_RNNT_PRE": "orig" } ],
-        "naive": [ { "CK_RNNT_PRE": "naive" } ]
-      }
-    },
-    "plugins-pre-glow": {
-      "local": "yes",
-      "name": "GLOW LSTM RNNT Pre plugin",
-      "sort": 120,
-      "tags": "nntest,plugin,rnnt-pre,glow",
-      "enable_if_env": [
-        { "CK_RNNT_PRE_BACKEND": ["glow"] }
-      ],
-      "update_tags_if_env" : {
-        "orig": [ { "CK_RNNT_PRE": "orig" } ],
-        "naive": [ { "CK_RNNT_PRE": "naive" } ]
-      }
     }
   },
   "run_vars": {
     "CK_ABS_DIFF_THRESHOLD": 0.001,
     "CK_IN_SHAPE_N": 1,
     "CK_OUT_RAW_DATA": "tmp-ck-output.bin",
-    "CK_RNNT_PRE_BACKEND": "pytorch",
-    "CK_RNNT_PRE": "orig"
+    "CK_RNNT_DEC": "orig",
+    "CK_RNNT_DEC_BACKEND": "pytorch"
   },
   "source_files": [
     "lstm.py"

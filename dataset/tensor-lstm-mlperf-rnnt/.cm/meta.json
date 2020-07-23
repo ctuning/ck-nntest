@@ -28,6 +28,9 @@
     "nntest",
     "tensor-lstm",
     "lstm",
-    "random"
+    "random",
+    "pre",
+    "post",
+    "dec"
   ]
 }
