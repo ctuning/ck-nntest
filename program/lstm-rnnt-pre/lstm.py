@@ -37,7 +37,9 @@ rng = np.random.RandomState(rnd_seed)
 print_in_tensor = os.environ.get('CK_PRINT_IN_TENSOR', 'no') in [ 'yes', 'YES', 'ON', 'on', '1' ]
 print_out_tensor = os.environ.get('CK_PRINT_OUT_TENSOR', 'no') in [ 'yes', 'YES', 'ON', 'on', '1' ]
 
-sample_file  = os.path.join(dataset_path, '{}{}-{}-{}.x'.format(dataset_path, dataset_prefix, op_id, sample_id))
+sample_file_new  = os.path.join(dataset_path, os.environ.get('CK_LSTM_DATASET_PREFIX', '')+'.pt')
+sample_file_old  = os.path.join(dataset_path, '{}{}-{}-{}.x'.format(dataset_path, dataset_prefix, op_id, sample_id))
+
 
 sizeof_float32 = 4
 
@@ -46,12 +48,18 @@ sizeof_float32 = 4
 lstm = PluginLstmRnntPre()
 
 # LOAD DATA
-if os.path.exists(sample_file):
+if os.path.exists(sample_file_new):
     # Load input data from file
-    input_data = torch.load(sample_file)
+    print("Loading data from file")
+    input_data = torch.load(sample_file_new)[0]
+    assert input_data.size()[2] == input_width
+elif os.path.exists(sample_file_old):
+    print("Loading data from file")
+    input_data = torch.load(sample_file_old)
     assert input_data.size()[2] == input_width
 else:
     # Generate random input data
+    print("Generating random input data")
     input_data = rng.randn(logit_count, batch_size, input_width).astype(np.float32)
     input_data = torch.from_numpy(input_data)
 

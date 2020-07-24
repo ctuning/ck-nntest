@@ -43,9 +43,9 @@ class PluginLstmRnntPost(torch.nn.Module):
         self.zeros_h_0 = numpy.zeros(self.input_shape_h0, dtype=numpy.float32)
         self.zeros_c_0 = numpy.zeros(self.input_shape_c0, dtype=numpy.float32)
 
-        print("input x", self.input_shape_x)
-        print("input h0", self.input_shape_h0)
-        print("input c0", self.input_shape_c0)
+        print("input %s" % self.input, self.input_shape_x)
+        print("input %s" % self.h_0, self.input_shape_h0)
+        print("input %s" % self.c_0, self.input_shape_c0)
         print("output o", self.output_shape_o)
         print("output hn", self.output_shape_hn)
         print("output cn", self.output_shape_cn)
