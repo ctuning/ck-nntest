@@ -1714,8 +1714,8 @@ def crowdsource(i):
 
             EXPERIMENT.prepare(i)
 
-            # If experiment does not require compilation
-            # we can reused deps from previous compiled experiment
+            # If the experiment does not require compilation,
+            # we can reuse deps from a previously compiled experiment
             if EXPERIMENT.skip_compilation:
                 EXPERIMENT.deps = copy.deepcopy(prepared_deps)
                 EXPERIMENT.compile_deps = copy.deepcopy(prepared_cdeps)
