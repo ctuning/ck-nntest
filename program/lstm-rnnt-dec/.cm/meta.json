@@ -143,6 +143,11 @@
           {
             "CK_RNNT_DEC": "orig"
           }
+        ],
+        "orig-quant": [
+          {
+            "CK_RNNT_DEC": "orig-quant"
+          }
         ]
       }
     },

@@ -103,6 +103,7 @@
       ],
       "update_tags_if_env" : {
         "orig": [ { "CK_RNNT_PRE": "orig" } ],
+        "orig-quant": [ { "CK_RNNT_PRE": "orig-quant" } ],
         "naive": [ { "CK_RNNT_PRE": "naive" } ]
       }
     },

@@ -143,6 +143,11 @@
           {
             "CK_RNNT_POST": "orig"
           }
+        ],
+        "orig-quant": [
+          {
+            "CK_RNNT_POST": "orig-quant"
+          }
         ]
       }
     },

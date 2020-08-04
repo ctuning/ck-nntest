@@ -8,19 +8,19 @@
   ],
   "desc_dataset_files": {
     "random-0-000000": {
-      "name": "LSTM 0 (Pre-RNN); random input 0"
+      "name": "LSTM random input 0"
     },
     "random-0-000001": {
-      "name": "LSTM 0 (Pre-RNN); random input 1"
+      "name": "LSTM random input 1"
     },
     "random-0-000002": {
-      "name": "LSTM 0 (Pre-RNN); random input 2"
+      "name": "LSTM random input 2"
     },
     "random-0-000003": {
-      "name": "LSTM 0 (Pre-RNN); random input 3"
+      "name": "LSTM random input 3"
     },
     "random-0-000004": {
-      "name": "LSTM 0 (Pre-RNN); random input 4"
+      "name": "LSTM random input 4"
     }
   },
   "tags": [
