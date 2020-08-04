@@ -66,6 +66,16 @@
         "PLUGIN_SUBDIR": "original"
       },
       "on_by_default": "yes"
+    },
+    "orig-quantized": {
+      "extra_customize": {
+        "package_name": "RNNT LSTM Pre original plugin - quantized",
+        "version": "orig"
+      },
+      "extra_env": {
+        "PLUGIN_SUBDIR": "orig-quantized"
+      },
+      "on_by_default": "no"
     }
   }
 }
