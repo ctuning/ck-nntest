@@ -67,7 +67,7 @@
       },
       "on_by_default": "yes"
     },
-    "orig-quantized": {
+    "orig-quant": {
       "extra_customize": {
         "package_name": "RNNT LSTM Dec original plugin - quantized",
         "version": "orig"
