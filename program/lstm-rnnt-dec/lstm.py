@@ -19,6 +19,8 @@ dataset_path = os.environ.get('CK_DATASET_PATH', '')
 
 dataset_prefix = os.environ.get('CK_LSTM_DATASET_PREFIX', 'sample')
 
+logit_count = os.environ.get('CK_LSTM_LOGIT_COUNT', '1')
+
 op_id = os.environ.get('CK_LSTM_OP_ID', '')
 sample_id = os.environ.get('CK_LSTM_SAMPLE_ID', '0').zfill(6)
 
@@ -37,7 +39,7 @@ rng = np.random.RandomState(rnd_seed)
 print_in_tensor = os.environ.get('CK_PRINT_IN_TENSOR', 'no') in [ 'yes', 'YES', 'ON', 'on', '1' ]
 print_out_tensor = os.environ.get('CK_PRINT_OUT_TENSOR', 'no') in [ 'yes', 'YES', 'ON', 'on', '1' ]
 
-sample_file  = os.path.join(dataset_path, '{}{}-{}-{}.x'.format(dataset_path, dataset_prefix, op_id, sample_id))
+sample_file = os.path.join(dataset_path, '{}{}-DEC0000.pt'.format(dataset_path, dataset_prefix))
 
 sizeof_float32 = 4
 
@@ -47,25 +49,36 @@ lstm = PluginLstmRnntDec()
 
 # LOAD DATA
 if os.path.exists(sample_file):
-    # Load input data from file
-    input_data = torch.load(sample_file)
-    assert input_data.size()[2] == input_width
+
+    input_data = []
+    for i in range(logit_count):
+        sample_file = os.path.join(dataset_path, '{}{}-DEC{}.pt'.format(dataset_path, dataset_prefix, str(i).zfill(4)))
+        input_data.append(torch.load(sample_file))
+
 else:
     # Generate random input data
-    input_data = rng.randn(logit_count, batch_size, input_width).astype(np.float32)
-    input_data = torch.from_numpy(input_data)
+    input_data = []
+    for i in range(logit_count):
+        input_x = rng.randn(1, batch_size, input_width).astype(np.float32)
+        input_x = torch.from_numpy(input_x)
+        input_h = rng.randn(2, batch_size, hidden_width).astype(np.float32)
+        input_h = torch.from_numpy(input_h)
+        input_c = rng.randn(2, batch_size, hidden_width).astype(np.float32)
+        input_c = torch.from_numpy(input_c)
+        input_data.append([input_x,(input_h,input_c)])
 
 if print_in_tensor:
     print("Input:")
     pprint(input_data)
     print("")
 
-logit_count, _, _ = input_data.size()
-
 finish_setup_time = perf_counter()
 
 # RUN THE TEST
-output, _ = lstm(input_data, None)
+output = torch.zeros([logit_count,1,hidden_width])
+for i in range(logit_count):
+    outx, _ = lstm(input_data[i][0], input_data[i][1])
+    output[i:i+1]=outx
 
 finish_lstm_time = perf_counter()
 
