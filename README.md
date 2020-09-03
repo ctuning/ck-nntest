@@ -8,6 +8,9 @@
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
+This [Collective Knowledge](https://cKnowledge.org) project contains CK workflows, automation actions, and reusable artifacts
+to test and benchmark common Nerual Network operations.
+
 ## [Installation](https://github.com/ctuning/ck#installation)
 
 ### CK
