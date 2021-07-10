@@ -1,6 +1,6 @@
 # CK-NNTest - testing and benchmarking common Neural Network operations via Collective Knowledge
 
-**All CK components can be found at [cKnowledge.io](https://cKnowledge.io) and in [one GitHub repository](https://github.com/ctuning/ai)!**
+**All CK components can be found at [cKnowledge.io](https://cKnowledge.io) and in [one GitHub repository](https://github.com/ctuning/ck-mlops)!**
 
 *This project is hosted by the [cTuning foundation (non-profit R&D organization)](https://cTuning.org).*
 
